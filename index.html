@@ -7277,8 +7277,8 @@ function admissionRoutePageName(value){return ADMISSION_ROUTE_PAGES[String(value
 async function setStomaSittingSessionDateForNewPatient(){
   const route=document.getElementById('np-admission-route')?.value||selectedAdmissionRouteForNewPatient||'';
   if(route!=='Elective surgery'){alert('This action is only for elective surgery pathway.');return;}
-  // Save the patient first
-  const savedPatientId=await saveNewPatientTab({isElectiveNewCase:true});
+  // Save the patient first with awaitingSurgery:true to bypass surgery date validation
+  const savedPatientId=await saveNewPatientTab({awaitingSurgery:true, isElectiveNewCase:true});
   if(!savedPatientId){alert('Failed to save patient.');return;}
   // Navigate to Appointments page to book the siting session
   // Store the patient ID so the Appointments page knows this is for siting session booking
