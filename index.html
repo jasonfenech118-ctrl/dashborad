@@ -7261,18 +7261,32 @@ function refreshNewPatientRouteUI(){
   const electiveWrap=document.getElementById('np-elective-sitting-date-wrap');
   if(electiveWrap)electiveWrap.style.display=route==='Elective surgery'?'block':'none';
   const btn=document.getElementById('np-route-continue-btn');
-  if(btn)btn.textContent=route==='Elective surgery'?'Save to Inpatients':'Continue';
+  if(btn)btn.textContent=route==='Elective surgery'?'Set a Sitting Session Date':'Continue';
   syncElectiveSittingDate();
   updateAdmissionWizardUI();
 }
 function continuePatientDetailsAfterRoute(){
   const route=document.getElementById('np-admission-route')?.value||selectedAdmissionRouteForNewPatient||'';
   if(!route){alert('Please choose an admission route first.');switchTab('admission-route-menu',document.querySelector('[data-tab="admission-route-menu"]'));return;}
-  if(route==='Elective surgery'){prepareAdmissionReview('Elective surgery',null,{awaitingSurgery:true});return;}
+  if(route==='Elective surgery'){setStomaSittingSessionDateForNewPatient();return;}
   const pageName=admissionRoutePageName(route);
   if(pageName)switchTab(pageName,document.querySelector(`.nav-tile[data-admission-route="${cssEscape(route)}"]`));
 }
 function admissionRoutePageName(value){return ADMISSION_ROUTE_PAGES[String(value||'').trim()]||'';}
+
+async function setStomaSittingSessionDateForNewPatient(){
+  const route=document.getElementById('np-admission-route')?.value||selectedAdmissionRouteForNewPatient||'';
+  if(route!=='Elective surgery'){alert('This action is only for elective surgery pathway.');return;}
+  // Save the patient first
+  const savedPatientId=await saveNewPatientTab({isElectiveNewCase:true});
+  if(!savedPatientId){alert('Failed to save patient.');return;}
+  // Navigate to Appointments page to book the siting session
+  // Store the patient ID so the Appointments page knows this is for siting session booking
+  window.ELECTIVE_SITING_PATIENT_ID=savedPatientId;
+  window.ELECTIVE_SITING_MODE=true;
+  switchTab('appointments',document.querySelector('[data-tab="appointments"]'));
+}
+
 function setAdmissionRouteValue(value){
   const routeEl=document.getElementById('np-admission-route');
   if(routeEl)routeEl.value=value||'';
@@ -9387,6 +9401,29 @@ async function bookSlot(slot,date,nid,nname,ntype){
     <div class="mact"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="doBook('${jsSafe(slot)}','${jsSafe(date)}')">Book Patient</button></div>`;
   openMo();
   setBookCardNewPatientMode(false);
+  // If in ELECTIVE_SITING_MODE, pre-fill the patient ID
+  if(window.ELECTIVE_SITING_MODE && window.ELECTIVE_SITING_PATIENT_ID){
+    setTimeout(async function(){
+      const idEl=document.getElementById('p-id');
+      if(idEl){
+        // Get the patient details
+        const {data:pat}=await SB.from('patients').select('*').eq('id',window.ELECTIVE_SITING_PATIENT_ID).single();
+        if(pat){
+          idEl.value=pat.id_card||'';
+          idEl.dataset.patientId=pat.id;
+          // Pre-fill name, surname, phone
+          document.getElementById('p-fn').value=pat.first_name||'';
+          document.getElementById('p-sn').value=pat.surname||'';
+          document.getElementById('p-ph').value=pat.phone||'';
+          document.getElementById('p-reg-note').innerHTML='<strong>Elective siting session booking:</strong> Patient details auto-filled from new case.';
+          document.getElementById('p-new-booking-type-wrap').style.display='none';
+          // Auto-set booking type to new_case
+          const followupEl=document.getElementById('p-followup-type');
+          if(followupEl) followupEl.value='new_case';
+        }
+      }
+    }, 100);
+  }
 }
 async function doBook(slot,date,nurseIdParam,nurseType){
   const idEl=document.getElementById('p-id');
