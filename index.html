@@ -5543,7 +5543,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div id="patient-route-title" class="pathway-title pathway-title-neutral">
         <span class="pathway-title-icon">?</span>
         <span class="pathway-title-text"><span class="pathway-title-label">Select pathway</span></span>
-        <button type="button" class="pathway-title-return" onclick="returnToAdmissionRouteMenu()">← Return</button>
+        <button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="returnToAdmissionRouteMenu()">← Return</button>
       </div>
       <div id="admission-patient-stepper"></div>
       
@@ -5634,7 +5634,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 
     <div class="page" id="page-admission-emergency">
       <div class="phdr"><div><h2>Stoma and Care</h2></div><button class="btn-add btn-return" onclick="continueAddPatientFromRoute('Emergency surgery')">← Back</button></div>
-      <div class="pathway-title pathway-title-emergency"><span class="pathway-title-icon">!</span><span class="pathway-title-text"><span class="pathway-title-label">Emergency surgery</span><span class="pathway-title-sub">Urgent or unplanned pathway — complete surgery and stoma care details.</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Emergency surgery')">← Return</button></div>
+      <div class="pathway-title pathway-title-emergency"><span class="pathway-title-icon">!</span><span class="pathway-title-text"><span class="pathway-title-label">Emergency surgery</span><span class="pathway-title-sub">Urgent or unplanned pathway — complete surgery and stoma care details.</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Emergency surgery')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Emergency surgery" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -5669,7 +5669,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-fistula">
-      <div class="pathway-title pathway-title-fistula"><span class="pathway-title-icon">W</span><span class="pathway-title-text"><span class="pathway-title-label">Fistula/wound management</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Fistula/wound management – bagging advice')">← Return</button></div>
+      <div class="pathway-title pathway-title-fistula"><span class="pathway-title-icon">W</span><span class="pathway-title-text"><span class="pathway-title-label">Fistula/wound management</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Fistula/wound management – bagging advice')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Fistula / wound management" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -5687,7 +5687,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-outside-mdh">
-      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
+      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Outside MDH" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -7191,7 +7191,7 @@ async function saveElectiveAwaitingSurgery(event){
   const typeEl=document.getElementById('np-inpatient-type'); if(typeEl)typeEl.value='awaiting_surgery';
   await saveNewPatientTab({awaitingSurgery:true});
 }
-// --- v92: 'Set a Siting Session Date' button: save the elective patient (creates the episode), then open the siting session to book the slot ---
+// --- v92: 'Book Siting Session' button: save the elective patient (creates the episode), then open the siting session to book the slot ---
 async function setSitingSessionDateForNewElective(event){
   if(event){event.preventDefault();event.stopPropagation();}
   setAdmissionRouteValue('Elective surgery');
@@ -7255,7 +7255,7 @@ function refreshNewPatientRouteUI(){
   const title=document.getElementById('patient-route-title');
   if(title){
     title.className='pathway-title '+meta.cls;
-    title.innerHTML=`<span class="pathway-title-icon">${meta.icon}</span><span class="pathway-title-text"><span class="pathway-title-label">${meta.label}</span><span class="pathway-title-sub">${meta.sub}</span></span><button type="button" class="pathway-title-return" onclick="returnToAdmissionRouteMenu()">← Return</button>`;
+    title.innerHTML=`<span class="pathway-title-icon">${meta.icon}</span><span class="pathway-title-text"><span class="pathway-title-label">${meta.label}</span><span class="pathway-title-sub">${meta.sub}</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="returnToAdmissionRouteMenu()">← Return</button>`;
   }
   const electiveWrap=document.getElementById('np-elective-sitting-date-wrap');
   if(electiveWrap)electiveWrap.style.display=route==='Elective surgery'?'block':'none';
@@ -15790,7 +15790,7 @@ try{
       if(/^\s*History\s*$/i.test(row.cells[0]?.textContent||''))return;
       const idText=row.cells[0]?.textContent||'';
       const p=v59PatientByRenderedId(idText);
-      row.insertAdjacentHTML('afterbegin',v59HistoryCellHTML(p));
+      row.insertAdjacentHTML('afterbegin'HistoryCellHTML(p));
 
       const closed=p&&v59IsClosedPatient(p);
       if(closed){
@@ -18295,28 +18295,28 @@ table thead th.v63-name-title,
     if(key==='stoma-history'){
       return '<div class="patient-interface-section"><h3 data-icon="S">Stoma</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'stoma_review\')">Add Stoma Review</button></div><div class="pi-demo-grid">'+
         v76DemoItem('Stoma Type', typeof patientStomaTypeText==='function'?patientStomaTypeText(p.stoma_type_summary):v76Html(p.stoma_type_summary||'—'))+
-        v76DemoItem('Surgery Date', v76DateText(p.surgery_date))+
+        v76DemoItem('Surgery Date'DateText(p.surgery_date))+
         v76DemoItem('Age at Stoma Formation', typeof patientAgeAtFormationText==='function'?patientAgeAtFormationText(p):'—')+
         v76DemoItem('Days with Stoma', typeof patientStomaDays==='function'?patientStomaDays(p):'—')+
-        v76DemoItem('Reversal Date', v76DateText(p.reversal_date))+
-        v76DemoItem('Date of RIP', v76DateText(p.rip_date))+
+        v76DemoItem('Reversal Date'DateText(p.reversal_date))+
+        v76DemoItem('Date of RIP'DateText(p.rip_date))+
         '</div></div>';
     }
     if(key==='stoma-care'){
       return '<div class="patient-interface-section"><h3 data-icon="C">Care</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'wound_review\')">Add Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'fistula_review\')" style="background:#7c3aed;">Add Fistula Review</button></div><div class="pi-demo-grid">'+
-        v76DemoItem('Admission Route', v76Html(p.admission_route||'—'))+
+        v76DemoItem('Admission Route'Html(p.admission_route||'—'))+
         v76DemoItem('Operation Performed', typeof patientOperationText==='function'?patientOperationText(p):v76Html(p.operation_performed||'—'))+
-        v76DemoItem('Surgery Type', v76Html(p.surgery_type||'—'))+
-        v76DemoItem('Consultant', v76Html(p.consultant||'—'))+
+        v76DemoItem('Surgery Type'Html(p.surgery_type||'—'))+
+        v76DemoItem('Consultant'Html(p.consultant||'—'))+
         '</div><div class="card" style="margin:12px 0 0;background:#fbfcfd;"><div class="card-title">Notes</div><div style="white-space:pre-wrap;font-size:12px;line-height:1.55;color:var(--navy);">'+v76Html(p.findings||'No notes recorded.')+'</div></div></div>';
     }
     if(key==='discharge-letters')return '<div class="patient-interface-section"><h3 data-icon="D">Discharge Planning</h3><div class="empty">No discharge planning records yet.</div></div>';
     if(key==='teaching-planning'){
       return '<div class="patient-interface-section"><h3 data-icon="T">Teaching</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'teaching_session\')">Add Teaching Session</button></div><div class="pi-demo-grid">'+
-        v76DemoItem('DPA', v76Html(p.dpa_status||'—'))+
-        v76DemoItem('Social History', v76Html(p.social_history||'—'))+
-        v76DemoItem('Past Medical History', v76Html(p.past_medical_history||'—'))+
-        v76DemoItem('Past Surgical History', v76Html(p.past_surgical_history||'—'))+
+        v76DemoItem('DPA'Html(p.dpa_status||'—'))+
+        v76DemoItem('Social History'Html(p.social_history||'—'))+
+        v76DemoItem('Past Medical History'Html(p.past_medical_history||'—'))+
+        v76DemoItem('Past Surgical History'Html(p.past_surgical_history||'—'))+
         '</div></div>';
     }
     return '<div class="patient-interface-section"><div class="empty">Select a section.</div></div>';
