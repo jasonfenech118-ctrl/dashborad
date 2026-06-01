@@ -5576,15 +5576,14 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
             <div class="fg full"><label>Past Medical History *</label><textarea id="np-pmh" placeholder="Past medical history" required></textarea></div>
             <div class="fg full"><label>Past Surgical History *</label><textarea id="np-psh" placeholder="Past surgical history" required></textarea></div>
             <div class="fg full"><label>Social History *</label><textarea id="np-social-history" placeholder="Social history" required></textarea></div>
-            <div class="fg full"><label>Medical History / Current Medications</label><div class="choice-group" id="np-medication-history"><label class="choice-chip"><input type="checkbox" name="np-med-history" value="No medications used" onchange="handleMedicationSelection()"/> No medications used</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="OHAs" onchange="handleMedicationSelection()"/> OHAs</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Antiplatelets" onchange="handleMedicationSelection()"/> Antiplatelets</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Anticoagulants" onchange="handleMedicationSelection()"/> Anticoagulants</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Antihypertensives" onchange="handleMedicationSelection()"/> Antihypertensives</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Statins" onchange="handleMedicationSelection()"/> Statins</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Steroids" onchange="handleMedicationSelection()"/> Steroids</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Immunosuppressants" onchange="handleMedicationSelection()"/> Immunosuppressants</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="PPIs" onchange="handleMedicationSelection()"/> PPIs</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Opioids" onchange="handleMedicationSelection()"/> Opioids</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Antibiotics" onchange="handleMedicationSelection()"/> Antibiotics</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Antidiarrhoeal" onchange="handleMedicationSelection()"/> Antidiarrhoeal</label><label class="choice-chip"><input type="checkbox" name="np-med-history" value="Other" onchange="handleMedicationSelection()"/> Other</label></div><div class="choice-hint">Select all that apply. Use “No medications used” when applicable.</div><input type="text" id="np-medication-other" placeholder="Other medications" style="margin-top:8px;display:none;"/></div><div class="fg full"><label>Additional Notes</label><textarea id="np-medication-notes" placeholder="Additional notes about medical history or current medication"></textarea></div>
-            <div class="fg full"><label>DPA *</label><div class="choice-group" id="np-dpa-group"><label class="choice-chip"><input type="radio" name="np-dpa" value="Yes" required/> Yes</label><label class="choice-chip"><input type="radio" name="np-dpa" value="No" required/> No</label><label class="choice-chip"><input type="radio" name="np-dpa" value="N/A" required/> N/A</label></div></div>
+            <div class="fg full"><label>Medical History / Current Medications</label><div class="med-grid" id="np-medication-history" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px;"><label class="med-chip"><input type="checkbox" name="np-med-history" value="Antibiotics" onchange="handleMedicationSelection()"/><span>Antibiotics</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Antidiarrhoeal" onchange="handleMedicationSelection()"/><span>Antidiarrhoeal</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Anticoagulants" onchange="handleMedicationSelection()"/><span>Anticoagulants</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Antihypertensives" onchange="handleMedicationSelection()"/><span>Antihypertensives</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Antiplatelets" onchange="handleMedicationSelection()"/><span>Antiplatelets</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Immunosuppressants" onchange="handleMedicationSelection()"/><span>Immunosuppressants</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="No medications used" onchange="handleMedicationSelection()"/><span>No medications used</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="OHAs" onchange="handleMedicationSelection()"/><span>OHAs</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Opioids" onchange="handleMedicationSelection()"/><span>Opioids</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="PPIs" onchange="handleMedicationSelection()"/><span>PPIs</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Statins" onchange="handleMedicationSelection()"/><span>Statins</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Steroids" onchange="handleMedicationSelection()"/><span>Steroids</span></label><label class="med-chip"><input type="checkbox" name="np-med-history" value="Other" onchange="handleMedicationSelection()"/><span>Other</span></label></div><div class="choice-hint">Select all that apply. Use “No medications used” when applicable.</div><input type="text" id="np-medication-other" placeholder="Other medications" style="margin-top:8px;display:none;"/></div><div class="fg full"><label>Additional Notes</label><textarea id="np-medication-notes" placeholder="Additional notes about medical history or current medication"></textarea></div>
+            <div class="fg full"><label>DPA *</label><div class="dpa-grid" id="np-dpa-group" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;"><label class="dpa-chip"><input type="radio" name="np-dpa" value="Yes" required/><span>YES</span></label><label class="dpa-chip"><input type="radio" name="np-dpa" value="No" required/><span>NO</span></label><label class="dpa-chip"><input type="radio" name="np-dpa" value="N/A" required/><span>N/A</span></label></div></div>
             <div class="fg full" id="np-selected-route-summary"><div class="admission-route-summary">Selected pathway: <strong id="np-selected-route-label">Not selected</strong></div></div>
           </div>
         </div>
         <div class="new-patient-section elective-sitting-section" id="np-elective-sitting-date-wrap" style="display:none;">
           <div class="new-patient-section-title">Elective Sitting Session</div>
           <div class="new-patient-grid">
-            <div class="fg full"><label>Sitting Session</label><button type="button" class="btn-save" id="np-set-siting-date-btn" onclick="setSitingSessionDateForNewElective(event)" style="width:100%;">Set a Siting Session Date</button></div>
             <div class="fg full"><div class="elective-sitting-note">This planned sitting date is saved with the inpatient episode and controls the Open Sitting Session priority colour.</div></div>
           </div>
         </div>
@@ -5611,7 +5610,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <!-- ADMISSION ROUTE PAGES -->
     <div class="page" id="page-admission-elective">
       <div class="phdr"><div><h2>Elective Surgery</h2></div><button class="btn-add btn-return" onclick="continueAddPatientFromRoute('Elective surgery')">← Back</button></div>
-      <div class="pathway-title pathway-title-elective"><span class="pathway-title-icon">E</span><span class="pathway-title-text"><span class="pathway-title-label">Elective surgery</span><span class="pathway-title-sub">Planned pathway using a sitting session date and inpatient continuation.</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Elective surgery')">← Return</button></div>
+      <div class="pathway-title pathway-title-elective"><span class="pathway-title-icon">E</span><span class="pathway-title-text"><span class="pathway-title-label">Elective surgery</span><span class="pathway-title-sub">Planned pathway using a sitting session date and inpatient continuation.</span></span></div>
       <div class="pathway-static-stepper" data-route="Elective surgery" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -7109,7 +7108,7 @@ async function saveNewPatientTab(options={}){
   if(!pastSurgicalHistory){alert('Past Surgical History is required.');return;}
   if(!socialHistory){alert('Social History is required.');return;}
   if(false){/* v92: siting date is set when the appointment slot is booked, not typed here */}
-  if(!awaitingSurgery&&!surgeryDate){alert('Please choose an Admission Route and complete Surgery Date in the Stoma and Care step.');return;}
+  if(!awaitingSurgery&&!surgeryDate&&!options.isElectiveNewCase){alert('Please choose an Admission Route and complete Surgery Date in the Stoma and Care step.');return;}
   if(!awaitingSurgery&&!stomaType){alert('Please choose an Admission Route and select Stoma Type in the Stoma and Care step.');return;}
   if(!dpaStatus){alert('Please select DPA: Yes, No, or N/A.');return;}
   const medicationValues=getCheckedValues('np-med-history');
@@ -7278,7 +7277,7 @@ async function setStomaSittingSessionDateForNewPatient(){
   const route=document.getElementById('np-admission-route')?.value||selectedAdmissionRouteForNewPatient||'';
   if(route!=='Elective surgery'){alert('This action is only for elective surgery pathway.');return;}
   // Save the patient first with awaitingSurgery:true to bypass surgery date validation
-  const savedPatientId=await saveNewPatientTab({awaitingSurgery:true, isElectiveNewCase:true});
+  const savedPatientId=await saveNewPatientTab({isElectiveNewCase:true});
   if(!savedPatientId){alert('Failed to save patient.');return;}
   // Navigate to Appointments page to book the siting session
   // Store the patient ID so the Appointments page knows this is for siting session booking
@@ -19915,6 +19914,14 @@ table thead th.v63-name-title,
   background: #6b7280; color: white;
 }
 
+.med-chip{display:flex;align-items:center;justify-content:center;padding:8px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s ease;text-align:center;min-height:44px;}
+.med-chip input{margin-right:4px;}
+.med-chip input:checked+span{font-weight:600;}
+.med-chip input:checked{accent-color:var(--teal);}
+.med-chip:has(input:checked){background:var(--teal);color:white;border-color:var(--teal);}
+.dpa-chip{display:flex;align-items:center;justify-content:center;padding:10px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.2s ease;min-height:44px;}
+.dpa-chip input{margin-right:4px;}
+.dpa-chip:has(input:checked){background:var(--teal);color:white;border-color:var(--teal);}
 </style>
 </body>
 </html>
