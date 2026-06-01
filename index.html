@@ -4637,7 +4637,12 @@ textarea:disabled,
 #page-patient-record-history .patient-record-card .episode-open-button{display:none!important;}
 .v71-build-pill{display:none!important;}.v81-build-banner{display:none!important;}
 
-#page-patients-list .card-title,#page-report-patient-group .card-title,#page-report-patients .card-title{text-align:left!important;justify-content:flex-start!important;}
+/* Registry tab title alignment */
+#page-patients-list .card-title, #page-report-patient-group .card-title, #page-report-patients .card-title, #page-ot-audit .card-title, .registry-card .card-title {text-align:left!important;justify-content:flex-start!important;align-items:flex-start!important;padding:14px 18px!important;}
+.card-title{text-align:left;}
+
+/* Hide old Surgery Watchlist - replaced by pathway buckets */
+.home-surgery-watchlist,#home-surgery-watchlist{display:none!important;}
 </style>
 
 <style>
@@ -7314,9 +7319,87 @@ async function setStomaSittingSessionDateForNewPatient(){
     followup_status:'inpatient',active_registry:'inpatient'
   };
   window.ELECTIVE_SITING_MODE=true;
-  // Navigate to Appointments page - patient will be saved when slot is booked
-  switchTab('appointments',document.querySelector('[data-tab="appointments"]'));
-  setTimeout(()=>{alert('Patient data captured. Please select an appointment slot to book the siting session. Patient will be saved when slot is confirmed.');},300);
+  // Open siting session booking modal (no page navigation)
+  openSitingSessionBookingModal();
+}
+
+async function openSitingSessionBookingModal(){
+  const pending=window.PENDING_ELECTIVE_PATIENT_DATA;
+  if(!pending){alert('Patient data not found. Please fill the form first.');return;}
+  // Get list of working nurses for column options
+  const nurseOptions=await buildNurseAllocationOptions('common','');
+  // Build slot options (08:30 to 13:30, 30-min intervals)
+  const slots=['08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30'];
+  const slotOpts=slots.map(s=>`<option value="${s}">${s}</option>`).join('');
+  // Default date = today
+  const todayStr=new Date().toISOString().slice(0,10);
+  document.getElementById('mb').innerHTML=`<h2>Book Siting Session</h2>
+    <div class="msub"><strong>New elective patient:</strong> ${htmlSafe(pending.first_name)} ${htmlSafe(pending.surname)} (${htmlSafe(pending.id_card)})<br/>Select a date and time slot for the siting session. The patient will be saved when you confirm.</div>
+    <div class="fg"><label>Siting Session Date *</label><input type="date" id="ss-date" value="${todayStr}" min="${todayStr}"/></div>
+    <div class="fg"><label>Time Slot *</label><select id="ss-slot">${slotOpts}</select></div>
+    <div class="fg"><label>Nurse / Column *</label><select id="ss-nurse">${nurseOptions}</select></div>
+    <div class="registry-lookup-note found">Patient details will be saved together with this booking. The patient will appear in the "Patients Review" bucket on the Home page.</div>
+    <div class="mact"><button class="btn-cancel" onclick="cancelSitingBooking()">Cancel</button><button class="btn-save" onclick="confirmSitingSessionBooking()">Confirm Booking</button></div>`;
+  openMo();
+}
+
+function cancelSitingBooking(){
+  window.PENDING_ELECTIVE_PATIENT_DATA=null;
+  window.ELECTIVE_SITING_MODE=false;
+  closeModal();
+}
+
+async function confirmSitingSessionBooking(){
+  const pending=window.PENDING_ELECTIVE_PATIENT_DATA;
+  if(!pending){alert('Patient data lost. Please start over.');closeModal();return;}
+  const date=document.getElementById('ss-date')?.value||'';
+  const slot=document.getElementById('ss-slot')?.value||'';
+  const nurseSel=document.getElementById('ss-nurse')?.value||'common';
+  if(!date){alert('Please select a date.');return;}
+  if(!slot){alert('Please select a time slot.');return;}
+  // 1. Save patient
+  const patientPayload={
+    id_card:pending.id_card,first_name:pending.first_name,surname:pending.surname,
+    phone_number:pending.phone_number,dob:pending.dob,locality:pending.locality,sex:pending.sex,
+    past_medical_history:pending.past_medical_history,past_surgical_history:pending.past_surgical_history,
+    social_history:pending.social_history,admission_route:'Elective surgery',
+    inpatient_type:'awaiting_surgery',followup_status:'inpatient',
+    followup_owner:'Common',followup_type:'new_case'
+  };
+  const{data:newPat,error:patErr}=await SB.from('patients').insert(patientPayload).select().single();
+  if(patErr||!newPat?.id){alert('Could not save patient: '+(patErr?.message||'Unknown error'));return;}
+  // 2. Create episode
+  try{
+    const planned=date+'T'+slot+':00';
+    const{data:ep}=await SB.from('episodes').insert({
+      patient_id:newPat.id,pathway_type:'elective',status:'open',
+      surgery_date:null,post_op_start:null
+    }).select().single();
+    if(ep?.id){
+      const steps=[
+        {step_no:1,step_key:'pathway_selection',status:'complete',data:{route:'Elective surgery'}},
+        {step_no:2,step_key:'siting_booking',status:'in_progress',data:{planned_siting:planned}},
+        {step_no:3,step_key:'siting_session',status:'not_started',data:{}},
+        {step_no:4,step_key:'clinical_operative',status:'not_started',data:{}},
+        {step_no:5,step_key:'post_op_review',status:'not_started',data:{}},
+        {step_no:6,step_key:'discharge_planning',status:'not_started',data:{}},
+        {step_no:7,step_key:'teaching_education',status:'not_started',data:{}}
+      ].map(s=>({...s,episode_id:ep.id}));
+      await SB.from('episode_steps').insert(steps);
+    }
+  }catch(e){console.warn('episode creation failed',e);}
+  // 3. Create appointment
+  const apptPayload={patient_id:newPat.id,appt_date:date,appt_slot:slot,assigned_to:null,bank_staff_id:null,status:'booked'};
+  if(nurseSel.startsWith('core:')) apptPayload.assigned_to=nurseSel.replace('core:','');
+  if(nurseSel.startsWith('bank:')) apptPayload.bank_staff_id=nurseSel.replace('bank:','');
+  const{error:apptErr}=await SB.from('appointments').insert(apptPayload);
+  if(apptErr){alert('Appointment booking error: '+apptErr.message);return;}
+  // Clear state and return home
+  window.PENDING_ELECTIVE_PATIENT_DATA=null;
+  window.ELECTIVE_SITING_MODE=false;
+  closeModal();
+  alert('Siting session booked successfully for '+pending.first_name+' '+pending.surname+' on '+date+' at '+slot);
+  switchTab('home',document.querySelector('[data-tab="home"]'));
 }
 
 function setAdmissionRouteValue(value){
@@ -9474,7 +9557,7 @@ async function doBook(slot,date,nurseIdParam,nurseType){
       past_medical_history:pending.past_medical_history,past_surgical_history:pending.past_surgical_history,
       social_history:pending.social_history,admission_route:'Elective surgery',
       inpatient_type:'awaiting_surgery',followup_status:'inpatient',
-      followup_owner:'Common',followup_type:'new_case',active_registry:'inpatient'
+      followup_owner:'Common',followup_type:'new_case'
     };
     const{data:newPat,error:patErr}=await SB.from('patients').insert(patientPayload).select().single();
     if(patErr||!newPat?.id){alert('Could not save patient: '+(patErr?.message||'Unknown'));return;}
@@ -19943,9 +20026,13 @@ table thead th.v63-name-title,
       if(!bucketsContainer){
         bucketsContainer = document.createElement('div');
         bucketsContainer.id = 'home-pathway-buckets';
-        const watchlist = document.getElementById('home-surgery-watchlist') || home.querySelector('.home-quick-actions');
-        if(watchlist) watchlist.insertAdjacentElement('afterend', bucketsContainer);
-        else home.appendChild(bucketsContainer);
+        // Place buckets after the home-quick-actions, or at top of home if not found
+        const placement = home.querySelector('.home-quick-actions') || home.firstChild;
+        if(placement && placement.insertAdjacentElement){
+          placement.insertAdjacentElement('afterend', bucketsContainer);
+        } else {
+          home.appendChild(bucketsContainer);
+        }
       }
       bucketsContainer.innerHTML = bucketsHTML;
 
