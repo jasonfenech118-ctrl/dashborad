@@ -20363,10 +20363,27 @@ table thead th.v63-name-title,
 <!-- fix/inpatient-registry-awaiting-sitting-button -->
 <script>
 (function(){
+  window.openClinicalRecordForPatient=async function(patientId){
+    try{
+      if(typeof SB==='undefined'){alert('Database not available.');return;}
+      const {data:ep}=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').limit(1).maybeSingle();
+      if(!ep){alert('No open episode found. Open the patient via Patient Interface to record the clinical operative record.');return;}
+      if(typeof openClinicalOperativeRecord==='function')openClinicalOperativeRecord(patientId,ep.id);
+      else alert('Clinical Operative Record is not available.');
+    }catch(e){alert('Could not open Clinical Operative Record: '+(e?.message||e));}
+  };
+  function hasSittingSessionRecord(p){
+    const f=String(p?.findings||'').toLowerCase();
+    const raw=String(p?.patient_status_raw||'').toLowerCase();
+    return f.includes('stoma sitting session')||raw.includes('sitting session complete');
+  }
   const prev=typeof patientRegisterEditAction==='function'?patientRegisterEditAction:null;
   patientRegisterEditAction=function(p){
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
+        if(hasSittingSessionRecord(p)){
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open 1st Post-Op Review</button></div>';
+        }
         return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
       if(typeof inpatientCategory==='function'&&inpatientCategory(p)==='inpatient'){
