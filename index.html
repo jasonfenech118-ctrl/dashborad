@@ -18904,17 +18904,14 @@ table thead th.v63-name-title,
 </script>
 <!-- v78 — handwritten registry/home corrections + final Patient Interface opener -->
 <style id="v78-handwritten-registry-home-styles">
-/* v78: keep Patient Registry headers visible while scrolling long lists */
+/* v78: Patient Registry header styling — no sticky (overflow-x:auto wrapper breaks sticky) */
 #page-patients-list #patients-list-head th{
-  position:sticky!important;
-  top:96px!important;
-  z-index:80!important;
   background:#06111f!important;
   color:#fff!important;
   box-shadow:0 2px 0 #e6a817!important;
 }
 #page-patients-list #patients-list-head th:first-child,
-#page-patients-list #patients-list-head th:nth-child(2){z-index:90!important;}
+#page-patients-list #patients-list-head th:nth-child(2){background:#06111f!important;}
 #page-patients-list .v78-hide-patient-group{display:none!important;}
 #home-operations-today-card{margin:14px 0 16px!important;border:2px solid #aeb9c6!important;box-shadow:0 6px 18px rgba(8,24,39,.12)!important;overflow:hidden!important;}
 #home-operations-today-card .home-card-head{background:#fff!important;border-left:6px solid #1d4ed8!important;min-height:auto!important;}
@@ -18931,7 +18928,7 @@ table thead th.v63-name-title,
 .v78-ops-name{font-size:12px;font-weight:1000;color:#10243d;line-height:1.25;}
 .v78-ops-meta{font-size:10px;font-weight:750;color:#526477;line-height:1.45;margin-top:3px;}
 .v78-ops-empty{padding:16px;text-align:center;color:#7a8fa6;font-size:12px;font-weight:800;}
-@media(max-width:700px){#page-patients-list #patients-list-head th{top:96px!important}.v78-ops-row{flex-direction:column}.v78-ops-row .home-card-actions{justify-content:flex-start!important;}}
+@media(max-width:700px){.v78-ops-row{flex-direction:column}.v78-ops-row .home-card-actions{justify-content:flex-start!important;}}
 </style>
 <script id="v78-handwritten-registry-home-patch">
 (function(){
