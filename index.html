@@ -20369,6 +20369,9 @@ table thead th.v63-name-title,
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
+      if(typeof inpatientCategory==='function'&&inpatientCategory(p)==='inpatient'){
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button></div>';
+      }
     }catch(e){}
     return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button></div>';
   };
