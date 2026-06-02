@@ -20359,5 +20359,23 @@ table thead th.v63-name-title,
 .dpa-chip input{margin-right:5px;width:16px;height:16px;}
 .dpa-chip:has(input:checked){background:var(--teal);color:white;border-color:var(--teal);}
 </style>
+
+<!-- fix/inpatient-registry-awaiting-sitting-button -->
+<script>
+(function(){
+  const prev=typeof patientRegisterEditAction==='function'?patientRegisterEditAction:null;
+  patientRegisterEditAction=function(p){
+    try{
+      if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
+      }
+    }catch(e){}
+    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button></div>';
+  };
+  window.patientRegisterEditAction=patientRegisterEditAction;
+  try{renderPatientsList&&renderPatientsList();}catch(e){}
+})();
+</script>
+<!-- /fix/inpatient-registry-awaiting-sitting-button -->
 </body>
 </html>
