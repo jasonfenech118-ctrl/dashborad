@@ -4643,6 +4643,27 @@ textarea:disabled,
 
 /* Hide old Surgery Watchlist - replaced by pathway buckets */
 .home-surgery-watchlist,#home-surgery-watchlist{display:none!important;}
+
+/* Force registry table headers to stay at the TOP */
+#page-patients-list table.dt thead, #page-patients-list table.dt thead tr, #page-patients-list table.dt thead tr th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #0d7377 !important;
+  color: #fff !important;
+}
+#page-patients-list table.dt thead tr th {
+  text-align: left !important;
+  padding: 10px 12px !important;
+  border-bottom: 2px solid #064c4e !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+#page-patients-list .card-title {
+  text-align: left !important;
+  padding: 14px 18px !important;
+  font-size: 16px !important;
+}
 </style>
 
 <style>
@@ -6673,7 +6694,7 @@ async function enrichAppointments(rows){
   if(patientIds.length){
     const patients=await fetchRowsByIdsInChunks(
       'patients',
-      'id,first_name,surname,id_card,phone_number,followup_owner,followup_due_month,followup_year,followup_status,followup_type',
+      'id,first_name,surname,id_card,phone_number,followup_owner,followup_due_month,followup_year,followup_status,followup_type,inpatient_type,planned_surgery_date,patient_status_raw,admission_route',
       patientIds
     );
     patientsMap=mapById(patients||[]);
@@ -7326,21 +7347,81 @@ async function setStomaSittingSessionDateForNewPatient(){
 async function openSitingSessionBookingModal(){
   const pending=window.PENDING_ELECTIVE_PATIENT_DATA;
   if(!pending){alert('Patient data not found. Please fill the form first.');return;}
-  // Get list of working nurses for column options
-  const nurseOptions=await buildNurseAllocationOptions('common','');
-  // Build slot options (08:30 to 13:30, 30-min intervals)
-  const slots=['08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30'];
-  const slotOpts=slots.map(s=>`<option value="${s}">${s}</option>`).join('');
-  // Default date = today
   const todayStr=new Date().toISOString().slice(0,10);
   document.getElementById('mb').innerHTML=`<h2>Book Siting Session</h2>
-    <div class="msub"><strong>New elective patient:</strong> ${htmlSafe(pending.first_name)} ${htmlSafe(pending.surname)} (${htmlSafe(pending.id_card)})<br/>Select a date and time slot for the siting session. The patient will be saved when you confirm.</div>
-    <div class="fg"><label>Siting Session Date *</label><input type="date" id="ss-date" value="${todayStr}" min="${todayStr}"/></div>
-    <div class="fg"><label>Time Slot *</label><select id="ss-slot">${slotOpts}</select></div>
-    <div class="fg"><label>Nurse / Column *</label><select id="ss-nurse">${nurseOptions}</select></div>
-    <div class="registry-lookup-note found">Patient details will be saved together with this booking. The patient will appear in the "Patients Review" bucket on the Home page.</div>
-    <div class="mact"><button class="btn-cancel" onclick="cancelSitingBooking()">Cancel</button><button class="btn-save" onclick="confirmSitingSessionBooking()">Confirm Booking</button></div>`;
+    <div class="msub"><strong>New elective patient:</strong> ${htmlSafe(pending.first_name)} ${htmlSafe(pending.surname)} (${htmlSafe(pending.id_card)})<br/>Siting sessions take <strong>1 hour</strong>. Click an available slot to book. The patient will be saved on confirmation.</div>
+    <div class="fg"><label>Siting Session Date *</label><input type="date" id="ss-date" value="${todayStr}" min="${todayStr}" onchange="renderSitingSlotGrid()"/></div>
+    <div id="ss-slot-grid-container" style="margin-top:14px;overflow-x:auto;"><div style="text-align:center;padding:20px;color:#666;">Select a date to see available slots...</div></div>
+    <div class="mact"><button class="btn-cancel" onclick="cancelSitingBooking()">Cancel</button></div>`;
   openMo();
+  // Trigger initial slot grid render
+  setTimeout(()=>renderSitingSlotGrid(),100);
+}
+
+async function renderSitingSlotGrid(){
+  const dateEl=document.getElementById('ss-date');
+  const container=document.getElementById('ss-slot-grid-container');
+  if(!dateEl||!container) return;
+  const date=dateEl.value;
+  if(!date){container.innerHTML='<div style="text-align:center;padding:20px;color:#666;">Please select a date.</div>';return;}
+  container.innerHTML='<div style="text-align:center;padding:20px;color:#666;">Loading slots...</div>';
+  try{
+    // Get working nurses for that day
+    const nurses=await getWorkingNurses(date);
+    // Get existing appointments for that day
+    const{data:appts}=await SB.from('appointments').select('*,patients(first_name,surname)').eq('appt_date',date).neq('status','cancelled');
+    // Slots 08:30 to 13:30 in 30-min steps
+    // 1-hour siting session slots (each siting takes 1 hour = 2 x 30min appt rows)
+    const slots=['08:30','09:30','10:30','11:30','12:30'];
+    // Map each siting start slot to its 30-min sub-slots that get blocked
+    const slotPairs={'08:30':['08:30','09:00'],'09:30':['09:30','10:00'],'10:30':['10:30','11:00'],'11:30':['11:30','12:00'],'12:30':['12:30','13:00']};
+    // Build columns: each nurse + Common at the end
+    const columns=[...nurses,{id:null,name:'Common',type:'common',status:'working'}];
+    // Helper: check if a specific nurse/common has a slot booked at a given time
+    function isBooked(nurseId,slot){
+      const slotKey=String(slot).slice(0,5);
+      return(appts||[]).find(a=>{
+        const aSlot=String(a.appt_slot||'').slice(0,5);
+        if(aSlot!==slotKey) return false;
+        if(nurseId===null){return a.assigned_to===null&&a.bank_staff_id===null;}
+        return a.assigned_to===nurseId||a.bank_staff_id===nurseId;
+      });
+    }
+    // Build the HTML table
+    let html=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="background:#0d7377;color:#fff;padding:8px;text-align:left;border:1px solid #ddd;">Time</th>`;
+    columns.forEach(c=>{
+      const tag=c.type==='ot'?' (OT)':c.type==='til-in'?' (TIL)':c.type==='common'?' (Common)':'';
+      html+=`<th style="background:#0d7377;color:#fff;padding:8px;text-align:left;border:1px solid #ddd;">${htmlSafe(c.name)}${tag}</th>`;
+    });
+    html+=`</tr></thead><tbody>`;
+    slots.forEach((slot)=>{
+      const pair=slotPairs[slot];
+      const endTime=pair[1]==='09:00'?'09:30':pair[1]==='10:00'?'10:30':pair[1]==='11:00'?'11:30':pair[1]==='12:00'?'12:30':'13:30';
+      html+=`<tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;background:#f9f9f9;">${slot} – ${endTime}</td>`;
+      columns.forEach(c=>{
+        // Check BOTH sub-slots
+        const bookedA=isBooked(c.id,pair[0]);
+        const bookedB=isBooked(c.id,pair[1]);
+        if(bookedA||bookedB){
+          // Identify who's booked
+          const bk=bookedA||bookedB;
+          const pName=bk.patients?`${bk.patients.first_name||''} ${bk.patients.surname||''}`.trim():'Booked';
+          html+=`<td style="padding:8px;border:1px solid #ddd;background:#e5e7eb;color:#6b7280;font-style:italic;text-align:center;">${htmlSafe(pName||'Booked')}</td>`;
+        }else{
+          const colId=c.id===null?'null':c.id;
+          const colName=String(c.name).replace(/'/g,"\\'");
+          const colType=c.type;
+          html+=`<td style="padding:0;border:1px solid #ddd;background:#d1fae5;text-align:center;"><button onclick="confirmSitingSessionBooking('${slot}','${pair[1]}','${colId}','${colName}','${colType}')" style="background:#10b981;color:#fff;border:none;padding:10px;cursor:pointer;font-weight:600;width:100%;">+ Book</button></td>`;
+        }
+      });
+      html+=`</tr>`;
+    });
+    html+=`</tbody></table><div style="margin-top:10px;font-size:11px;color:#666;"><span style="display:inline-block;width:12px;height:12px;background:#d1fae5;border:1px solid #ddd;margin-right:4px;vertical-align:middle;"></span>Available (1 hour) · <span style="display:inline-block;width:12px;height:12px;background:#e5e7eb;border:1px solid #ddd;margin-right:4px;margin-left:10px;vertical-align:middle;"></span>Booked or partially booked</div>`;
+    container.innerHTML=html;
+  }catch(err){
+    console.error('renderSitingSlotGrid error',err);
+    container.innerHTML='<div style="color:#dc2626;padding:20px;">Error loading slots: '+(err.message||'unknown')+'</div>';
+  }
 }
 
 function cancelSitingBooking(){
@@ -7349,14 +7430,12 @@ function cancelSitingBooking(){
   closeModal();
 }
 
-async function confirmSitingSessionBooking(){
+async function confirmSitingSessionBooking(slot,nextSlot,colId,colName,colType){
   const pending=window.PENDING_ELECTIVE_PATIENT_DATA;
   if(!pending){alert('Patient data lost. Please start over.');closeModal();return;}
   const date=document.getElementById('ss-date')?.value||'';
-  const slot=document.getElementById('ss-slot')?.value||'';
-  const nurseSel=document.getElementById('ss-nurse')?.value||'common';
   if(!date){alert('Please select a date.');return;}
-  if(!slot){alert('Please select a time slot.');return;}
+  if(!confirm(`Book siting session for ${pending.first_name} ${pending.surname} on ${date} at ${slot} (1 hour, ending ${nextSlot}) with ${colName}?`)) return;
   // 1. Save patient
   const patientPayload={
     id_card:pending.id_card,first_name:pending.first_name,surname:pending.surname,
@@ -7366,9 +7445,21 @@ async function confirmSitingSessionBooking(){
     inpatient_type:'awaiting_surgery',followup_status:'inpatient',
     followup_owner:'Common',followup_type:'new_case'
   };
-  const{data:newPat,error:patErr}=await SB.from('patients').insert(patientPayload).select().single();
-  if(patErr||!newPat?.id){alert('Could not save patient: '+(patErr?.message||'Unknown error'));return;}
-  // 2. Create episode
+  // Check if patient already exists by id_card (handles duplicate key gracefully)
+  let newPat=null;
+  const{data:existing}=await SB.from('patients').select('*').eq('id_card',pending.id_card).maybeSingle();
+  if(existing&&existing.id){
+    // Update existing record with the new data
+    const{data:updated,error:upErr}=await SB.from('patients').update(patientPayload).eq('id',existing.id).select().single();
+    if(upErr){alert('Could not update existing patient: '+upErr.message);return;}
+    newPat=updated;
+  }else{
+    // Insert new patient
+    const{data:inserted,error:patErr}=await SB.from('patients').insert(patientPayload).select().single();
+    if(patErr||!inserted?.id){alert('Could not save patient: '+(patErr?.message||'Unknown'));return;}
+    newPat=inserted;
+  }
+  // 2. Create episode + 7 steps
   try{
     const planned=date+'T'+slot+':00';
     const{data:ep}=await SB.from('episodes').insert({
@@ -7378,7 +7469,7 @@ async function confirmSitingSessionBooking(){
     if(ep?.id){
       const steps=[
         {step_no:1,step_key:'pathway_selection',status:'complete',data:{route:'Elective surgery'}},
-        {step_no:2,step_key:'siting_booking',status:'in_progress',data:{planned_siting:planned}},
+        {step_no:2,step_key:'siting_booking',status:'in_progress',data:{planned_siting:planned,end_slot:nextSlot}},
         {step_no:3,step_key:'siting_session',status:'not_started',data:{}},
         {step_no:4,step_key:'clinical_operative',status:'not_started',data:{}},
         {step_no:5,step_key:'post_op_review',status:'not_started',data:{}},
@@ -7388,17 +7479,20 @@ async function confirmSitingSessionBooking(){
       await SB.from('episode_steps').insert(steps);
     }
   }catch(e){console.warn('episode creation failed',e);}
-  // 3. Create appointment
-  const apptPayload={patient_id:newPat.id,appt_date:date,appt_slot:slot,assigned_to:null,bank_staff_id:null,status:'booked'};
-  if(nurseSel.startsWith('core:')) apptPayload.assigned_to=nurseSel.replace('core:','');
-  if(nurseSel.startsWith('bank:')) apptPayload.bank_staff_id=nurseSel.replace('bank:','');
-  const{error:apptErr}=await SB.from('appointments').insert(apptPayload);
-  if(apptErr){alert('Appointment booking error: '+apptErr.message);return;}
+  // 3. Create TWO appointments (slot + nextSlot, since siting = 1 hour)
+  const baseAppt={patient_id:newPat.id,appt_date:date,assigned_to:null,bank_staff_id:null,status:'booked'};
+  if(colType==='core') baseAppt.assigned_to=colId;
+  else if(colType==='ot'||colType==='til-in') baseAppt.bank_staff_id=colId;
+  // For common column, both assigned_to and bank_staff_id stay null
+  const appt1={...baseAppt,appt_slot:slot};
+  const appt2={...baseAppt,appt_slot:nextSlot};
+  const{error:apptErr}=await SB.from('appointments').insert([appt1,appt2]);
+  if(apptErr){alert('Booking error: '+apptErr.message);return;}
   // Clear state and return home
   window.PENDING_ELECTIVE_PATIENT_DATA=null;
   window.ELECTIVE_SITING_MODE=false;
   closeModal();
-  alert('Siting session booked successfully for '+pending.first_name+' '+pending.surname+' on '+date+' at '+slot);
+  alert('Siting session booked successfully for '+pending.first_name+' '+pending.surname+' on '+date+' at '+slot+' (1 hour).');
   switchTab('home',document.querySelector('[data-tab="home"]'));
 }
 
@@ -8333,6 +8427,43 @@ function appointmentsForSlotAndColumn(appts,slot,n){
   return (appts||[]).filter(a=>String(a.appt_slot||'').slice(0,5)===slot && appointmentMatchesNurseColumn(a,n));
 }
 
+function addMinutesToSlot(slot,minutes){
+  const parts=String(slot||'').slice(0,5).split(':').map(Number);
+  if(parts.length!==2||Number.isNaN(parts[0])||Number.isNaN(parts[1]))return '';
+  const total=parts[0]*60+parts[1]+Number(minutes||0);
+  const hh=Math.floor((total%1440)/60);
+  const mm=total%60;
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+}
+function stomaSittingCellKey(slot,n){
+  return `${String(slot||'').slice(0,5)}||${String(n?.type||'')}||${String(n?.id??'')}`;
+}
+function sameAppointmentPatientAndColumn(a,b){
+  return String(a?.patient_id||'')===String(b?.patient_id||'')
+    && String(a?.assigned_to||'')===String(b?.assigned_to||'')
+    && String(a?.bank_staff_id||'')===String(b?.bank_staff_id||'');
+}
+function isStomaSittingAppointment(a){
+  const p=a?.patients||{};
+  const inpatient=String(p.inpatient_type||'').toLowerCase().replace(/[ -]/g,'_');
+  const status=String(p.patient_status_raw||p.followup_status||'').toLowerCase();
+  const route=String(p.admission_route||'').toLowerCase();
+  return inpatient.includes('awaiting_surgery')
+    || status.includes('awaiting surgery')
+    || status.includes('awaiting_surgery')
+    || (route.includes('elective') && normaliseFollowupType(p.followup_type)==='new_case' && String(p.followup_status||'').toLowerCase()==='inpatient');
+}
+function stomaSittingRowspanFor(appt,appts,slot,n){
+  if(!appt||!isStomaSittingAppointment(appt))return {rowspan:1,label:''};
+  const idx=SLOTS.indexOf(String(slot||'').slice(0,5));
+  const nextSlot=idx>=0?SLOTS[idx+1]:null;
+  if(!nextSlot)return {rowspan:1,label:''};
+  const nextAppt=appointmentsForSlotAndColumn(appts,nextSlot,n)
+    .find(x=>String(x.status||'')!=='cancelled' && isStomaSittingAppointment(x) && sameAppointmentPatientAndColumn(appt,x));
+  if(!nextAppt)return {rowspan:1,label:''};
+  return {rowspan:2,label:`${slot}–${addMinutesToSlot(nextSlot,30)}`,skipSlot:nextSlot};
+}
+
 function visiblePatientContactHTML(patient){
   const id=htmlSafe(patient?.id_card||'No ID');
   const phone=htmlSafe(patient?.phone_number||'No phone');
@@ -8529,19 +8660,25 @@ async function loadAppts(){
   });
   html+='</tr></thead><tbody>';
 
+  const stomaSittingMergedSkip=new Set();
   SLOTS.forEach(slot=>{
     html+=`<tr>`;
     nurses.forEach(n=>{
+      if(stomaSittingMergedSkip.has(stomaSittingCellKey(slot,n)))return;
       const slotAppts=appointmentsForSlotAndColumn(appts,slot,n);
       const appt=slotAppts.find(a=>a.status!=='cancelled');
       const cancelledHere=slotAppts.filter(a=>a.status==='cancelled');
       const cellBg=n.type==='common'?'#fafafa':(n.type==='absent'||n.type==='ot-booked')?'#fff5f5':'#fff';
       if(appt){
+        const mergeInfo=stomaSittingRowspanFor(appt,appts,slot,n);
+        if(mergeInfo.rowspan>1&&mergeInfo.skipSlot)stomaSittingMergedSkip.add(stomaSittingCellKey(mergeInfo.skipSlot,n));
+        const isMergedSitting=mergeInfo.rowspan>1;
         const bg={booked:'#f0faf9',attended:'#d4edda',cancelled:'#fff5f5',did_not_attend:'#fff3cd'}[appt.status]||'#f0faf9';
         const sl={booked:'Booked',attended:'Attended',cancelled:'Cancelled',did_not_attend:'DNTU'}[appt.status]||'';
         const nm=`${appt.patients?.first_name||''} ${appt.patients?.surname||''}`.trim();
-        html+=`<td class="appt-cell-card ${appt.status==='attended'?'attended':appt.status==='did_not_attend'?'dntu':'booked'}" style="padding:8px 10px;background:${bg};vertical-align:top;">
-          <div class="cell-time-badge">${slot}</div>
+        html+=`<td ${isMergedSitting?'rowspan="2"':''} class="appt-cell-card ${appt.status==='attended'?'attended':appt.status==='did_not_attend'?'dntu':'booked'} ${isMergedSitting?'stoma-sitting-merged-cell':''}" style="padding:8px 10px;background:${bg};vertical-align:top;${isMergedSitting?'border-left-width:7px!important;':''}">
+          <div class="cell-time-badge">${isMergedSitting?mergeInfo.label:slot}</div>
+          ${isMergedSitting?'<div style="display:inline-block;margin:0 0 4px 0;padding:2px 6px;border-radius:8px;background:#fff3cd;color:#856404;border:1px solid #fcd34d;font-size:9px;font-weight:900;">Sitting session · 1 hour</div>':''}
           <div class="appt-patient-name">${htmlSafe(nm)}</div>
           ${visiblePatientContactHTML(appt.patients)}
           ${(n.type==='absent'||n.type==='ot-booked')?'<div style="font-size:10px;color:#c0392b;font-weight:700;margin-top:3px;">⚠ Nurse not rostered today</div>':''}
@@ -14012,7 +14149,8 @@ function renderStomaSittingSession(){
     <div class="card stoma-sitting-checklist-card">
       <div class="card-title">Checklist</div>
       <div class="stoma-sitting-controls">
-        <div class="fg"><label>Planned Sitting Session Date *</label><input type="date" id="sss-date" value="${patientDateInputValue(p.planned_surgery_date)||TODAY}" onchange="handleStomaSittingDateChange()"/><div class="stoma-sitting-slot-note">Selecting a date opens the Stoma Sitting booking slots.</div></div>
+        <div class="fg"><label>Sitting Session Date *</label><input type="date" id="sss-date" value="${patientDateInputValue(p.planned_surgery_date)||TODAY}" onchange="handleStomaSittingDateChange()"/></div>
+        <div class="fg"><label>Surgery Date * <span style="color:#dc2626;">(required)</span></label><input type="date" id="sss-surgery-date" min="${TODAY}" placeholder="Confirmed surgery date"/></div>
         <div class="fg"><label>Auto signature</label><input type="text" id="sss-signature" readonly placeholder="Logged-in nurse"/></div>
       </div>
       <div style="overflow-x:auto;"><table class="stoma-sitting-table">
@@ -14142,42 +14280,54 @@ async function saveStomaSittingSession(options={}){
   if(!data.signature){await ensureStomaSittingSignature();data.signature=document.getElementById('sss-signature')?.value||'Logged-in nurse';}
   const incomplete=data.items.filter(x=>!x.status).length;
   if(incomplete){if(note){note.style.color='var(--red)';note.textContent='Please mark Met or Not Met for every checklist item.';}return;}
+  // Also collect Surgery Date if added
+  const surgeryDate=document.getElementById('sss-surgery-date')?.value||'';
+  if(!surgeryDate){if(note){note.style.color='var(--red)';note.textContent='Please enter the Surgery Date.';}return;}
   const summary=[
     '',
     '--- Stoma Sitting Session ---',
     `Date: ${data.date}`,
     `Auto signature: ${data.signature}`,
     `Planned sitting session date: ${data.date||p.planned_surgery_date||'Not recorded'}`,
+    `Surgery date recorded: ${surgeryDate}`,
     ...data.items.map(x=>`${x.item}: ${x.status}${x.comments?` — Comments: ${x.comments}`:''}`)
   ].join('\n');
   const previous=String(p.findings||'').trim();
-  const payload={findings:(previous ? previous + '\n\n' : '') + block,last_outcome_date:date};
-  if(type==='followup_review'){
-    patientPayload.followup_status='active';
-    patientPayload.followup_type='follow_up';
-    const owner=document.getElementById('er-owner')?.value||p.followup_owner||'Common';
-    patientPayload.followup_owner=owner;
-    const next=nextReviewMonthYearFromEncounter();
-    if(next.month&&next.year){patientPayload.followup_due_month=next.month;patientPayload.followup_year=next.year;}
-  }
-  const {error:pErr}=await SB.from('patients').update(patientPayload).eq('id',patientId);
-  if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not save encounter: '+(pErr.message||'Unknown error');}return;}
-  if(appointmentId){
-    const user=await getCurrentUserForAudit();
-    const apptPayload={status:'attended',notes:block,outcome_recorded_at:new Date().toISOString(),outcome_recorded_by_email:user.email,outcome_recorded_by_name:user.name};
-    let {error:aErr}=await SB.from('appointments').update(apptPayload).eq('id',appointmentId);
-    if(aErr && String(aErr.message||'').toLowerCase().includes('column')){
-      const retry=await SB.from('appointments').update({status:'attended',notes:block}).eq('id',appointmentId);
-      aErr=retry.error;
+  // 1. Update patient with findings + surgery date
+  const patientPayload={
+    findings:(previous?previous+'\n\n':'')+summary,
+    last_outcome_date:data.date,
+    surgery_date:surgeryDate,
+    planned_surgery_date:surgeryDate,
+    inpatient_type:'awaiting_surgery',
+    patient_status_raw:'Awaiting Surgery'
+  };
+  const{error:pErr}=await SB.from('patients').update(patientPayload).eq('id',p.id);
+  if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not save session: '+(pErr.message||'Unknown');}return;}
+  // 2. Update the associated episode: set surgery_date, mark step 3 complete, step 4 in_progress
+  try{
+    const{data:ep}=await SB.from('episodes').select('id').eq('patient_id',p.id).eq('status','open').maybeSingle();
+    if(ep?.id){
+      await SB.from('episodes').update({surgery_date:surgeryDate}).eq('id',ep.id);
+      // Mark step 3 (siting_session) as complete
+      await SB.from('episode_steps').update({
+        status:'complete',
+        data:{checklist:data.items,signature:data.signature,session_date:data.date,surgery_date:surgeryDate},
+        completed_at:new Date().toISOString()
+      }).eq('episode_id',ep.id).eq('step_no',3);
+      // Mark step 4 (clinical_operative) as in_progress
+      await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',ep.id).eq('step_no',4);
     }
-    if(aErr){if(note){note.style.color='var(--red)';note.textContent='Encounter saved, but appointment could not be marked Seen: '+(aErr.message||'Unknown error');}return;}
-  }
-  if(note){note.style.color='var(--green)';note.textContent='Encounter saved.';}
-  closeModal();
-  if(patientInterfaceCurrentId===patientId)await openPatientInterface(patientId);
-  else if(episodePagePatient?.id===patientId)await openPatientEpisodePage(patientId,episodePageActiveTab||'encounters');
-  refreshAppointmentViews();
-  if(currentPatientsTab)loadPatientsList(currentPatientsTab);
+  }catch(e){console.warn('episode update failed',e);}
+  if(note){note.style.color='var(--green)';note.textContent='Sitting session saved successfully.';}
+  // Return home or to inpatients
+  setTimeout(()=>{
+    if(options.goToInpatients){
+      switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));
+    }else{
+      switchTab('home',document.querySelector('[data-tab="home"]'));
+    }
+  },800);
 }
 async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
   const {data:raw,error}=await SB.from('appointments').select('*').eq('id',apptId).single();
@@ -15957,7 +16107,7 @@ try{
       if(/^\s*History\s*$/i.test(row.cells[0]?.textContent||''))return;
       const idText=row.cells[0]?.textContent||'';
       const p=v59PatientByRenderedId(idText);
-      row.insertAdjacentHTML('afterbegin'HistoryCellHTML(p));
+      row.insertAdjacentHTML('afterbegin', HistoryCellHTML(p));
 
       const closed=p&&v59IsClosedPatient(p);
       if(closed){
@@ -18462,28 +18612,28 @@ table thead th.v63-name-title,
     if(key==='stoma-history'){
       return '<div class="patient-interface-section"><h3 data-icon="S">Stoma</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'stoma_review\')">Add Stoma Review</button></div><div class="pi-demo-grid">'+
         v76DemoItem('Stoma Type', typeof patientStomaTypeText==='function'?patientStomaTypeText(p.stoma_type_summary):v76Html(p.stoma_type_summary||'—'))+
-        v76DemoItem('Surgery Date'DateText(p.surgery_date))+
+        v76DemoItem('Surgery Date', v76DateText(p.surgery_date))+
         v76DemoItem('Age at Stoma Formation', typeof patientAgeAtFormationText==='function'?patientAgeAtFormationText(p):'—')+
         v76DemoItem('Days with Stoma', typeof patientStomaDays==='function'?patientStomaDays(p):'—')+
-        v76DemoItem('Reversal Date'DateText(p.reversal_date))+
-        v76DemoItem('Date of RIP'DateText(p.rip_date))+
+        v76DemoItem('Reversal Date', v76DateText(p.reversal_date))+
+        v76DemoItem('Date of RIP', v76DateText(p.rip_date))+
         '</div></div>';
     }
     if(key==='stoma-care'){
       return '<div class="patient-interface-section"><h3 data-icon="C">Care</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'wound_review\')">Add Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'fistula_review\')" style="background:#7c3aed;">Add Fistula Review</button></div><div class="pi-demo-grid">'+
-        v76DemoItem('Admission Route'Html(p.admission_route||'—'))+
+        v76DemoItem('Admission Route', v76Html(p.admission_route||'—'))+
         v76DemoItem('Operation Performed', typeof patientOperationText==='function'?patientOperationText(p):v76Html(p.operation_performed||'—'))+
-        v76DemoItem('Surgery Type'Html(p.surgery_type||'—'))+
-        v76DemoItem('Consultant'Html(p.consultant||'—'))+
+        v76DemoItem('Surgery Type', v76Html(p.surgery_type||'—'))+
+        v76DemoItem('Consultant', v76Html(p.consultant||'—'))+
         '</div><div class="card" style="margin:12px 0 0;background:#fbfcfd;"><div class="card-title">Notes</div><div style="white-space:pre-wrap;font-size:12px;line-height:1.55;color:var(--navy);">'+v76Html(p.findings||'No notes recorded.')+'</div></div></div>';
     }
     if(key==='discharge-letters')return '<div class="patient-interface-section"><h3 data-icon="D">Discharge Planning</h3><div class="empty">No discharge planning records yet.</div></div>';
     if(key==='teaching-planning'){
       return '<div class="patient-interface-section"><h3 data-icon="T">Teaching</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal(\''+v76Html(p.id)+'\',\'teaching_session\')">Add Teaching Session</button></div><div class="pi-demo-grid">'+
-        v76DemoItem('DPA'Html(p.dpa_status||'—'))+
-        v76DemoItem('Social History'Html(p.social_history||'—'))+
-        v76DemoItem('Past Medical History'Html(p.past_medical_history||'—'))+
-        v76DemoItem('Past Surgical History'Html(p.past_surgical_history||'—'))+
+        v76DemoItem('DPA', v76Html(p.dpa_status||'—'))+
+        v76DemoItem('Social History', v76Html(p.social_history||'—'))+
+        v76DemoItem('Past Medical History', v76Html(p.past_medical_history||'—'))+
+        v76DemoItem('Past Surgical History', v76Html(p.past_surgical_history||'—'))+
         '</div></div>';
     }
     return '<div class="patient-interface-section"><div class="empty">Select a section.</div></div>';
