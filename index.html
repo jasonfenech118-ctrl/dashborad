@@ -20366,8 +20366,14 @@ table thead th.v63-name-title,
   window.openClinicalRecordForPatient=async function(patientId){
     try{
       if(typeof SB==='undefined'){alert('Database not available.');return;}
-      const {data:ep}=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').limit(1).maybeSingle();
-      if(!ep){alert('No open episode found. Open the patient via Patient Interface to record the clinical operative record.');return;}
+      let ep=null;
+      const r1=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').limit(1).maybeSingle();
+      ep=r1.data||null;
+      if(!ep){
+        const r2=await SB.from('episodes').select('id').eq('patient_id',patientId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        ep=r2.data||null;
+      }
+      if(!ep){if(typeof openPatientInterface==='function')openPatientInterface(patientId);return;}
       if(typeof openClinicalOperativeRecord==='function')openClinicalOperativeRecord(patientId,ep.id);
       else alert('Clinical Operative Record is not available.');
     }catch(e){alert('Could not open Clinical Operative Record: '+(e?.message||e));}
