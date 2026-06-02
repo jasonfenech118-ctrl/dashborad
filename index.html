@@ -20036,6 +20036,28 @@ table thead th.v63-name-title,
   function sectionHtml(title,icon,items,extraClass){
     return '<div class="v78-ops-section '+(extraClass||'')+'"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.join('')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';
   }
+  function text(v){return String(v==null?'':v).replace(/\s+/g,' ').trim();}
+  function timeText(v){const s=String(v||'').slice(0,5);return /^\d{2}:\d{2}$/.test(s)?s:'—';}
+  function apptStatus(a){return String(a?.status||'booked').toLowerCase().replace(/\s+/g,'_');}
+  function isCancelledAppt(a){const st=apptStatus(a);return ['cancelled','canceled','did_not_attend','dna','dntu','not_attended'].includes(st);}
+  function isSeenAppt(a){const st=apptStatus(a);const notes=String(a?.notes||'').toLowerCase();return st==='attended'||st==='seen'||notes.includes('follow-up review')||notes.includes('follow up review')||notes.includes('seen as follow');}
+  function patientFromAppt(a){return a?.patient||a?.patients||a?.patient_details||{};}
+  async function getAppointmentsForDate(d){
+    try{
+      if(typeof SB==='undefined')return [];
+      const {data,error}=await SB.from('appointments').select('*').eq('appt_date',d).order('appt_slot',{ascending:true});
+      if(error)throw error;
+      return (typeof enrichAppointments==='function')?await enrichAppointments(data||[]):(data||[]);
+    }catch(e){console.warn('v87 appointments lookup skipped',e);return [];}
+  }
+  function followupAppointmentRows(appts,onlySeen){
+    return (appts||[]).filter(a=>!isCancelledAppt(a)).filter(a=>onlySeen?isSeenAppt(a):true).map(a=>{
+      const p=patientFromAppt(a);const status=apptStatus(a);
+      const name=nm(p)||text(a.patient_name)||'Appointment patient';
+      const id=p?.id_card||a.patient_id_card||a.id_card||'';
+      return {appt:a,p,name,id,status,time:timeText(a.appt_slot||a.appointment_time||a.time),patientId:p?.id||a.patient_id||''};
+    }).sort((x,y)=>String(x.time).localeCompare(String(y.time))||String(x.name).localeCompare(String(y.name)));
+  }
   async function renderPatientsReviewV87(){
     const home=document.getElementById('page-home');if(!home)return;
     let card=document.getElementById('home-operations-today-card');
