@@ -253,7 +253,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .dc-S{background:#c0392b;color:#fff;}.dc-M{background:#e91e8c;color:#fff;}
 .dc-St{background:#2980b9;color:#fff;}.dc-OT{background:#e6a817;color:#fff;}
 .dc-L{background:#27ae60;color:#fff;}.dc-TO{background:#0d7377;color:#fff;}.dc-TI{background:#14a085;color:#fff;}
-.dc-CI{background:#e6a817;color:#fff;}.dc-CO{background:#fff;color:#c8840a;border:2px solid #e6a817;}
+.dc-COD-in{background:#ea580c;color:#fff;width:auto!important;min-width:46px!important;padding:0 5px!important;font-size:8px!important;border-radius:8px!important;}
+.dc-COD-off{background:#fff7ed;color:#c2410c;border:2px solid #ea580c;width:auto!important;min-width:46px!important;padding:0 5px!important;font-size:8px!important;border-radius:8px!important;}
 .dc-O{background:transparent;color:#ddd;}
 
 /* OT/TIL BARS */
@@ -5875,8 +5876,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <div class="leg"><div class="ld dc-L">L</div>Annual Leave</div>
         <div class="leg"><div class="ld dc-TO">TO</div>TIL Off</div>
         <div class="leg"><div class="ld dc-TI">TI</div>TIL In</div>
-        <div class="leg"><div class="ld dc-CI">CI</div>Change of duty in</div>
-        <div class="leg"><div class="ld dc-CO">CO</div>Change of duty off</div>
+        <div class="leg"><div class="ld dc-COD-in" style="width:auto;min-width:36px;padding:0 4px;font-size:8px;border-radius:8px;">COD-in</div>Change of duty in</div>
+        <div class="leg"><div class="ld dc-COD-off" style="width:auto;min-width:36px;padding:0 4px;font-size:8px;border-radius:8px;">COD-off</div>Change of duty off</div>
       </div>
       <div id="hban-roster"></div>
       <!-- OT BAR -->
@@ -8047,7 +8048,7 @@ async function renderRoster(){
       const isCOD=!coreTIL&&!coreOT&&entry?.notes?.startsWith('COD-');
       const isCODin=isCOD&&entry.status==='working';
       const isCODoff=isCOD&&entry.status==='off';
-      const code=coreTIL?(isCoreTilOff?'TO':'TI'):(coreOT?'OT':(isCODin?'CI':(isCODoff?'CO':(entry?CODE_MAP[entry.status]||'D':CODE_MAP[defaultCode(st,ds)]||'D'))));
+      const code=coreTIL?(isCoreTilOff?'TO':'TI'):(coreOT?'OT':(isCODin?'COD-in':(isCODoff?'COD-off':(entry?CODE_MAP[entry.status]||'D':CODE_MAP[defaultCode(st,ds)]||'D'))));
       const tdCls=isSel?'td-sel':isT?'td-today':hol?'td-hol':isSun?'td-sun':'';
       const otTimes=coreOT?.source==='core_leave'?parseNoteTimeRange(coreOT.notes):null;
       const otStart=(coreOT?.shift_start||otTimes?.start||'07:00').slice(0,5);
