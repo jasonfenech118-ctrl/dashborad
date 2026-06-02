@@ -5534,7 +5534,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <div class="pathway-stepper" aria-label="Admission pathway steps">
           <div class="pathway-step active"><span class="pathway-step-num">1</span><span class="pathway-step-text"><span class="pathway-step-label">Choose</span><span class="pathway-step-sub"></span></span></div>
-          <div class="pathway-step"><span class="pathway-step-num">2</span><span class="pathway-step-text"><span class="pathway-step-label">Patient</span><span class="pathway-step-sub"></span></span></div>
+          <div class="pathway-step"><span class="pathway-step-num">2</span><span class="pathway-step-text"><span class="pathway-step-label">Patient details</span><span class="pathway-step-sub"></span></span></div>
           <div class="pathway-step"><span class="pathway-step-num">3</span><span class="pathway-step-text"><span class="pathway-step-label">Clinical</span><span class="pathway-step-sub"></span></span></div>
           <div class="pathway-step"><span class="pathway-step-num">4</span><span class="pathway-step-text"><span class="pathway-step-label">Check</span><span class="pathway-step-sub"></span></span></div>
           <div class="pathway-step"><span class="pathway-step-num">5</span><span class="pathway-step-text"><span class="pathway-step-label">Save</span><span class="pathway-step-sub"></span></span></div>
@@ -7754,7 +7754,7 @@ function admissionRouteShortLabel(route){
 function admissionStepperHtml(route,active){
   const steps=[
     ['route','1','Choose',''],
-    ['patient','2','Patient',''],
+    ['patient','2','Patient details',''],
     ['clinical','3','Clinical',''],
     ['review','4','Check',''],
     ['save','5','Save','']
@@ -19390,7 +19390,7 @@ table thead th.v63-name-title,
       const auto=await autoDiaryEntries(d);
       const seen=auto.map(e=>`<div class="v78-ops-row"><div><div class="v78-ops-name">${esc(entryTitle(e))}<span class="v82-auto-badge">AUTO</span></div><div class="v78-ops-meta">${esc(entryMeta(e))}</div></div></div>`);
       function sec(title,icon,items){return `<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">${esc(icon)}</span>${esc(title)}</div><span class="v78-ops-count">${items.length}</span></div>${items.length?`<div class="v78-ops-list">${items.slice(0,8).join('')}${items.length>8?`<div class="surgery-watch-note">Showing first 8 of ${items.length}.</div>`:''}</div>`:`<div class="v78-ops-empty">No patients in this group for the selected date.</div>`}</div>`;}
-      body.innerHTML=`<div class="v78-ops-grid">${sec('Patients for Ward Review','▣',inpatients)}${sec('Seen as Follow-up Today','✓',seen)}</div><div class="diary-note">Seen follow-up patients are also shown automatically in the Patients Diary.</div>`;
+      body.innerHTML=`<div class="v78-ops-grid">${sec('Patients for Ward Review','▣',inpatients)}${sec('Today's Follow-ups','✓',seen)}</div><div class="diary-note">Seen follow-up patients are also shown automatically in the Patients Diary.</div>`;
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
 
@@ -19588,7 +19588,7 @@ table thead th.v63-name-title,
       }
       function sec(title,icon,items){return `<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">${esc(icon)}</span>${esc(title)}</div><span class="v78-ops-count">${items.length}</span></div>${items.length?`<div class="v78-ops-list">${items.slice(0,8).join('')}${items.length>8?`<div class="surgery-watch-note">Showing first 8 of ${items.length}.</div>`:''}</div>`:`<div class="v78-ops-empty">No patients in this group for the selected date.</div>`}</div>`;}
       const note=nonWorking?`<div class="v84-nonworking-note">${isSunday(d)?'Sunday':'Public holiday'+(typeof nonWorking==='string'&&nonWorking?': '+esc(nonWorking):'')}: ward review list is hidden; showing follow-up appointments only.</div>`:'';
-      body.innerHTML=`${note}<div class="v78-ops-grid">${nonWorking?'':sec('Patients for Ward Review','▣',inRows)}${sec('Seen as Follow-up Today','✓',followRows)}</div><div class="diary-note">This follow-up section uses appointment patients only. Patients are added to Patients Diary automatically after the appointment is marked attended/seen.</div>`;
+      body.innerHTML=`${note}<div class="v78-ops-grid">${nonWorking?'':sec('Patients for Ward Review','▣',inRows)}${sec('Today's Follow-ups','✓',followRows)}</div><div class="diary-note">This follow-up section uses appointment patients only. Patients are added to Patients Diary automatically after the appointment is marked attended/seen.</div>`;
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
   function mark(){const m=document.querySelector('.v71-login-build'); if(m)m.textContent='Build v84 loaded';const p=document.querySelector('.v71-build-pill'); if(p)p.textContent='v84';const logo=document.querySelector('.tb-logo'); if(logo&&!document.querySelector('.v84-build-banner')){const b=document.createElement('span');b.className='v81-build-banner v84-build-banner';b.textContent='v84';logo.appendChild(b);} }
@@ -19947,7 +19947,7 @@ table thead th.v63-name-title,
       if(!nonWorking){const pts=typeof getPatients==='function'?await getPatients():[];inRows=(pts||[]).filter(function(p){let st='';try{st=typeof patientRegisterStatus==='function'?patientRegisterStatus(p):String(p.followup_status||p.patient_status_raw||'').toLowerCase();}catch(e){}return !/deceased|reversed|relocated/.test(st)&&st==='inpatient';}).sort((a,b)=>nameOfPatient(a).localeCompare(nameOfPatient(b))).map(function(p){const meta='ID '+esc(p.id_card||'—')+' · '+esc(p.inpatient_type||'Inpatient')+' · Planned '+dateText(p.planned_surgery_date);return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOfPatient(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtonsForPatient(p,d)+'</div>';});}
       function sec(title,icon,items){return '<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.slice(0,8).join('')+(items.length>8?'<div class="surgery-watch-note">Showing first 8 of '+items.length+'.</div>':'')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';}
       const note=nonWorking?'<div class="v84-nonworking-note">Non-working day: ward review list is hidden; showing follow-up appointments only.</div>':'';
-      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Seen as Follow-up Today','✓',followRows)+'</div><div class="diary-note">Use Input Daily Review for ward Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
+      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Today's Follow-ups','✓',followRows)+'</div><div class="diary-note">Use Input Daily Review for ward Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
   window.v84RenderPatientsReview=renderPatientsReviewV86;window.v82RenderPatientsReview=renderPatientsReviewV86;window.v78RenderOperationsToday=renderPatientsReviewV86;
@@ -20051,10 +20051,12 @@ table thead th.v63-name-title,
           const pid=x.patientId||patient.id||x.patient_id||'';
           const time=esc(x.time||String(x.appt_slot||'').slice(0,5)||'—');
           const id=esc(x.id_card||x.patient_id_card||patient.id_card||x.id||'—');
-          return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(patient))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+' · Appointment patient only</div></div>'+(pid?'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>':'')+'</div>';
+          const isAwaitingSiting=String(patient.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting_surgery')||String(patient.patient_status_raw||'').toLowerCase().includes('awaiting');
+          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-add" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Start Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
+          return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(patient))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+(isAwaitingSiting?' · Siting session':'')+'</div></div>'+actionBtn+'</div>';
         });
       }catch(e){followRows=[];}
-      body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Seen as Follow-up Today','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
+      body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Today's Follow-ups','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
 
