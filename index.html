@@ -14262,7 +14262,19 @@ async function openStomaSittingSession(patientId){
   stomaSittingConfirmed=false;
   renderStomaSittingSession();
 }
-function collectStomaSittingSessionData(){
+function confirmStomaSittingSession(){
+  const note=document.getElementById('sss-note');
+  const date=document.getElementById('sss-date')?.value||'';
+  const surgeryDate=document.getElementById('sss-surgery-date')?.value||'';
+  if(!date){if(note){note.style.color='var(--red)';note.textContent='Please enter the Sitting Session Date.';}return;}
+  if(!surgeryDate){if(note){note.style.color='var(--red)';note.textContent='Please enter the Surgery Date.';}return;}
+  const incomplete=STOMA_SITTING_CHECKLIST.filter((_,i)=>!document.querySelector(`input[name="sss-status-${i}"]:checked`)).length;
+  if(incomplete){if(note){note.style.color='var(--red)';note.textContent=`Please mark Met or Not Met for all ${incomplete} remaining checklist item${incomplete!==1?'s':''}.`;}return;}
+  stomaSittingConfirmed=true;
+  const btn=document.getElementById('sss-save-close');
+  if(btn){btn.disabled=false;btn.style.opacity='1';}
+  if(note){note.style.color='var(--green)';note.textContent='Checklist confirmed. Press Save & Close to save the session.';}
+}
   return {
     date:document.getElementById('sss-date')?.value||'',
     signature:document.getElementById('sss-signature')?.value||'',
