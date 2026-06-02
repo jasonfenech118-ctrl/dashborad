@@ -14275,6 +14275,7 @@ function confirmStomaSittingSession(){
   if(btn){btn.disabled=false;btn.style.opacity='1';}
   if(note){note.style.color='var(--green)';note.textContent='Checklist confirmed. Press Save & Close to save the session.';}
 }
+function collectStomaSittingSessionData(){
   return {
     date:document.getElementById('sss-date')?.value||'',
     signature:document.getElementById('sss-signature')?.value||'',
@@ -19393,11 +19394,11 @@ table thead th.v63-name-title,
     const body=card.querySelector('.home-card-body');
     try{
       const pts=await getPatients();
-      const inpatients=(pts||[]).filter(p=>!isClosed(p)&&statusKey(p)==='inpatient').sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>{const aw=isAwaitingSiting(p);return`<div class="v78-ops-row"><div><div class="v78-ops-name">${esc(nameOf(p))}</div><div class="v78-ops-meta">ID ${esc(p.id_card||'—')} · ${esc(p.inpatient_type||'Inpatient')} · Planned ${esc(dateText(p.planned_surgery_date))}</div></div><div class="home-card-actions"><button class="ncb-btn ${aw?'btn-add':'patient-interface-button'}" ${aw?'style="background:#0d7377;color:#fff;"':''} onclick="${aw?'openStomaSittingSession(\''+esc(p.id)+'\')':'openPatientInterface(\''+esc(p.id)+'\')'}">${aw?'Open Sitting Session':'Open'}</button></div></div>`;});
+      const inpatients=(pts||[]).filter(p=>!isClosed(p)&&statusKey(p)==='inpatient').sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>openBtn(p)?'<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOf(p))+'</div><div class="v78-ops-meta">ID '+esc(p.id_card||'—')+' \xb7 '+esc(p.inpatient_type||'Inpatient')+' \xb7 Planned '+esc(dateText(p.planned_surgery_date))+'</div></div>'+openBtn(p)+'</div>':'');
       const auto=await autoDiaryEntries(d);
       const seen=auto.map(e=>`<div class="v78-ops-row"><div><div class="v78-ops-name">${esc(entryTitle(e))}<span class="v82-auto-badge">AUTO</span></div><div class="v78-ops-meta">${esc(entryMeta(e))}</div></div></div>`);
       function sec(title,icon,items){return `<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">${esc(icon)}</span>${esc(title)}</div><span class="v78-ops-count">${items.length}</span></div>${items.length?`<div class="v78-ops-list">${items.slice(0,8).join('')}${items.length>8?`<div class="surgery-watch-note">Showing first 8 of ${items.length}.</div>`:''}</div>`:`<div class="v78-ops-empty">No patients in this group for the selected date.</div>`}</div>`;}
-      body.innerHTML=`<div class="v78-ops-grid">${sec('Patients for Ward Review','▣',inpatients)}${sec('Today's Follow-ups','✓',seen)}</div><div class="diary-note">Seen follow-up patients are also shown automatically in the Patients Diary.</div>`;
+      body.innerHTML=`<div class="v78-ops-grid">${sec('Patients for Ward Review','▣',inpatients)}${sec('Today\'s Follow-ups','✓',seen)}</div><div class="diary-note">Seen follow-up patients are also shown automatically in the Patients Diary.</div>`;
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
 
@@ -19591,11 +19592,11 @@ table thead th.v63-name-title,
       let inRows=[];
       if(!nonWorking){
         const pts=await getPatients();
-        inRows=(pts||[]).filter(p=>!isClosed(p)&&statusKey(p)==='inpatient').sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>{const aw=isAwaitingSiting(p);return`<div class="v78-ops-row"><div><div class="v78-ops-name">${esc(nameOf(p))}</div><div class="v78-ops-meta">ID ${esc(p.id_card||'—')} · ${esc(p.inpatient_type||'Inpatient')} · Planned ${esc(dateText(p.planned_surgery_date))}</div></div><div class="home-card-actions"><button class="ncb-btn ${aw?'btn-add':'patient-interface-button'}" ${aw?'style="background:#0d7377;color:#fff;"':''} onclick="${aw?'openStomaSittingSession(\''+esc(p.id)+'\')':'openPatientInterface(\''+esc(p.id)+'\')'}">${aw?'Open Sitting Session':'Open'}</button></div></div>`;});
+        inRows=(pts||[]).filter(p=>!isClosed(p)&&statusKey(p)==='inpatient').sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>'<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOf(p))+'</div><div class="v78-ops-meta">ID '+esc(p.id_card||'—')+' \xb7 '+esc(p.inpatient_type||'Inpatient')+' \xb7 Planned '+esc(dateText(p.planned_surgery_date))+'</div></div>'+openBtn(p)+'</div>');
       }
       function sec(title,icon,items){return `<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">${esc(icon)}</span>${esc(title)}</div><span class="v78-ops-count">${items.length}</span></div>${items.length?`<div class="v78-ops-list">${items.slice(0,8).join('')}${items.length>8?`<div class="surgery-watch-note">Showing first 8 of ${items.length}.</div>`:''}</div>`:`<div class="v78-ops-empty">No patients in this group for the selected date.</div>`}</div>`;}
       const note=nonWorking?`<div class="v84-nonworking-note">${isSunday(d)?'Sunday':'Public holiday'+(typeof nonWorking==='string'&&nonWorking?': '+esc(nonWorking):'')}: ward review list is hidden; showing follow-up appointments only.</div>`:'';
-      body.innerHTML=`${note}<div class="v78-ops-grid">${nonWorking?'':sec('Patients for Ward Review','▣',inRows)}${sec('Today's Follow-ups','✓',followRows)}</div><div class="diary-note">This follow-up section uses appointment patients only. Patients are added to Patients Diary automatically after the appointment is marked attended/seen.</div>`;
+      body.innerHTML=`${note}<div class="v78-ops-grid">${nonWorking?'':sec('Patients for Ward Review','▣',inRows)}${sec('Today\'s Follow-ups','✓',followRows)}</div><div class="diary-note">This follow-up section uses appointment patients only. Patients are added to Patients Diary automatically after the appointment is marked attended/seen.</div>`;
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
   function mark(){const m=document.querySelector('.v71-login-build'); if(m)m.textContent='Build v84 loaded';const p=document.querySelector('.v71-build-pill'); if(p)p.textContent='v84';const logo=document.querySelector('.tb-logo'); if(logo&&!document.querySelector('.v84-build-banner')){const b=document.createElement('span');b.className='v81-build-banner v84-build-banner';b.textContent='v84';logo.appendChild(b);} }
@@ -19954,7 +19955,7 @@ table thead th.v63-name-title,
       if(!nonWorking){const pts=typeof getPatients==='function'?await getPatients():[];inRows=(pts||[]).filter(function(p){let st='';try{st=typeof patientRegisterStatus==='function'?patientRegisterStatus(p):String(p.followup_status||p.patient_status_raw||'').toLowerCase();}catch(e){}return !/deceased|reversed|relocated/.test(st)&&st==='inpatient';}).sort((a,b)=>nameOfPatient(a).localeCompare(nameOfPatient(b))).map(function(p){const meta='ID '+esc(p.id_card||'—')+' · '+esc(p.inpatient_type||'Inpatient')+' · Planned '+dateText(p.planned_surgery_date);return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOfPatient(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtonsForPatient(p,d)+'</div>';});}
       function sec(title,icon,items){return '<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.slice(0,8).join('')+(items.length>8?'<div class="surgery-watch-note">Showing first 8 of '+items.length+'.</div>':'')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';}
       const note=nonWorking?'<div class="v84-nonworking-note">Non-working day: ward review list is hidden; showing follow-up appointments only.</div>':'';
-      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Today's Follow-ups','✓',followRows)+'</div><div class="diary-note">Use Input Daily Review for ward Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
+      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Today\'s Follow-ups','✓',followRows)+'</div><div class="diary-note">Use Input Daily Review for ward Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
   window.v84RenderPatientsReview=renderPatientsReviewV86;window.v82RenderPatientsReview=renderPatientsReviewV86;window.v78RenderOperationsToday=renderPatientsReviewV86;
@@ -20063,7 +20064,7 @@ table thead th.v63-name-title,
           return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(patient))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+(isAwaitingSiting?' · Siting session':'')+'</div></div>'+actionBtn+'</div>';
         });
       }catch(e){followRows=[];}
-      body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Today's Follow-ups','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
+      body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Today\'s Follow-ups','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
 
