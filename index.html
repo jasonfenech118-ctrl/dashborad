@@ -4646,15 +4646,13 @@ textarea:disabled,
 /* Surgery Watchlist — hidden by default, shown by JS when items exist */
 .home-surgery-watchlist,#home-surgery-watchlist{display:none;}
 
-/* Force registry table headers to stay at the TOP */
-#page-patients-list table.dt thead, #page-patients-list table.dt thead tr, #page-patients-list table.dt thead tr th {
+/* Registry table — sticky column headers */
+#page-patients-list table.dt thead tr th {
   position: sticky !important;
   top: 0 !important;
   z-index: 10 !important;
   background: #0d7377 !important;
   color: #fff !important;
-}
-#page-patients-list table.dt thead tr th {
   text-align: left !important;
   padding: 10px 12px !important;
   border-bottom: 2px solid #064c4e !important;
