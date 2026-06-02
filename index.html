@@ -11168,13 +11168,19 @@ function careEpisodeStartDate(p){
   return p?.surgery_date||p?.planned_surgery_date||p?.last_outcome_date||TODAY;
 }
 function careEpisodeNumber(p,index=1){
-  return `CE-${recordYearFromDate(careEpisodeStartDate(p))}-${patientRecordSeed(p)}-${String(index||1).padStart(2,'0')}`;
+  const idCard=String(p?.id_card||p?.id||'').replace(/\s+/g,'').toUpperCase()||'UNKNOWN';
+  return `EP-${idCard}-${String(index||1).padStart(4,'0')}`;
 }
 function followupReviewEpisodeNumber(p,index=0,date=''){
   return `FU-${recordYearFromDate(date||TODAY)}-${patientRecordSeed(p)}-${String((index||0)+1).padStart(3,'0')}`;
 }
 function careEncounterNumberForPatient(p,index=0){
-  return `${careEpisodeNumber(p)}-EN${String((index||0)+1).padStart(3,'0')}`;
+  const idCard=String(p?.id_card||p?.id||'').replace(/\s+/g,'').toUpperCase()||'UNKNOWN';
+  const now=new Date();
+  const dd=String(now.getDate()).padStart(2,'0');
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const yyyy=now.getFullYear();
+  return `ENC-${idCard}-${dd}/${mm}/${yyyy}`;
 }
 function virtualEpisodeNumber(p){return careEpisodeNumber(p,1);}
 function encounterNumberForPatient(p,index){return careEncounterNumberForPatient(p,index);}
