@@ -20374,11 +20374,20 @@ table thead th.v63-name-title,
         ep=r2.data||null;
       }
       if(!ep){
-        let createdBy='Logged-in nurse';
-        try{if(typeof getCurrentUserForAudit==='function'){const u=await getCurrentUserForAudit();createdBy=u.name||u.email||createdBy;}}catch(e){}
-        const ins=await SB.from('episodes').insert({patient_id:patientId,pathway_type:'elective',status:'open',created_by:createdBy}).select('id').single();
+        const ins=await SB.from('episodes').insert({patient_id:patientId,pathway_type:'elective',status:'open',surgery_date:null,post_op_start:null}).select('id').single();
         if(ins.error||!ins.data){alert('Could not create episode: '+(ins.error?.message||'Unknown error'));return;}
         ep=ins.data;
+        try{
+          await SB.from('episode_steps').insert([
+            {episode_id:ep.id,step_no:1,step_key:'pathway_selection',status:'complete',data:{route:'Elective surgery'}},
+            {episode_id:ep.id,step_no:2,step_key:'siting_booking',status:'complete',data:{}},
+            {episode_id:ep.id,step_no:3,step_key:'siting_session',status:'complete',data:{}},
+            {episode_id:ep.id,step_no:4,step_key:'clinical_operative',status:'in_progress',data:{}},
+            {episode_id:ep.id,step_no:5,step_key:'post_op_review',status:'not_started',data:{}},
+            {episode_id:ep.id,step_no:6,step_key:'daily_reviews',status:'not_started',data:{}},
+            {episode_id:ep.id,step_no:7,step_key:'discharge',status:'not_started',data:{}}
+          ]);
+        }catch(e){}
       }
       if(typeof openClinicalOperativeRecord==='function')openClinicalOperativeRecord(patientId,ep.id);
       else alert('Clinical Operative Record is not available.');
