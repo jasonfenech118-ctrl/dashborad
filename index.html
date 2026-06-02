@@ -16181,7 +16181,7 @@ try{
       if(/^\s*History\s*$/i.test(row.cells[0]?.textContent||''))return;
       const idText=row.cells[0]?.textContent||'';
       const p=v59PatientByRenderedId(idText);
-      row.insertAdjacentHTML('afterbegin', HistoryCellHTML(p));
+      row.insertAdjacentHTML('afterbegin', v59HistoryCellHTML(p));
 
       const closed=p&&v59IsClosedPatient(p);
       if(closed){
