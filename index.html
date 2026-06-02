@@ -20077,7 +20077,7 @@ table thead th.v63-name-title,
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
         const frows=typeof followupAppointmentRows==='function'?followupAppointmentRows(appts,false):appts;
         followRows=(frows||[]).map(x=>{
-          const patient=x.patients||{};
+          const patient=x.p||x.patients||{};
           const pid=x.patientId||patient.id||x.patient_id||'';
           const time=esc(x.time||String(x.appt_slot||'').slice(0,5)||'—');
           const id=esc(x.id_card||x.patient_id_card||patient.id_card||x.id||'—');
