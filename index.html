@@ -14329,6 +14329,77 @@ async function saveStomaSittingSession(options={}){
     }
   },800);
 }
+
+async function openClinicalOperativeRecord(patientId, episodeId){
+  const [{data:patient},{data:episode}]=await Promise.all([
+    SB.from('patients').select('*').eq('id',patientId).maybeSingle(),
+    SB.from('episodes').select('*').eq('id',episodeId).maybeSingle()
+  ]);
+  if(!patient||!episode){alert('Could not load patient or episode data.');return;}
+  const tomorrow=new Date();
+  tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr=tomorrow.toISOString().slice(0,10);
+  const todayStr=new Date().toISOString().slice(0,10);
+  document.getElementById('mb').innerHTML=`
+    <h2>Clinical Operative Record</h2>
+    <div class="msub"><strong>${htmlSafe(patient.first_name)} ${htmlSafe(patient.surname)}</strong> (${htmlSafe(patient.id_card)}) — Surgery Date: ${String(episode.surgery_date||'').slice(0,10)}</div>
+    <div class="fg"><label>Operation Performed *</label><input type="text" id="cor-operation" placeholder="e.g., Ileostomy formation, Colostomy"/></div>
+    <div class="fg"><label>Stoma Type *</label><select id="cor-stoma-type"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
+    <div class="fg"><label>Stoma Site *</label><select id="cor-stoma-site"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
+    <div class="fg"><label>Surgeon Name</label><input type="text" id="cor-surgeon" placeholder="Name of operating surgeon"/></div>
+    <div class="fg"><label>Consultant</label><input type="text" id="cor-consultant" placeholder="Responsible consultant"/></div>
+    <div class="fg"><label>Operation Findings</label><textarea id="cor-findings" placeholder="Details of operation, any complications, notes" style="height:100px;"></textarea></div>
+    <div class="fg"><label>Post-Op Day 1 Date *</label><input type="date" id="cor-postop-date" value="${tomorrowStr}" min="${todayStr}"/><div style="font-size:12px;color:#666;margin-top:4px;">When post-operative daily reviews will begin.</div></div>
+    <div class="fg"><label>Complications (if any)</label><textarea id="cor-complications" placeholder="Any post-operative complications or concerns" style="height:80px;"></textarea></div>
+    <div id="cor-note" style="background:#e8f4f8;padding:10px;border-radius:4px;margin:12px 0;font-size:12px;color:#0d7377;"></div>
+    <div class="mact">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveClinicalOperativeRecord('${patientId}','${episodeId}')">Save &amp; Continue</button>
+    </div>`;
+  openMo();
+}
+
+async function saveClinicalOperativeRecord(patientId, episodeId){
+  const note=document.getElementById('cor-note');
+  const operation=(document.getElementById('cor-operation')?.value||'').trim();
+  const stomaType=(document.getElementById('cor-stoma-type')?.value||'').trim();
+  const stomaSite=(document.getElementById('cor-stoma-site')?.value||'').trim();
+  const postOpDate=document.getElementById('cor-postop-date')?.value||'';
+  if(!operation){note.style.color='var(--red)';note.textContent='Please enter Operation Performed.';return;}
+  if(!stomaType){note.style.color='var(--red)';note.textContent='Please select Stoma Type.';return;}
+  if(!stomaSite){note.style.color='var(--red)';note.textContent='Please select Stoma Site.';return;}
+  if(!postOpDate){note.style.color='var(--red)';note.textContent='Please select Post-Op Day 1 Date.';return;}
+  const surgeon=(document.getElementById('cor-surgeon')?.value||'').trim();
+  const consultant=(document.getElementById('cor-consultant')?.value||'').trim();
+  const findings=(document.getElementById('cor-findings')?.value||'').trim();
+  const complications=(document.getElementById('cor-complications')?.value||'').trim();
+  const user=typeof getCurrentUserForAudit==='function'?await getCurrentUserForAudit():{name:'System',email:'system@clinic.local'};
+  const{error:pErr}=await SB.from('patients').update({
+    operation_performed:operation,
+    stoma_type_summary:`${stomaType} at ${stomaSite}`,
+    consultant:consultant,
+    inpatient_type:'actual_inpatient',
+    patient_status_raw:'Inpatient',
+    last_outcome_date:new Date().toISOString().slice(0,10)
+  }).eq('id',patientId);
+  if(pErr){note.style.color='var(--red)';note.textContent='Error saving patient: '+pErr.message;return;}
+  const{error:epErr}=await SB.from('episodes').update({post_op_start:postOpDate}).eq('id',episodeId);
+  if(epErr){note.style.color='var(--red)';note.textContent='Error updating episode: '+epErr.message;return;}
+  const step4Data={operation,stoma_type:stomaType,stoma_site:stomaSite,surgeon,consultant,findings,complications,recorded_date:new Date().toISOString().slice(0,10),recorded_by:user.name};
+  const[s4,s5]=await Promise.all([
+    SB.from('episode_steps').update({status:'complete',data:step4Data,completed_at:new Date().toISOString(),completed_by:user.name}).eq('episode_id',episodeId).eq('step_no',4),
+    SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5)
+  ]);
+  if(s4.error)console.warn('Step 4 update warning',s4.error);
+  if(s5.error)console.warn('Step 5 update warning',s5.error);
+  note.style.color='var(--green)';note.textContent='Operation recorded. Patient moved to Inpatients.';
+  setTimeout(()=>{
+    closeModal();
+    switchTab('home',document.querySelector('[data-tab="home"]'));
+    if(typeof loadHomeDashboard==='function')loadHomeDashboard();
+  },800);
+}
+
 async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
   const {data:raw,error}=await SB.from('appointments').select('*').eq('id',apptId).single();
   if(error||!raw){alert('Could not load this appointment.');return;}
@@ -20106,8 +20177,8 @@ table thead th.v63-name-title,
       const today = new Date().toISOString().split('T')[0];
 
       // Derive buckets
-      const patientsReview = []; // pre-surgery
-      const reviewToday = []; // siting due today
+      const patientsReview = []; // pre-surgery, awaiting siting
+      const surgeryToday = []; // surgery_date = today, pre-op
       const inpatientsToReview = []; // post-op, not discharged
 
       for(const ep of (episodes||[])){
@@ -20117,16 +20188,12 @@ table thead th.v63-name-title,
         if(!p) continue;
 
         // Classify by pathway stage
-        if(!ep.post_op_start) {
-          // pre-surgery
-          if(ep.surgery_date && ep.surgery_date === today) {
-            reviewToday.push({...p, episode:ep, label:'Stoma Siting Session'});
-          } else {
-            patientsReview.push({...p, episode:ep, label:'Awaiting Siting Session'});
-          }
-        } else {
-          // post-op, not discharged
+        if(ep.post_op_start) {
           inpatientsToReview.push({...p, episode:ep, label:'Record Daily Review'});
+        } else if(ep.surgery_date && ep.surgery_date.slice(0,10) === today) {
+          surgeryToday.push({...p, episode:ep, label:'Record Operation'});
+        } else {
+          patientsReview.push({...p, episode:ep, label:'Awaiting Siting Session'});
         }
       }
 
@@ -20144,13 +20211,13 @@ table thead th.v63-name-title,
         bucketsHTML += `</div></div>`;
       }
 
-      // Bucket 2: Review Today (siting due)
-      if(reviewToday.length > 0){
+      // Bucket 2: Surgery Today (surgery_date = today, pre-op)
+      if(surgeryToday.length > 0){
         bucketsHTML += `<div class="home-card pathway-bucket">
-          <div class="home-card-head" style="border-left-color:#fbbf24"><span class="home-card-symbol" style="background:#fbbf24">⏰</span><div><div class="home-card-title">Review Today</div><div class="home-card-sub">Siting session due today</div></div></div>
+          <div class="home-card-head" style="border-left-color:#f0ad4e"><span class="home-card-symbol" style="background:#f0ad4e">🔪</span><div><div class="home-card-title">Surgery Today</div><div class="home-card-sub">Surgery scheduled for today — record operative details</div></div></div>
           <div class="home-card-body">`;
-        reviewToday.forEach(p=>{
-          bucketsHTML += `<div class="bucket-row"><div><strong>${p.first_name} ${p.surname}</strong> (${p.id_card})</div><button class="btn-add" style="background:#fbbf24;color:#000" onclick="openStomaSittingSession('${p.id}')">Stoma Siting Session</button></div>`;
+        surgeryToday.forEach(p=>{
+          bucketsHTML += `<div class="bucket-row"><div><strong>${htmlSafe(p.first_name)} ${htmlSafe(p.surname)}</strong> (${htmlSafe(p.id_card)})<br/><small>Surgery: ${p.episode.surgery_date.slice(0,10)}</small></div><button class="btn-add" style="background:#f0ad4e;color:#333;font-weight:700;" onclick="openClinicalOperativeRecord('${p.id}','${p.episode.id}')">📋 Record Operation</button></div>`;
         });
         bucketsHTML += `</div></div>`;
       }
