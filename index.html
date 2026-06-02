@@ -10145,7 +10145,7 @@ function isAwaitingSurgeryPatient(p){
   return type==='awaiting_surgery'||type==='awaiting surgery'||raw.includes('awaiting_surgery')||raw.includes('awaiting surgery')||!!p?.planned_surgery_date;
 }
 function inpatientCategory(p){return isAwaitingSurgeryPatient(p)?'awaiting_surgery':'inpatient';}
-function inpatientCategoryText(p){return inpatientCategory(p)==='awaiting_surgery'?'Awaiting Surgery':'Actual Inpatient';}
+function inpatientCategoryText(p){if(inpatientCategory(p)==='awaiting_surgery'){return p?.planned_surgery_date?'Awaiting Surgery':'Awaiting Sitting';}return 'Actual Inpatient';}
 function inpatientCategoryChip(p){const cat=inpatientCategory(p);return `<span class="inpatient-type-chip ${htmlSafe(cat)}">${htmlSafe(inpatientCategoryText(p))}</span>`;}
 function isInpatientSourcePatient(p){
   const raw=String(p?.assigned_nurse_raw||p?.patient_status_raw||'').toLowerCase();
