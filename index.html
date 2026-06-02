@@ -4641,8 +4641,8 @@ textarea:disabled,
 #page-patients-list .card-title, #page-report-patient-group .card-title, #page-report-patients .card-title, #page-ot-audit .card-title, .registry-card .card-title {text-align:left!important;justify-content:flex-start!important;align-items:flex-start!important;padding:14px 18px!important;}
 .card-title{text-align:left;}
 
-/* Hide old Surgery Watchlist - replaced by pathway buckets */
-.home-surgery-watchlist,#home-surgery-watchlist{display:none!important;}
+/* Surgery Watchlist — hidden by default, shown by JS when items exist */
+.home-surgery-watchlist,#home-surgery-watchlist{display:none;}
 
 /* Force registry table headers to stay at the TOP */
 #page-patients-list table.dt thead, #page-patients-list table.dt thead tr, #page-patients-list table.dt thead tr th {
@@ -17079,7 +17079,7 @@ table thead th.v63-name-title,
    v65 — Home Surgery Watchlist: awaiting formation/reversal
    ========================================================= -->
 <style>
-#page-home .home-surgery-watchlist{display:block!important;margin:14px 0 16px!important;border:2px solid #aeb9c6!important;box-shadow:0 6px 18px rgba(8,24,39,.12)!important;overflow:hidden!important;}
+#page-home .home-surgery-watchlist{margin:14px 0 16px!important;border:2px solid #aeb9c6!important;box-shadow:0 6px 18px rgba(8,24,39,.12)!important;overflow:hidden!important;}
 #page-home .home-surgery-watchlist .home-card-head{background:#fff!important;border-left:6px solid #e6a817!important;min-height:auto!important;}
 #page-home .home-surgery-watchlist .home-card-symbol{background:#e6a817!important;color:#111827!important;}
 .surgery-watch-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
@@ -18422,6 +18422,12 @@ table thead th.v63-name-title,
       if(cleaned.length!==reversalItems().length) setReversalItems(cleaned);
       reversalRows.sort((a,b)=>(dateValue(a.item.planned_date)||'9999-12-31').localeCompare(dateValue(b.item.planned_date)||'9999-12-31')||fullName(a.p).localeCompare(fullName(b.p)));
       const reversalHtml=reversalRows.map(x=>rowForReversal(x.p,x.item));
+      const shell=document.getElementById('home-surgery-watchlist');
+      if(formationRows.length===0&&reversalHtml.length===0){
+        if(shell) shell.style.display='none';
+        return;
+      }
+      if(shell) shell.style.display='block';
       body.innerHTML=`<div class="surgery-watch-summary"><span class="surgery-watch-pill formation">Formation: ${formationRows.length}</span><span class="surgery-watch-pill reversal">Reversal: ${reversalHtml.length}</span></div><div class="surgery-watch-grid">${sectionHtml('formation','Awaiting Stoma Formation','＋',formationRows)}${sectionHtml('reversal','Awaiting Reversal Surgery','↺',reversalHtml)}</div><div class="surgery-watch-note">Formation is automatic from the Elective pathway surgery date. Reversal is managed from the Open button only.</div>`;
     }catch(err){
       console.error('v73 surgery watchlist error',err);
