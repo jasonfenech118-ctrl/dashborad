@@ -20072,18 +20072,22 @@ table thead th.v63-name-title,
         const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Planned '+esc(dText(p.planned_surgery_date));
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d)+'</div>';
       });
+      const ptsById={};(pts||[]).forEach(p=>{if(p.id)ptsById[String(p.id)]=p;});
       let followRows=[];
       try{
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
         const frows=typeof followupAppointmentRows==='function'?followupAppointmentRows(appts,false):appts;
         followRows=(frows||[]).map(x=>{
-          const patient=x.p||x.patients||{};
-          const pid=x.patientId||patient.id||x.patient_id||'';
+          const enrichedPat=x.p||x.patients||{};
+          const pid=x.patientId||enrichedPat.id||x.appt?.patient_id||'';
+          const fullPat=(pid&&ptsById[String(pid)])||enrichedPat;
           const time=esc(x.time||String(x.appt_slot||'').slice(0,5)||'—');
-          const id=esc(x.id_card||x.patient_id_card||patient.id_card||x.id||'—');
-          const isAwaitingSiting=String(patient.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting_surgery')||String(patient.patient_status_raw||'').toLowerCase().includes('awaiting');
-          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-add" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Start Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
-          return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(patient))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+(isAwaitingSiting?' · Siting session':'')+'</div></div>'+actionBtn+'</div>';
+          const id=esc(x.id||fullPat.id_card||x.patient_id_card||enrichedPat.id_card||'—');
+          const rawType=String(fullPat.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
+          const rawStatus=String(fullPat.patient_status_raw||'').toLowerCase();
+          const isAwaitingSiting=rawType.includes('awaiting')||rawStatus.includes('awaiting');
+          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-add" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Open Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
+          return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(fullPat))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+(isAwaitingSiting?' · Sitting session':'')+'</div></div>'+actionBtn+'</div>';
         });
       }catch(e){followRows=[];}
       body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Today\'s Follow-ups','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
