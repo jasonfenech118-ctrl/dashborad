@@ -19529,7 +19529,7 @@ table thead th.v63-name-title,
 
 <!-- v87 — Fix Patients Review inpatient list + remove extra patient-report charts -->
 <style id="v87-patients-review-fix-styles">
-/* Keep the Patients Review home card simple: two lists, no analytics/chart expansion. */
+/* Keep the Patients Review home card simple: no analytics/chart expansion. */
 #report-patient-analytics,
 #report-patient-analytics.show,
 .report-analytics-wrap.show{
@@ -19540,6 +19540,19 @@ table thead th.v63-name-title,
 .v87-input-done{background:#166534!important;color:#fff!important;border:1px solid #14532d!important;}
 .v87-reviewed-btn{background:#1d4ed8!important;color:#fff!important;border:1px solid #1e3a8a!important;}
 .v87-input-btn{background:#e6a817!important;color:#111827!important;border:1px solid #92400e!important;}
+/* v88 section colours */
+.v88-postop-section .v78-ops-title{color:#1e3a5f!important;}
+.v88-postop-section .v78-ops-icon{background:#e6a817!important;color:#111827!important;}
+.v88-preop-section .v78-ops-title{color:#0d7377!important;}
+.v88-preop-section .v78-ops-icon{background:#0d7377!important;color:#fff!important;}
+.v88-sitting-section .v78-ops-title{color:#6d28d9!important;}
+.v88-sitting-section .v78-ops-icon{background:#7c3aed!important;color:#fff!important;}
+/* urgency badges */
+.v88-urg-badge{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;vertical-align:middle;line-height:18px;}
+.v88-urg-green{background:#d1fae5;color:#065f46;}
+.v88-urg-amber{background:#fef3c7;color:#92400e;}
+.v88-urg-red{background:#fee2e2;color:#991b1b;}
+.v88-urg-overdue{background:#fce7f3;color:#9d174d;}
 </style>
 <script id="v87-patients-review-fix-script">
 (function(){
@@ -19617,30 +19630,93 @@ table thead th.v63-name-title,
     let card=document.getElementById('home-operations-today-card');
     if(!card){card=document.createElement('div');card.id='home-operations-today-card';card.className='home-card';(document.getElementById('home-surgery-watchlist')||home).insertAdjacentElement('afterend',card);}
     const d=selectedHomeDate();
-    card.innerHTML='<div class="home-card-head"><div class="home-card-head-left"><span class="home-card-symbol">✓</span><div><div class="home-card-title">Patients Review</div><div class="home-card-sub">Inpatients for ward Daily Review and follow-up patients seen on the selected date.</div></div></div><button type="button" class="btn-cancel" onclick="v84RenderPatientsReview()">Refresh</button></div><div class="home-card-body"><div class="home-loading">Loading patients review...</div></div>';
+    card.innerHTML='<div class="home-card-head"><div class="home-card-head-left"><span class="home-card-symbol">✓</span><div><div class="home-card-title">Patients Review</div><div class="home-card-sub">Post-op inpatients · Pre-op awaiting surgery · Awaiting sitting session · Today\'s follow-ups.</div></div></div><button type="button" class="btn-cancel" onclick="v84RenderPatientsReview()">Refresh</button></div><div class="home-card-body"><div class="home-loading">Loading patients review...</div></div>';
     const body=card.querySelector('.home-card-body');
     try{
       const pts=typeof getPatients==='function'?await getPatients():[];
-      const inpatients=(pts||[]).filter(isInpatientPatient);
-      const inpatientPidSet=new Set(inpatients.map(p=>String(p.id||'')));
-      const inRows=inpatients.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
+      const activePts=(pts||[]).filter(p=>!isClosedPatient(p));
+      const todayDate=new Date(d+'T12:00:00');
+
+      // ── patient categorisation helpers ──
+      const safePostOp=p=>{
+        try{if(typeof postOperativeEncounterStarted==='function'&&postOperativeEncounterStarted(p))return true;}catch(e){}
+        return String(p?.inpatient_type||'').toLowerCase().trim()==='actual_inpatient';
+      };
+      const safeSittingDone=p=>{
+        try{if(typeof stomaSittingCompleted==='function'&&stomaSittingCompleted(p))return true;}catch(e){}
+        const f=String(p?.findings||'').toLowerCase();
+        const raw=String(p?.patient_status_raw||'').toLowerCase();
+        return f.includes('stoma sitting session')||raw.includes('sitting session complete')||raw.includes('awaiting surgery');
+      };
+      const isElectivePathway=p=>{
+        const route=String(p?.admission_route||'').toLowerCase();
+        const ftype=String(p?.followup_type||'').toLowerCase();
+        const itype=String(p?.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
+        const raw=statusRaw(p);
+        if(route.includes('elective'))return true;
+        if(ftype==='new_case'||ftype.includes('new_case'))return true;
+        if(itype.includes('awaiting'))return true;
+        if(raw.includes('awaiting'))return true;
+        if(!!p?.planned_surgery_date)return true;
+        try{if(typeof isInpatientPatient==='function'&&isInpatientPatient(p))return true;}catch(e){}
+        return false;
+      };
+
+      const postOpPatients=activePts.filter(safePostOp);
+      const preOpPatients=activePts.filter(p=>!safePostOp(p)&&safeSittingDone(p));
+      const awaitingSittingPts=activePts.filter(p=>!safePostOp(p)&&!safeSittingDone(p)&&isElectivePathway(p));
+      const allShownPids=new Set([...postOpPatients,...preOpPatients,...awaitingSittingPts].map(p=>String(p.id||'')));
+
+      // ── Section 1: Post-Op Inpatients ──
+      const postOpRows=postOpPatients.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
-        const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Planned '+esc(dText(p.planned_surgery_date));
+        const meta='ID '+esc(p.id_card||'—')+' · '+chip;
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d)+'</div>';
       });
+
+      // ── Section 2: Pre-Op / Awaiting Surgery (sorted by surgery date, urgency badge) ──
+      const surgDateOf=p=>p?.surgery_date||p?.planned_surgery_date||'';
+      const urgencyBadge=(sd)=>{
+        if(!sd)return '';
+        const diff=Math.round((new Date(sd+'T12:00:00')-todayDate)/86400000);
+        const cls=diff<0?'v88-urg-overdue':diff<=3?'v88-urg-red':diff<=7?'v88-urg-amber':'v88-urg-green';
+        const lbl=diff<0?'Overdue':diff+'d away';
+        return '<span class="v88-urg-badge '+cls+'">'+esc(lbl)+'</span>';
+      };
+      const preOpRows=preOpPatients.slice().sort((a,b)=>{
+        const da=new Date(surgDateOf(a)||'9999-12-31'),db=new Date(surgDateOf(b)||'9999-12-31');
+        return da-db;
+      }).map(p=>{
+        const sd=surgDateOf(p);
+        const meta='ID '+esc(p.id_card||'—')+(sd?' · Surgery: '+esc(dText(sd)):' · No surgery date recorded');
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">1st Post-Op Review</button></div>':'';
+        return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+urgencyBadge(sd)+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
+      });
+
+      // ── Section 3: Awaiting Sitting Session (oldest waiting first, days-waiting badge) ──
+      const awaitRows=awaitingSittingPts.slice().sort((a,b)=>new Date(a.created_at||'2099-01-01')-new Date(b.created_at||'2099-01-01')).map(p=>{
+        let waitDays=-1;
+        if(p.created_at)waitDays=Math.max(0,Math.round((todayDate-new Date(p.created_at))/86400000));
+        const waitLabel=waitDays>=0?waitDays+'d waiting':'';
+        const waitClass=waitDays<0?'':waitDays>=60?'v88-urg-red':waitDays>=30?'v88-urg-amber':'v88-urg-green';
+        const waitBadge=waitLabel?'<span class="v88-urg-badge '+waitClass+'">'+esc(waitLabel)+'</span>':'';
+        const planned=p.planned_surgery_date?' · Planned: '+esc(dText(p.planned_surgery_date)):'';
+        const meta='ID '+esc(p.id_card||'—')+planned;
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#7c3aed;color:#fff;" onclick="openStomaSittingSession(\''+esc(p.id)+'\')">Open Sitting Session</button></div>':'';
+        return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+waitBadge+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
+      });
+
+      // ── Section 4: Today's Follow-ups (appointment-based, deduped) ──
       const ptsById={};(pts||[]).forEach(p=>{if(p.id)ptsById[String(p.id)]=p;});
       let followRows=[];
       try{
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
         const frows=typeof followupAppointmentRows==='function'?followupAppointmentRows(appts,false):appts;
-        // Count appointments per patient for the day. A 1-hour sitting session = 2 booked
-        // consecutive 30-min slots, so any patient with 2+ slots is a sitting session.
         const apptCountByPid={};
         (frows||[]).forEach(x=>{
           const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
           if(pid)apptCountByPid[pid]=(apptCountByPid[pid]||0)+1;
         });
-        // Robust sitting detection: appointment-count OR patient flags OR elective new-case inpatient
         const isSittingRow=(x)=>{
           const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
           const fp=(pid&&ptsById[pid])||ep;
@@ -19654,12 +19730,10 @@ table thead th.v63-name-title,
           if(route.includes('elective')&&ftype.includes('new')&&stat.includes('inpatient'))return true;
           return false;
         };
-        // Keep only the FIRST (earliest) appointment per patient — collapses the 2 sitting slots
-        // into one row and removes any incidental duplicate follow-up rows.
         const seenPids=new Set();
         const deduped=(frows||[]).filter(x=>{
           const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
-          if(pid&&inpatientPidSet.has(pid))return false; // already in Inpatients section
+          if(pid&&allShownPids.has(pid))return false;
           if(pid){if(seenPids.has(pid))return false;seenPids.add(pid);}
           return true;
         });
@@ -19672,17 +19746,22 @@ table thead th.v63-name-title,
           let timeLabel=startTime;
           if(/^\d{2}:\d{2}$/.test(startTime)){
             const [h,m]=startTime.split(':').map(Number);
-            const dur=isAwaitingSiting?60:30;
-            const end=h*60+m+dur;
+            const end=h*60+m+(isAwaitingSiting?60:30);
             timeLabel=startTime+' – '+String(Math.floor(end/60)).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
           }
           const id=esc(x.id||fullPat.id_card||x.patient_id_card||enrichedPat.id_card||'—');
           const apptLabel=isAwaitingSiting?'Sitting session · 1 hr':'Follow-up · 30 min';
-          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-add" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Open Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
+          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Open Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
           return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(fullPat))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+esc(timeLabel)+' · ID '+id+' · '+apptLabel+'</div></div>'+actionBtn+'</div>';
         });
       }catch(e){followRows=[];}
-      body.innerHTML='<div class="v78-ops-grid">'+sectionHtml('Inpatients','▣',inRows,'v87-inpatient-section')+sectionHtml('Today\'s Follow-ups','✓',followRows,'')+'</div><div class="diary-note">Use Input Daily Review for inpatient ward Daily Reviews. After saving, Input Daily Review turns green and Reviewed opens Today\'s Review.</div>';
+
+      body.innerHTML='<div class="v78-ops-grid">'+
+        sectionHtml('Post-Op Inpatients','▣',postOpRows,'v88-postop-section v87-inpatient-section')+
+        sectionHtml('Pre-Op · Awaiting Surgery','⚕',preOpRows,'v88-preop-section')+
+        sectionHtml('Awaiting Sitting Session','⊙',awaitRows,'v88-sitting-section')+
+        sectionHtml("Today's Follow-ups",'✓',followRows,'')+
+        '</div><div class="diary-note">Post-Op: use Input Daily Review for ward reviews · Pre-Op: urgency badge shows days until surgery · Awaiting sitting: badge shows days since referral · Follow-ups: booked appointments for the selected date.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
 
