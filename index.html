@@ -14362,15 +14362,28 @@ async function openClinicalOperativeRecord(patientId, episodeId){
   const todayStr=new Date().toISOString().slice(0,10);
   document.getElementById('mb').innerHTML=`
     <h2>Clinical Operative Record</h2>
-    <div class="msub"><strong>${htmlSafe(patient.first_name)} ${htmlSafe(patient.surname)}</strong> (${htmlSafe(patient.id_card)}) — Surgery Date: ${String(episode.surgery_date||'').slice(0,10)}</div>
+    <div class="msub"><strong>${htmlSafe(patient.first_name)} ${htmlSafe(patient.surname)}</strong> &nbsp;·&nbsp; ID: ${htmlSafe(patient.id_card)} &nbsp;·&nbsp; Surgery Date: ${String(episode.surgery_date||'Not recorded').slice(0,10)}</div>
+
+    <div class="cor-section-label">Operative Details</div>
     <div class="fg"><label>Operation Performed *</label><input type="text" id="cor-operation" placeholder="e.g., Ileostomy formation, Colostomy"/></div>
-    <div class="fg"><label>Stoma Type *</label><select id="cor-stoma-type"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
-    <div class="fg"><label>Stoma Site *</label><select id="cor-stoma-site"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
-    <div class="fg"><label>Surgeon Name</label><input type="text" id="cor-surgeon" placeholder="Name of operating surgeon"/></div>
-    <div class="fg"><label>Consultant</label><input type="text" id="cor-consultant" placeholder="Responsible consultant"/></div>
-    <div class="fg"><label>Operation Findings</label><textarea id="cor-findings" placeholder="Details of operation, any complications, notes" style="height:100px;"></textarea></div>
-    <div class="fg"><label>Post-Op Day 1 Date *</label><input type="date" id="cor-postop-date" value="${tomorrowStr}" min="${todayStr}"/><div style="font-size:12px;color:#666;margin-top:4px;">When post-operative daily reviews will begin.</div></div>
-    <div class="fg"><label>Complications (if any)</label><textarea id="cor-complications" placeholder="Any post-operative complications or concerns" style="height:80px;"></textarea></div>
+    <div class="cor-2col">
+      <div class="fg"><label>Stoma Type *</label><select id="cor-stoma-type"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
+      <div class="fg"><label>Stoma Site *</label><select id="cor-stoma-site"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
+    </div>
+
+    <div class="cor-section-label">Surgical Team</div>
+    <div class="cor-2col">
+      <div class="fg"><label>Surgeon Name</label><input type="text" id="cor-surgeon" placeholder="Operating surgeon"/></div>
+      <div class="fg"><label>Consultant</label><input type="text" id="cor-consultant" placeholder="Responsible consultant"/></div>
+    </div>
+
+    <div class="cor-section-label">Post-Operative Planning</div>
+    <div class="fg" style="max-width:260px;"><label>Post-Op Day 1 Date *</label><input type="date" id="cor-postop-date" value="${tomorrowStr}" min="${todayStr}"/><div style="font-size:11px;color:#666;margin-top:3px;">Date when daily post-op reviews begin.</div></div>
+
+    <div class="cor-section-label">Clinical Notes</div>
+    <div class="fg"><label>Operation Findings</label><textarea id="cor-findings" placeholder="Details of operation findings, intra-operative notes" style="height:90px;"></textarea></div>
+    <div class="fg"><label>Complications (if any)</label><textarea id="cor-complications" placeholder="Any post-operative complications or concerns" style="height:70px;"></textarea></div>
+
     <div id="cor-note" style="background:#e8f4f8;padding:10px;border-radius:4px;margin:12px 0;font-size:12px;color:#0d7377;"></div>
     <div class="mact">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
@@ -20340,6 +20353,11 @@ table thead th.v63-name-title,
 })();
 </script>
 
+<style id="cor-layout-styles">
+.cor-section-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#0d7377;border-bottom:2px solid #e8f4f8;padding-bottom:4px;margin:18px 0 10px;}
+.cor-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.cor-2col{grid-template-columns:1fr;}}
+</style>
 <style id="v89-open-episode-button-style">
 .v89-open-episode-button{display:inline-flex!important;align-items:center;justify-content:center;background:#0d7377!important;color:#fff!important;border:1px solid #064c4e!important;margin-right:5px!important;}
 .v89-open-episode-button:hover{filter:brightness(.96);transform:translateY(-1px);}
