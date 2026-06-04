@@ -20078,7 +20078,6 @@ table thead th.v63-name-title,
         <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type-${idx}"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
         <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site-${idx}"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
       </div>
-      <div class="fg" style="max-width:260px;"><label>Stoma Formed On *</label><input type="date" id="fpr-stoma-formed-${idx}" onchange="fprUpdateStomaIdPreview(${idx})"/></div>
       <div class="elective-section-label" style="font-size:13px;color:#475569;margin:14px 0 8px;">Stoma Review</div>
       <div class="cor-2col">
         <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour-${idx}"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
@@ -20108,7 +20107,7 @@ table thead th.v63-name-title,
   };
   const _FPR_MONTH=['A','B','C','D','E','F','G','H','I','J','K','L'];
   window.fprUpdateStomaIdPreview=function(idx){
-    const dateVal=document.getElementById('fpr-stoma-formed-'+idx)?.value;
+    const dateVal=document.getElementById('fpr-surgery-date')?.value;
     const display=document.getElementById('fpr-stoma-id-display-'+idx);
     if(!display)return;
     const idCard=(document.getElementById('fpr-stoma-container')?.dataset?.idcard)||'···';
@@ -20116,6 +20115,9 @@ table thead th.v63-name-title,
     const letter=_FPR_MONTH[new Date(dateVal+'T12:00:00').getMonth()];
     display.textContent='STO-'+idCard+'-'+letter+'????';
     display.title='Full ID assigned on save';
+  };
+  window.fprUpdateAllStomaIdPreviews=function(){
+    document.querySelectorAll('.fpr-stoma-block').forEach((_,i)=>window.fprUpdateStomaIdPreview(i));
   };
   window.fprAddStoma=function(){
     const container=document.getElementById('fpr-stoma-container');
@@ -20171,7 +20173,7 @@ table thead th.v63-name-title,
             <div class="fg"><label>Surgeon Name</label><input type="text" id="fpr-surgeon" placeholder="Operating surgeon"/></div>
             <div class="fg"><label>Consultant</label><input type="text" id="fpr-consultant" placeholder="Responsible consultant"/></div>
           </div>
-          <div class="fg" style="max-width:240px;"><label>Date of Operation *</label><input type="date" id="fpr-surgery-date" value="${esc(surgDate)}"/></div>
+          <div class="fg" style="max-width:240px;"><label>Date of Operation *</label><input type="date" id="fpr-surgery-date" value="${esc(surgDate)}" onchange="fprUpdateAllStomaIdPreviews()"/></div>
         </div>
 
         <div id="fpr-stoma-container" data-idcard="${esc(idCard)}">${fprStomaBlock(0)}</div>
@@ -20209,14 +20211,12 @@ table thead th.v63-name-title,
       const bid=b.id.replace('fpr-stoma-block-','');
       const sType=(document.getElementById('fpr-stoma-type-'+bid)?.value||'').trim();
       const sSite=(document.getElementById('fpr-stoma-site-'+bid)?.value||'').trim();
-      const sFormed=(document.getElementById('fpr-stoma-formed-'+bid)?.value||'').trim();
       if(!sType){showNote(`Please select Stoma Type for Stoma ${i+1}.`);return;}
       if(!sSite){showNote(`Please select Stoma Site for Stoma ${i+1}.`);return;}
-      if(!sFormed){showNote(`Please enter Stoma Formed On date for Stoma ${i+1}.`);return;}
       stomas.push({
         _bid:bid,
         stoma_number:i+1,
-        stoma_type:sType,stoma_site:sSite,stoma_formed_on:sFormed,
+        stoma_type:sType,stoma_site:sSite,stoma_formed_on:surgDate,
         stoma_colour:(document.getElementById('fpr-stoma-colour-'+bid)?.value||'').trim(),
         peristomal_skin:(document.getElementById('fpr-peristomal-'+bid)?.value||'').trim(),
         stoma_output:(document.getElementById('fpr-output-'+bid)?.value||'').trim(),
