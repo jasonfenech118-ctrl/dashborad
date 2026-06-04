@@ -19635,38 +19635,44 @@ table thead th.v63-name-title,
     card.innerHTML='<div class="home-card-head"><div class="home-card-head-left"><span class="home-card-symbol">✓</span><div><div class="home-card-title">Patients Review</div><div class="home-card-sub">Post-op inpatients · Pre-op awaiting surgery · Awaiting sitting session · Today\'s follow-ups.</div></div></div><button type="button" class="btn-cancel" onclick="v84RenderPatientsReview()">Refresh</button></div><div class="home-card-body"><div class="home-loading">Loading patients review...</div></div>';
     const body=card.querySelector('.home-card-body');
     try{
-      const pts=typeof getPatients==='function'?await getPatients():[];
-      const activePts=(pts||[]).filter(p=>!isClosedPatient(p));
+      // Fresh direct query — bypasses homeDashboardCache which may lack inpatient_type
+      const ipFields='id,first_name,surname,id_card,phone_number,inpatient_type,patient_status_raw,assigned_nurse_raw,followup_status,planned_surgery_date,surgery_date,findings,admission_route,followup_type,rip_date,reversal_date,created_at';
+      let inpatientRaw=[];
+      try{
+        const[{data:d1},{data:d2}]=await Promise.all([
+          SB.from('patients').select(ipFields).not('inpatient_type','is',null).order('surname',{ascending:true}),
+          SB.from('patients').select(ipFields).is('inpatient_type',null).not('planned_surgery_date','is',null)
+        ]);
+        const seen=new Set();
+        [...(d1||[]),...(d2||[])].forEach(p=>{if(p.id&&!seen.has(p.id)){seen.add(p.id);inpatientRaw.push(p);}});
+      }catch(e){
+        const fallback=typeof getPatients==='function'?await getPatients():[];
+        inpatientRaw=(fallback||[]).filter(p=>isInpatientPatient(p));
+      }
+      const activePts=inpatientRaw.filter(p=>!isClosedPatient(p));
       const todayDate=new Date(d+'T12:00:00');
 
       // ── patient categorisation helpers ──
       const safePostOp=p=>{
         try{if(typeof postOperativeEncounterStarted==='function'&&postOperativeEncounterStarted(p))return true;}catch(e){}
-        return String(p?.inpatient_type||'').toLowerCase().trim()==='actual_inpatient';
+        const itype=String(p?.inpatient_type||'').toLowerCase().trim();
+        return itype==='actual_inpatient'||itype==='post_operative'||itype==='post-operative';
       };
+      // Sitting done = findings contains the stoma sitting session record.
+      // We deliberately do NOT check patient_status_raw for 'awaiting surgery' because all
+      // inpatients share that status regardless of whether sitting has happened yet.
       const safeSittingDone=p=>{
-        try{if(typeof stomaSittingCompleted==='function'&&stomaSittingCompleted(p))return true;}catch(e){}
         const f=String(p?.findings||'').toLowerCase();
+        if(f.includes('stoma sitting session'))return true;
         const raw=String(p?.patient_status_raw||'').toLowerCase();
-        return f.includes('stoma sitting session')||raw.includes('sitting session complete')||raw.includes('awaiting surgery');
-      };
-      const isElectivePathway=p=>{
-        const route=String(p?.admission_route||'').toLowerCase();
-        const ftype=String(p?.followup_type||'').toLowerCase();
-        const itype=String(p?.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
-        const raw=statusRaw(p);
-        if(route.includes('elective'))return true;
-        if(ftype==='new_case'||ftype.includes('new_case'))return true;
-        if(itype.includes('awaiting'))return true;
-        if(raw.includes('awaiting'))return true;
-        if(!!p?.planned_surgery_date)return true;
-        try{if(typeof isInpatientPatient==='function'&&isInpatientPatient(p))return true;}catch(e){}
+        if(raw.includes('sitting session complete'))return true;
+        try{if(typeof hasSittingSessionRecord==='function'&&hasSittingSessionRecord(p))return true;}catch(e){}
         return false;
       };
 
       const postOpPatients=activePts.filter(safePostOp);
       const preOpPatients=activePts.filter(p=>!safePostOp(p)&&safeSittingDone(p));
-      const awaitingSittingPts=activePts.filter(p=>!safePostOp(p)&&!safeSittingDone(p)&&isElectivePathway(p));
+      const awaitingSittingPts=activePts.filter(p=>!safePostOp(p)&&!safeSittingDone(p));
       const allShownPids=new Set([...postOpPatients,...preOpPatients,...awaitingSittingPts].map(p=>String(p.id||'')));
 
       // ── Section 1: Post-Op Inpatients ──
@@ -19709,7 +19715,9 @@ table thead th.v63-name-title,
       });
 
       // ── Section 4: Today's Follow-ups (appointment-based, deduped) ──
-      const ptsById={};(pts||[]).forEach(p=>{if(p.id)ptsById[String(p.id)]=p;});
+      const cachedPts=typeof getPatients==='function'?await getPatients():[];
+      const ptsById={};
+      [...(cachedPts||[]),...inpatientRaw].forEach(p=>{if(p.id)ptsById[String(p.id)]=p;});
       let followRows=[];
       try{
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
