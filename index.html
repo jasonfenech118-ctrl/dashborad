@@ -20097,6 +20097,7 @@ table thead th.v63-name-title,
         <div class="fg"><label>Stoma Output</label><select id="fpr-output-${idx}"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>
         <div class="fg"><label>Appliance Used</label><input type="text" id="fpr-appliance-${idx}" placeholder="Type and size"/></div>
       </div>
+      <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories-${idx}" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>
       <div class="fg"><label>Stoma Review Notes</label><textarea id="fpr-stoma-notes-${idx}" placeholder="Clinical observations, patient concerns, teaching started" style="height:80px;"></textarea></div>
     </div>`;
   }
@@ -20231,6 +20232,7 @@ table thead th.v63-name-title,
         peristomal_skin:(document.getElementById('fpr-peristomal-'+bid)?.value||'').trim(),
         stoma_output:(document.getElementById('fpr-output-'+bid)?.value||'').trim(),
         appliance:(document.getElementById('fpr-appliance-'+bid)?.value||'').trim(),
+        accessories:(document.getElementById('fpr-accessories-'+bid)?.value||'').trim(),
         stoma_notes:(document.getElementById('fpr-stoma-notes-'+bid)?.value||'').trim()
       });
     }
@@ -20271,8 +20273,8 @@ table thead th.v63-name-title,
       try{await SB.from('episodes').update({status:'in_progress'}).eq('id',episodeId);}catch(_){}
       const stepData={operation,surgeon,consultant,surgery_date:surgDate,findings,complications,stomas,recorded_date:new Date().toISOString().slice(0,10)};
       await Promise.all([
-        SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4).catch(()=>{}),
-        SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5).catch(()=>{})
+        (async()=>{try{await SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4);}catch(_){}})(),
+        (async()=>{try{await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5);}catch(_){}})()
       ]);
       showNote('Saved successfully. Opening Post-Operative Centre...', true);
       setTimeout(()=>window.openPostOpCentre(patientId,episodeId),700);
