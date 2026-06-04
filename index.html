@@ -7193,7 +7193,7 @@ async function saveNewPatientTab(options={}){
         if(!epErr&&epRow&&epRow.id){
           const nowIso=new Date().toISOString();
           const STEP_DEFS=[[1,'pathway','complete'],[2,'booking','complete'],[3,'siting','not_started'],[4,'clinical','not_started'],[5,'post_op_review','not_started'],[6,'discharge_planning','not_started'],[7,'teaching','not_started']];
-          const stepRows=STEP_DEFS.map(s=>({episode_id:epRow.id,step_no:s[0],step_key:s[1],status:s[2],completed_by:s[2]==='complete'?createdBy:null,completed_at:s[2]==='complete'?nowIso:null}));
+          const stepRows=STEP_DEFS.map(s=>({episode_id:epRow.id,step_no:s[0],step_key:s[1],status:s[2]}));
           await SB.from('episode_steps').insert(stepRows);
         }
       }
@@ -7462,8 +7462,7 @@ async function confirmSitingSessionBooking(slot,nextSlot,colId,colName,colType){
   try{
     const planned=date+'T'+slot+':00';
     const{data:ep}=await SB.from('episodes').insert({
-      patient_id:newPat.id,status:'open',
-      surgery_date:null,post_op_start:null
+      patient_id:newPat.id,status:'open'
     }).select().single();
     if(ep?.id){
       const steps=[
@@ -9705,8 +9704,7 @@ async function doBook(slot,date,nurseIdParam,nurseType){
     try{
       const planned=date+'T'+String(slot).slice(0,5)+':00';
       const{data:ep}=await SB.from('episodes').insert({
-        patient_id:newPat.id,status:'open',
-        surgery_date:null,post_op_start:null
+        patient_id:newPat.id,status:'open'
       }).select().single();
       if(ep?.id){
         // Seed 7 steps
@@ -14405,8 +14403,7 @@ async function saveClinicalOperativeRecord(patientId, episodeId){
     last_outcome_date:new Date().toISOString().slice(0,10)
   }).eq('id',patientId);
   if(pErr){note.style.color='var(--red)';note.textContent='Error saving patient: '+pErr.message;return;}
-  const{error:epErr}=await SB.from('episodes').update({post_op_start:postOpDate}).eq('id',episodeId);
-  if(epErr){note.style.color='var(--red)';note.textContent='Error updating episode: '+epErr.message;return;}
+  try{await SB.from('episodes').update({status:'in_progress'}).eq('id',episodeId);}catch(e){console.warn('Episode status update skipped',e);}
   const step4Data={operation,stoma_type:stomaType,stoma_site:stomaSite,surgeon,consultant,findings,complications,recorded_date:new Date().toISOString().slice(0,10),recorded_by:user.name};
   const[s4,s5]=await Promise.all([
     SB.from('episode_steps').update({status:'complete',data:step4Data,completed_at:new Date().toISOString(),completed_by:user.name}).eq('episode_id',episodeId).eq('step_no',4),
@@ -20397,7 +20394,7 @@ table thead th.v63-name-title,
         ep=r2.data||null;
       }
       if(!ep){
-        const ins=await SB.from('episodes').insert({patient_id:patientId,status:'open',surgery_date:null,post_op_start:null}).select('id').single();
+        const ins=await SB.from('episodes').insert({patient_id:patientId,status:'open'}).select('id').single();
         if(ins.error||!ins.data){alert('Could not create episode: '+(ins.error?.message||'Unknown error'));return;}
         ep=ins.data;
         try{
