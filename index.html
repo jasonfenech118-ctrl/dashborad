@@ -19637,25 +19637,41 @@ table thead th.v63-name-title,
       try{
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
         const frows=typeof followupAppointmentRows==='function'?followupAppointmentRows(appts,false):appts;
-        // Remove appointments for patients already shown in the Inpatients section above,
-        // and deduplicate: sitting-session patients occupy 2×30-min slots — keep only the first
-        const seenSittingPids=new Set();
+        // Count appointments per patient for the day. A 1-hour sitting session = 2 booked
+        // consecutive 30-min slots, so any patient with 2+ slots is a sitting session.
+        const apptCountByPid={};
+        (frows||[]).forEach(x=>{
+          const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
+          if(pid)apptCountByPid[pid]=(apptCountByPid[pid]||0)+1;
+        });
+        // Robust sitting detection: appointment-count OR patient flags OR elective new-case inpatient
+        const isSittingRow=(x)=>{
+          const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
+          const fp=(pid&&ptsById[pid])||ep;
+          if(pid&&apptCountByPid[pid]>1)return true;
+          const itype=String(fp.inpatient_type||ep.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
+          const stat=String(fp.patient_status_raw||ep.patient_status_raw||fp.followup_status||'').toLowerCase();
+          const route=String(fp.admission_route||ep.admission_route||'').toLowerCase();
+          const ftype=String(fp.followup_type||ep.followup_type||'').toLowerCase();
+          if(itype.includes('awaiting'))return true;
+          if(stat.includes('awaiting'))return true;
+          if(route.includes('elective')&&ftype.includes('new')&&stat.includes('inpatient'))return true;
+          return false;
+        };
+        // Keep only the FIRST (earliest) appointment per patient — collapses the 2 sitting slots
+        // into one row and removes any incidental duplicate follow-up rows.
+        const seenPids=new Set();
         const deduped=(frows||[]).filter(x=>{
-          const ep=x.p||x.patients||{};const pid=x.patientId||ep.id||x.appt?.patient_id||'';
-          // If patient is already in the Inpatients section, skip them here entirely
-          if(pid&&inpatientPidSet.has(String(pid)))return false;
-          const fp=(pid&&ptsById[String(pid)])||ep;
-          const isSit=String(fp.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting')||String(fp.patient_status_raw||'').toLowerCase().includes('awaiting');
-          if(isSit&&pid){if(seenSittingPids.has(String(pid)))return false;seenSittingPids.add(String(pid));}
+          const ep=x.p||x.patients||{};const pid=String(x.patientId||ep.id||x.appt?.patient_id||'');
+          if(pid&&inpatientPidSet.has(pid))return false; // already in Inpatients section
+          if(pid){if(seenPids.has(pid))return false;seenPids.add(pid);}
           return true;
         });
         followRows=deduped.map(x=>{
           const enrichedPat=x.p||x.patients||{};
           const pid=x.patientId||enrichedPat.id||x.appt?.patient_id||'';
           const fullPat=(pid&&ptsById[String(pid)])||enrichedPat;
-          const rawType=String(fullPat.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
-          const rawStatus=String(fullPat.patient_status_raw||'').toLowerCase();
-          const isAwaitingSiting=rawType.includes('awaiting')||rawStatus.includes('awaiting');
+          const isAwaitingSiting=isSittingRow(x);
           const startTime=x.time||String(x.appt?.appt_slot||'').slice(0,5)||'—';
           let timeLabel=startTime;
           if(/^\d{2}:\d{2}$/.test(startTime)){
