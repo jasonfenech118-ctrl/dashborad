@@ -20380,7 +20380,7 @@ table thead th.v63-name-title,
         ep=r2.data||null;
       }
       if(!ep){
-        const ins=await SB.from('episodes').insert({patient_id:patientId,pathway_type:'elective',status:'open',surgery_date:null,post_op_start:null}).select('id').single();
+        const ins=await SB.from('episodes').insert({patient_id:patientId,status:'open',surgery_date:null,post_op_start:null}).select('id').single();
         if(ins.error||!ins.data){alert('Could not create episode: '+(ins.error?.message||'Unknown error'));return;}
         ep=ins.data;
         try{
