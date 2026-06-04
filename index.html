@@ -10660,104 +10660,9 @@ function patientInterfaceSectionLabel(key){
 function patientInterfaceDemographicItem(label,value){
   return `<div class="pi-demo-item"><div class="lbl">${htmlSafe(label)}</div><div class="val">${value||'—'}</div></div>`;
 }
-function patientInterfaceAppointmentRows(){
-  const appts=patientInterfaceAppointments||[];
-  if(!appts.length)return '<tr><td colspan="5" class="empty">No appointment history found.</td></tr>';
-  return appts.map(a=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    return `<tr><td>${htmlSafe(a.appt_date||'—')}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td>${htmlSafe(a.notes||'—')}</td></tr>`;
-  }).join('');
-}
-function patientEpisodeGroupedEncounterRows(){
-  const appts=patientInterfaceAppointments||[];
-  if(!appts.length)return '<tr><td colspan="6" class="empty">No encounters are recorded under this episode yet.</td></tr>';
-  return appts.map((a,idx)=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    const encNo=encounterNumberForPatient(patientInterfacePatient||{},idx);
-    return `<tr><td><strong>${htmlSafe(encNo)}</strong></td><td>${htmlSafe(a.appt_date||'—')}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td><span class="locked-pill">Locked record</span></td></tr>`;
-  }).join('');
-}
-function patientEpisodeGroupedHistory(p){
-  return `<div class="episode-group-card">
-    <div class="episode-group-header" onclick="openPatientEpisodePage('${p.id}')">
-      <div>
-        <div class="episode-group-title">${htmlSafe(virtualEpisodeNumber(p))} · ${htmlSafe(episodeTypeText(p))}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span class="episode-status-pill ${currentEpisodeStatus(p).toLowerCase().includes('closed')?'closed':''}">${htmlSafe(currentEpisodeStatus(p))}</span>
-        <button class="episode-open-button" onclick="event.stopPropagation();openPatientEpisodePage('${p.id}')">Open Episode</button>
-      </div>
-    </div>
-    <div class="episode-group-body">
-      ${renderEpisodeTimeline(p)}
-      <div class="episode-encounter-table"><table class="dt"><thead><tr><th>Encounter No.</th><th>Date</th><th>Time</th><th>Nurse / Column</th><th>Outcome</th><th>Status</th></tr></thead><tbody>${patientEpisodeGroupedEncounterRows()}</tbody></table></div>
-    </div>
-  </div>`;
-}
-function renderPatientInterfaceSection(){
-  const p=patientInterfacePatient||{};
-  const key=patientInterfaceActiveSection||'episode-history';
-  if(key==='episode-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="E">Episodes</h3>${patientEpisodeGroupedHistory(p)}</div>`;
-  }
-  if(key==='follow-up-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="F">Follow-up</h3><div class="kpi-row"><div class="kpi"><div class="k-label">Owner</div><div class="k-value" style="font-size:22px;">${htmlSafe(p.followup_owner||'Common')}</div></div><div class="kpi"><div class="k-label">Due</div><div class="k-value" style="font-size:22px;">${htmlSafe(patientDueText(p))}</div></div><div class="kpi"><div class="k-label">Status</div><div class="k-value" style="font-size:22px;">${htmlSafe(followupStatusText(p.followup_status))}</div></div></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Date</th><th>Time</th><th>Seen By</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${patientInterfaceAppointmentRows()}</tbody></table></div></div>`;
-  }
-  if(key==='stoma-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="S">Stoma</h3><div class="pi-demo-grid">${patientInterfaceDemographicItem('Stoma Type',patientStomaTypeText(p.stoma_type_summary))}${patientInterfaceDemographicItem('Surgery Date',patientDateText(p.surgery_date))}${patientInterfaceDemographicItem('Age at Stoma Formation',htmlSafe(patientAgeAtFormationText(p)))}${patientInterfaceDemographicItem('Days with Stoma',htmlSafe(patientStomaDays(p)))}${patientInterfaceDemographicItem('Reversal Date',patientDateText(p.reversal_date))}${patientInterfaceDemographicItem('Date of RIP',patientDateText(p.rip_date))}</div></div>`;
-  }
-  if(key==='stoma-care'){
-    return `<div class="patient-interface-section"><h3 data-icon="C">Care</h3><div class="pi-demo-grid">${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'—'))}${patientInterfaceDemographicItem('Operation Performed',patientOperationText(p))}${patientInterfaceDemographicItem('Surgery Type',htmlSafe(p.surgery_type||'—'))}${patientInterfaceDemographicItem('Consultant',htmlSafe(p.consultant||'—'))}</div><div class="card" style="margin:12px 0 0;background:#fbfcfd;"><div class="card-title">Notes</div><div style="white-space:pre-wrap;font-size:12px;line-height:1.55;color:var(--navy);">${htmlSafe(p.findings||'No notes recorded.')}</div></div></div>`;
-  }
-  if(key==='discharge-letters'){
-    return `<div class="patient-interface-section"><h3 data-icon="D">Discharge Planning</h3><div class="empty">No discharge planning records yet.</div></div>`;
-  }
-  if(key==='teaching-planning'){
-    return `<div class="patient-interface-section"><h3 data-icon="T">Teaching</h3><div class="pi-demo-grid">${patientInterfaceDemographicItem('DPA',htmlSafe(p.dpa_status||'—'))}${patientInterfaceDemographicItem('Social History',htmlSafe(p.social_history||'—'))}${patientInterfaceDemographicItem('Past Medical History',htmlSafe(p.past_medical_history||'—'))}${patientInterfaceDemographicItem('Past Surgical History',htmlSafe(p.past_surgical_history||'—'))}</div></div>`;
-  }
-  return `<div class="patient-interface-section"><div class="empty">Select a section.</div></div>`;
-}
 function setPatientInterfaceSection(key){
   patientInterfaceActiveSection=key;
   renderPatientInterface();
-}
-function renderPatientInterface(){
-  const body=document.getElementById('patient-interface-body');
-  if(!body)return;
-  const p=patientInterfacePatient;
-  if(!p){body.innerHTML='<div class="card"><div class="empty">Select a patient from a register to open the Patient Interface.</div></div>';return;}
-  const sexKind=patientInterfaceSexKind(p);
-  const demoStyle=patientInterfaceDemographicStyle(sexKind);
-  const fullName=`${p.first_name||''} ${p.surname||''}`.trim()||'Unnamed patient';
-  const tabs=[
-    ['episode-history','Episodes',''],
-    ['follow-up-history','Follow-up',''],
-    ['stoma-history','Stoma',''],
-    ['stoma-care','Care',''],
-    ['discharge-letters','Discharge Planning',''],
-    ['teaching-planning','Teaching','']
-  ];
-  body.innerHTML=`
-    <div class="patient-interface-demographics ${sexKind}" style="${demoStyle}">
-      ${patientInterfaceAvatarWithRegistrySymbol(p,sexKind)}
-      <div>
-        <div class="pi-demo-head">
-          <div><div class="pi-demo-title">${htmlSafe(fullName)}</div><div class="pi-demo-sub">ID: ${htmlSafe(p.id_card||'No ID')}</div></div>
-          <button class="btn-add" onclick="openPatientDemographicsCard()">Edit Details</button>
-        </div>
-        <div class="pi-demo-grid">
-          ${patientInterfaceDemographicItem('ID Number',htmlSafe(p.id_card||'—'))}
-          ${patientInterfaceDemographicItem('DOB',patientDateText(p.dob))}
-          ${patientInterfaceDemographicItem('Current Age',htmlSafe(patientCurrentAgeText(p)))}
-          ${patientInterfaceDemographicItem('Phone',htmlSafe(p.phone_number||'—'))}
-          ${patientInterfaceDemographicItem('Locality',htmlSafe(p.locality||'—'))}
-        </div>
-      </div>
-    </div>
-    <div class="patient-interface-nav">
-      ${tabs.map(([key,label,sub])=>`<button type="button" class="nav-tile tile-teal ${patientInterfaceActiveSection===key?'active':''}" onclick="setPatientInterfaceSection('${key}')"><span class="nav-tile-icon">${htmlSafe(label.charAt(0))}</span><span class="nav-tile-text"><span class="nav-tile-label">${htmlSafe(label)}</span><span class="nav-tile-sub">${htmlSafe(sub)}</span></span><span class="nav-tile-arrow">›</span></button>`).join('')}
-    </div>
-    ${renderPatientInterfaceSection()}`;
 }
 async function openPatientInterface(patientId){
   if(!patientId){alert('No patient selected.');return;}
@@ -11167,9 +11072,6 @@ function careEpisodeNumber(p,index=1){
   const idCard=String(p?.id_card||p?.id||'').replace(/\s+/g,'').toUpperCase()||'UNKNOWN';
   return `EP-${idCard}-${String(index||1).padStart(4,'0')}`;
 }
-function followupReviewEpisodeNumber(p,index=0,date=''){
-  return `FU-${recordYearFromDate(date||TODAY)}-${patientRecordSeed(p)}-${String((index||0)+1).padStart(3,'0')}`;
-}
 function careEncounterNumberForPatient(p,index=0){
   const idCard=String(p?.id_card||p?.id||'').replace(/\s+/g,'').toUpperCase()||'UNKNOWN';
   const now=new Date();
@@ -11243,124 +11145,6 @@ function followupEpisodeActionHTML(a){
   if(a.status==='cancelled')return '<span class="patient-record-status closed">Cancelled</span>';
   return '<span class="patient-record-status followup">Planned</span>';
 }
-function followupReviewEpisodeRows(p){
-  const rawRows=followupAppointmentRowsForPatient();
-  if(!rawRows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
-  // Detect sitting-session patient (awaiting surgery)
-  const isSitting=String(p?.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting')||String(p?.patient_status_raw||'').toLowerCase().includes('awaiting');
-  let rows=rawRows;
-  if(isSitting){
-    // Each sitting session is stored as 2 consecutive 30-min slots — keep only the first of each pair
-    const skipKeys=new Set();
-    rows=rawRows.filter(a=>{
-      const t=String(a.appt_slot||'').slice(0,5);
-      const k=a.appt_date+'|'+t;
-      if(skipKeys.has(k))return false;
-      if(/^\d{2}:\d{2}$/.test(t)){
-        const [h,m]=t.split(':').map(Number);
-        const total=h*60+m+30;
-        const next=String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
-        skipKeys.add(a.appt_date+'|'+next);
-        skipKeys.add(a.appt_date+'|'+next+':00');
-      }
-      return true;
-    });
-  }
-  return rows.map((a,idx)=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    const type=isSitting?'Sitting Session':'Follow-up Review';
-    return `<tr><td><span class="patient-record-no">${htmlSafe(followupReviewEpisodeNumber(p,idx,a.appt_date))}</span></td><td>${patientDateText(a.appt_date)}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>${htmlSafe(type)}</td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td><div class="patient-record-actions">${followupEpisodeActionHTML(a)}</div></td></tr>`;
-  }).join('');
-}
-function followupReviewEpisodeTableHTML(p){
-  return `<div class="patient-record-card">
-    <div class="patient-record-head"><div><div class="patient-record-title"><span class="patient-record-icon">FU</span><span>Follow-up Review Episodes</span></div><div class="patient-record-sub">Single-event outpatient reviews. The Seen button opens and records the Follow-up Review.</div></div></div>
-    <div class="patient-record-table-wrap"><table class="patient-record-table"><thead><tr><th>Follow-up No.</th><th>Date</th><th>Time</th><th>Type</th><th>Seen By</th><th>Status</th><th>Action</th></tr></thead><tbody>${followupReviewEpisodeRows(p)}</tbody></table></div>
-  </div>`;
-}
-function patientEpisodeGroupedHistory(p){
-  return `<div class="patient-record-split">${careEpisodeTableHTML(p)}${followupReviewEpisodeTableHTML(p)}</div>`;
-}
-function patientInterfaceAppointmentRows(){
-  const p=patientInterfacePatient||{};
-  const rows=followupAppointmentRowsForPatient();
-  if(!rows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
-  return rows.map((a,idx)=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    return `<tr><td><span class="patient-record-no">${htmlSafe(followupReviewEpisodeNumber(p,idx,a.appt_date))}</span></td><td>${patientDateText(a.appt_date)}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td style="white-space:pre-wrap;max-width:420px;">${htmlSafe(a.notes||'—')}</td><td>${followupEpisodeActionHTML(a)}</td></tr>`;
-  }).join('');
-}
-function renderPatientInterfaceSection(){
-  const p=patientInterfacePatient||{};
-  const key=patientInterfaceActiveSection||'episode-history';
-  if(key==='episode-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="E">Episodes</h3>${patientEpisodeGroupedHistory(p)}</div>`;
-  }
-  if(key==='follow-up-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="F">Follow-up Reviews</h3><div class="kpi-row"><div class="kpi"><div class="k-label">Owner</div><div class="k-value" style="font-size:22px;">${htmlSafe(p.followup_owner||'Common')}</div></div><div class="kpi"><div class="k-label">Due</div><div class="k-value" style="font-size:22px;">${htmlSafe(patientDueText(p))}</div></div><div class="kpi"><div class="k-label">Status</div><div class="k-value" style="font-size:22px;">${htmlSafe(followupStatusText(p.followup_status))}</div></div></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Follow-up No.</th><th>Date</th><th>Time</th><th>Seen By</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead><tbody>${patientInterfaceAppointmentRows()}</tbody></table></div></div>`;
-  }
-  if(key==='stoma-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="S">Stoma</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','stoma_review')">Add Stoma Review</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Stoma Type',patientStomaTypeText(p.stoma_type_summary))}${patientInterfaceDemographicItem('Surgery Date',patientDateText(p.surgery_date))}${patientInterfaceDemographicItem('Age at Stoma Formation',htmlSafe(patientAgeAtFormationText(p)))}${patientInterfaceDemographicItem('Days with Stoma',htmlSafe(patientStomaDays(p)))}${patientInterfaceDemographicItem('Reversal Date',patientDateText(p.reversal_date))}${patientInterfaceDemographicItem('Date of RIP',patientDateText(p.rip_date))}</div></div>`;
-  }
-  if(key==='stoma-care'){
-    const woundBtn=`<button class="btn-add" onclick="openGenericEncounterModal('${p.id}','wound_review')">Add Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','fistula_review')" style="background:#7c3aed;">Add Fistula Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','phone_advice')" style="background:#1a2e4a;">Phone / Advice</button>`;
-    return `<div class="patient-interface-section"><h3 data-icon="C">Care</h3><div class="encounter-toolbar">${woundBtn}</div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'—'))}${patientInterfaceDemographicItem('Operation Performed',patientOperationText(p))}${patientInterfaceDemographicItem('Surgery Type',htmlSafe(p.surgery_type||'—'))}${patientInterfaceDemographicItem('Consultant',htmlSafe(p.consultant||'—'))}</div></div>`;
-  }
-  if(key==='discharge-letters')return `<div class="patient-interface-section"><h3 data-icon="D">Discharge Planning</h3><div class="empty">No discharge planning records yet.</div></div>`;
-  if(key==='teaching-planning')return `<div class="patient-interface-section"><h3 data-icon="T">Teaching</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','teaching_session')">Add Teaching Session</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('DPA',htmlSafe(p.dpa_status||'—'))}${patientInterfaceDemographicItem('Social History',htmlSafe(p.social_history||'—'))}${patientInterfaceDemographicItem('Past Medical History',htmlSafe(p.past_medical_history||'—'))}${patientInterfaceDemographicItem('Past Surgical History',htmlSafe(p.past_surgical_history||'—'))}</div></div>`;
-  return `<div class="patient-interface-section"><div class="empty">Select a section.</div></div>`;
-}
-function renderPatientInterface(){
-  const body=document.getElementById('patient-interface-body');
-  if(!body)return;
-  const p=patientInterfacePatient;
-  if(!p){body.innerHTML='<div class="card"><div class="empty">Select a patient from a register to open the Patient Interface.</div></div>';return;}
-  const sexKind=patientInterfaceSexKind(p);
-  const demoStyle=patientInterfaceDemographicStyle(sexKind);
-  const fullName=`${p.first_name||''} ${p.surname||''}`.trim()||'Unnamed patient';
-  const tabs=[['episode-history','Episodes',''],['follow-up-history','Follow-up',''],['stoma-history','Stoma',''],['stoma-care','Care',''],['discharge-letters','Discharge Planning',''],['teaching-planning','Teaching','']];
-  body.innerHTML=`
-    <div class="patient-interface-demographics ${sexKind}" style="${demoStyle}">
-      ${patientInterfaceAvatarWithRegistrySymbol(p,sexKind)}
-      <div>
-        <div class="pi-demo-head">
-          <div><div class="pi-demo-title">${htmlSafe(fullName)}</div><div class="pi-demo-sub">ID: ${htmlSafe(p.id_card||'No ID')}</div></div>
-          <button class="btn-add" onclick="openPatientDemographicsCard()">Edit Details</button>
-        </div>
-        <div class="pi-demo-grid">
-          ${patientInterfaceDemographicItem('ID Number',htmlSafe(p.id_card||'—'))}
-          ${patientInterfaceDemographicItem('DOB',patientDateText(p.dob))}
-          ${patientInterfaceDemographicItem('Current Age',htmlSafe(patientCurrentAgeText(p)))}
-          ${patientInterfaceDemographicItem('Phone',htmlSafe(p.phone_number||'—'))}
-          ${patientInterfaceDemographicItem('Locality',htmlSafe(p.locality||'—'))}
-        </div>
-      </div>
-    </div>
-    <div class="patient-interface-nav">
-      ${tabs.map(([key,label,sub])=>`<button type="button" class="nav-tile tile-teal ${patientInterfaceActiveSection===key?'active':''}" onclick="setPatientInterfaceSection('${key}')"><span class="nav-tile-icon">${htmlSafe(label.charAt(0))}</span><span class="nav-tile-text"><span class="nav-tile-label">${htmlSafe(label)}</span><span class="nav-tile-sub">${htmlSafe(sub)}</span></span><span class="nav-tile-arrow">›</span></button>`).join('')}
-    </div>
-    ${renderPatientInterfaceSection()}`;
-}
-function renderEpisodePageSection(){
-  const p=episodePagePatient||{};
-  const tab=episodePageActiveTab||'encounters';
-  const showTimeline=isFirstElectiveEmergencyEpisode(p);
-  if(tab==='timeline'){
-    if(!showTimeline)return `<div class="episode-section-card"><h3>Care Encounters</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','general_note')">Add Care Encounter</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','phone_advice')" style="background:#1a2e4a;">Phone / Advice</button></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Encounter No.</th><th>Date</th><th>Type</th><th>Recorded by</th><th>Details</th></tr></thead><tbody>${patientCareEncounterRows(p)}</tbody></table></div></div>`;
-    return `<div class="episode-section-card"><h3>Care Timeline</h3>${renderEpisodeTimeline(p,'episode')}</div>`;
-  }
-  if(tab==='details')return `<div class="episode-section-card"><h3>Care Episode Details</h3><div class="pi-demo-grid">${patientInterfaceDemographicItem('Care Episode Number',htmlSafe(careEpisodeNumber(p)))}${patientInterfaceDemographicItem('Care Episode Type',htmlSafe(episodeTypeText(p)))}${patientInterfaceDemographicItem('Status',htmlSafe(currentEpisodeStatus(p)))}${patientInterfaceDemographicItem('Start Date',patientDateText(careEpisodeStartDate(p)))}</div></div>`;
-  if(tab==='stoma-care')return `<div class="episode-section-card"><h3>Care</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','stoma_review')">Stoma Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','wound_review')" style="background:#7c3aed;">Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','fistula_review')" style="background:#1a2e4a;">Fistula Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','phone_advice')" style="background:#0f3a5f;">Phone / Advice</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Stoma Type',patientStomaTypeText(p.stoma_type_summary))}${patientInterfaceDemographicItem('Surgery Date',patientDateText(p.surgery_date))}${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'—'))}${patientInterfaceDemographicItem('Operation Performed',patientOperationText(p))}${patientInterfaceDemographicItem('Consultant',htmlSafe(p.consultant||'—'))}${patientInterfaceDemographicItem('Surgery Type',htmlSafe(p.surgery_type||'—'))}</div></div>`;
-  if(tab==='encounters')return `<div class="episode-section-card"><h3>Care Encounters</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','general_note')">Add Care Encounter</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','postop_stoma_review')" style="background:#e6a817;">Post-op Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','wound_review')" style="background:#7c3aed;">Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','fistula_review')" style="background:#1a2e4a;">Fistula Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','phone_advice')" style="background:#0f3a5f;">Phone / Advice</button></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Encounter No.</th><th>Date</th><th>Type</th><th>Recorded by</th><th>Details</th></tr></thead><tbody>${patientCareEncounterRows(p)}</tbody></table></div></div>`;
-  if(tab==='postop')return `<div class="episode-section-card"><h3>Post-op Reviews</h3><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','postop_stoma_review')">Add Post-op Stoma Review</button></div>`;
-  if(tab==='teaching')return `<div class="episode-section-card"><h3>Teaching</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','teaching_session')">Add Teaching Session</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Teaching status','Encounter based')}${patientInterfaceDemographicItem('Options','Full / Refresher / Not required')}</div></div>`;
-  if(tab==='discharge')return `<div class="episode-section-card"><h3>Discharge Planning</h3><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','discharge_planning')">Add Discharge Planning</button></div>`;
-  if(tab==='followup')return `<div class="episode-section-card"><h3>Follow-up Plan</h3><div class="pi-demo-grid">${patientInterfaceDemographicItem('Owner',htmlSafe(p.followup_owner||'—'))}${patientInterfaceDemographicItem('Due Month',htmlSafe(patientDueText(p)))}${patientInterfaceDemographicItem('Follow-up Type',htmlSafe(followupTypeText(p.followup_type)))}</div></div>`;
-  if(tab==='close')return `<div class="episode-section-card"><h3>Close Care Episode</h3><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','general_note')">Add Closure Note</button></div>`;
-  return '<div class="episode-section-card"><div class="empty">Select a care episode tab.</div></div>';
-}
-
-
 /* =========================================================
    v47 — Global compatibility guard
    Prevents old encounter export blocks from failing when legacy helpers were removed.
@@ -14479,30 +14263,6 @@ function patientEpisodeGroupedHistory(p){
     </div>
   </div>`;
 }
-function renderPatientInterfaceSection(){
-  const p=patientInterfacePatient||{};
-  const key=patientInterfaceActiveSection||'episode-history';
-  if(key==='episode-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="E">Episodes</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','followup_review')">Add Encounter</button></div>${patientEpisodeGroupedHistory(p)}</div>`;
-  }
-  if(key==='follow-up-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="R">Reviews</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','followup_review')">Add Encounter</button></div><div class="kpi-row"><div class="kpi"><div class="k-label">Owner</div><div class="k-value" style="font-size:22px;">${htmlSafe(p.followup_owner||'Common')}</div></div><div class="kpi"><div class="k-label">Due</div><div class="k-value" style="font-size:22px;">${htmlSafe(patientDueText(p))}</div></div><div class="kpi"><div class="k-label">Status</div><div class="k-value" style="font-size:22px;">${htmlSafe(followupStatusText(p.followup_status))}</div></div></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Date</th><th>Time</th><th>Seen By</th><th>Outcome</th><th>Notes</th></tr></thead><tbody>${patientInterfaceAppointmentRows()}</tbody></table></div></div>`;
-  }
-  if(key==='stoma-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="S">Stoma</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','stoma_review')">Add Stoma Review</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Stoma Type',patientStomaTypeText(p.stoma_type_summary))}${patientInterfaceDemographicItem('Surgery Date',patientDateText(p.surgery_date))}${patientInterfaceDemographicItem('Age at Stoma Formation',htmlSafe(patientAgeAtFormationText(p)))}${patientInterfaceDemographicItem('Days with Stoma',htmlSafe(patientStomaDays(p)))}${patientInterfaceDemographicItem('Reversal Date',patientDateText(p.reversal_date))}${patientInterfaceDemographicItem('Date of RIP',patientDateText(p.rip_date))}</div></div>`;
-  }
-  if(key==='stoma-care'){
-    const woundBtn=`<button class="btn-add" onclick="openGenericEncounterModal('${p.id}','wound_review')">Add Wound Review</button><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','fistula_review')" style="background:#7c3aed;">Add Fistula Review</button>`;
-    return `<div class="patient-interface-section"><h3 data-icon="C">Care</h3><div class="encounter-toolbar">${woundBtn}</div><div class="pi-demo-grid">${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'—'))}${patientInterfaceDemographicItem('Operation Performed',patientOperationText(p))}${patientInterfaceDemographicItem('Surgery Type',htmlSafe(p.surgery_type||'—'))}${patientInterfaceDemographicItem('Consultant',htmlSafe(p.consultant||'—'))}</div><div class="card" style="margin:12px 0 0;background:#fbfcfd;"><div class="card-title">Notes</div><div style="white-space:pre-wrap;font-size:12px;line-height:1.55;color:var(--navy);">${htmlSafe(p.findings||'No notes recorded.')}</div></div></div>`;
-  }
-  if(key==='discharge-letters'){
-    return `<div class="patient-interface-section"><h3 data-icon="D">Discharge Planning</h3><div class="empty">No discharge planning records yet.</div></div>`;
-  }
-  if(key==='teaching-planning'){
-    return `<div class="patient-interface-section"><h3 data-icon="T">Teaching</h3><div class="encounter-toolbar"><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','teaching_session')">Add Teaching Session</button></div><div class="pi-demo-grid">${patientInterfaceDemographicItem('DPA',htmlSafe(p.dpa_status||'—'))}${patientInterfaceDemographicItem('Social History',htmlSafe(p.social_history||'—'))}${patientInterfaceDemographicItem('Past Medical History',htmlSafe(p.past_medical_history||'—'))}${patientInterfaceDemographicItem('Past Surgical History',htmlSafe(p.past_surgical_history||'—'))}</div></div>`;
-  }
-  return `<div class="patient-interface-section"><div class="empty">Select a section.</div></div>`;
-}
 function renderPatientInterface(){
   const body=document.getElementById('patient-interface-body');
   if(!body)return;
@@ -14785,42 +14545,6 @@ let followupSeenReviewReturnPage = 'appointments';
 
 function fuSeenDisplayName(p){return `${p?.first_name||''} ${p?.surname||''}`.trim()||'Patient';}
 function fuSeenSanitiseIdForCode(p){return normaliseIdCard(p?.id_card||patientRecordSeed(p)||'NOID').replace(/[^A-Z0-9]/g,'')||'NOID';}
-function fuSeenEpisodeCode(p,date){return `FU-${fuSeenSanitiseIdForCode(p)}-${String(date||TODAY).slice(0,10)}`;}
-function fuSeenExistingEpisodeCode(a,p){
-  const m=String(a?.notes||'').match(/Follow-up Episode Code:\s*(FU-[^\n]+)/i);
-  return m?m[1].trim():fuSeenEpisodeCode(p,a?.appt_date||TODAY);
-}
-function fuSeenEpisodeReviewDate(a){
-  const m=String(a?.notes||'').match(/Date of review:\s*([^\n]+)/i);
-  return (m?m[1].trim():String(a?.outcome_recorded_at||a?.appt_date||TODAY).slice(0,10));
-}
-function fuSeenSelectedValues(id){
-  const root=document.getElementById(id);
-  if(!root)return [];
-  if(root.tagName==='SELECT')return Array.from(root.selectedOptions||[]).map(o=>o.value).filter(Boolean);
-  return Array.from(root.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.value).filter(Boolean);
-}
-function fuSeenOptionHTML(options,selected=[]){const s=new Set(selected||[]);return (options||[]).map(v=>`<option value="${htmlSafe(v)}" ${s.has(v)?'selected':''}>${htmlSafe(v)}</option>`).join('');}
-function fuSeenMultiPickerHTML(id,label,options,selected=[]){
-  const s=new Set(selected||[]);
-  return `<div class="fg fu-multi-field"><label>${htmlSafe(label)} *</label><div id="${id}" class="fu-multi-picker" role="group" aria-label="${htmlSafe(label)}">${(options||[]).map(v=>`<label class="fu-multi-option"><input type="checkbox" value="${htmlSafe(v)}" ${s.has(v)?'checked':''} onchange="fuSeenUpdateMultiPreview('${id}','${id}-preview')"/>${htmlSafe(v)}</label>`).join('')}</div><div id="${id}-preview" class="fu-selected-preview"><span class="fu-selected-empty">No selection yet — at least one is required.</span></div></div>`;
-}
-function fuSeenUpdateMultiPreview(id,previewId){
-  const values=fuSeenSelectedValues(id);
-  const box=document.getElementById(previewId);
-  if(!box)return;
-  if(!values.length){box.innerHTML='<span class="fu-selected-empty">No selection yet — at least one is required.</span>';return;}
-  box.innerHTML=values.map(v=>`<button type="button" class="fu-selected-pill" title="Remove ${htmlSafe(v)}" onclick="fuSeenRemoveMulti('${id}','${jsSafe(v)}','${previewId}')"><span>${htmlSafe(v)}</span><span class="x">×</span></button>`).join('');
-}
-function fuSeenRemoveMulti(id,value,previewId){
-  const root=document.getElementById(id);
-  if(!root)return;
-  root.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb.value===value)cb.checked=false;});
-  fuSeenUpdateMultiPreview(id,previewId);
-}
-function fuSeenRadioGroupHTML(name,label,options){
-  return `<div class="fg"><label>${htmlSafe(label)} *</label><div class="fu-radio-group">${options.map(v=>`<label class="fu-radio-chip${fuSeenRadioChipClass(v)}"><input type="radio" name="${name}" value="${htmlSafe(v)}" onchange="toggleFuSeenOther('${name}')"/>${htmlSafe(v)}</label>`).join('')}</div><div id="${name}-other-wrap" class="fu-other-box"><textarea id="${name}-other" placeholder="Please describe other ${htmlSafe(label.toLowerCase())}..."></textarea></div></div>`;
-}
 function toggleFuSeenOther(name){
   const selected=document.querySelector(`input[name="${name}"]:checked`)?.value||'';
   const wrap=document.getElementById(`${name}-other-wrap`);
@@ -15010,7 +14734,6 @@ async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
   if(mode==='seen'||targetStatus==='attended')return openFollowupSeenReviewPage(apptId);
   return openOutcomeFollowupModal(apptId,targetStatus||null);
 }
-function followupReviewEpisodeNumber(p,index=0,date=''){return fuSeenEpisodeCode(p,date||TODAY);}
 function fuSeenAppointmentEpisodeCode(a,p){return fuSeenExistingEpisodeCode(a,p);}
 function fuSeenNotesPreview(a){
   const txt=String(a?.notes||'').trim();
@@ -15018,37 +14741,6 @@ function fuSeenNotesPreview(a){
   const report=(txt.match(/Nursing Report:\s*([\s\S]*)$/i)||[])[1];
   if(report)return report.trim()||'—';
   return txt;
-}
-function patientInterfaceAppointmentRows(){
-  const p=patientInterfacePatient||{};
-  const rows=followupAppointmentRowsForPatient?followupAppointmentRowsForPatient():(patientInterfaceAppointments||[]);
-  if(!rows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
-  return rows.map((a,idx)=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    const date=fuSeenEpisodeReviewDate(a);
-    return `<tr><td><span class="patient-record-no">${htmlSafe(fuSeenAppointmentEpisodeCode(a,p))}</span></td><td>${patientDateText(date)}</td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td style="white-space:pre-wrap;max-width:520px;">${htmlSafe(fuSeenNotesPreview(a))}</td><td>${followupEpisodeActionHTML(a)}</td></tr>`;
-  }).join('');
-}
-function followupReviewEpisodeRows(p){
-  const rows=followupAppointmentRowsForPatient();
-  if(!rows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
-  return rows.map((a,idx)=>{
-    const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    const date=fuSeenEpisodeReviewDate(a);
-    return `<tr><td><span class="patient-record-no">${htmlSafe(fuSeenAppointmentEpisodeCode(a,p))}</span></td><td>${patientDateText(date)}</td><td>Follow-up Review</td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td><div class="patient-record-actions">${followupEpisodeActionHTML(a)}</div></td></tr>`;
-  }).join('');
-}
-function followupReviewEpisodeTableHTML(p){
-  return `<div class="patient-record-card"><div class="patient-record-head"><div><div class="patient-record-title"><span class="patient-record-icon">FU</span><span>Follow-up Review Episodes</span></div><div class="patient-record-sub">Each Seen appointment saves as FU-ID Number-Date of review and appears here.</div></div></div><div class="patient-record-table-wrap"><table class="patient-record-table"><thead><tr><th>Follow-up No.</th><th>Date of Review</th><th>Type</th><th>Seen By</th><th>Status</th><th>Action</th></tr></thead><tbody>${followupReviewEpisodeRows(p)}</tbody></table></div></div>`;
-}
-const __v34_prevRenderPatientInterfaceSection = typeof renderPatientInterfaceSection==='function'?renderPatientInterfaceSection:null;
-function renderPatientInterfaceSection(){
-  const p=patientInterfacePatient||{};
-  const key=patientInterfaceActiveSection||'episode-history';
-  if(key==='follow-up-history'){
-    return `<div class="patient-interface-section"><h3 data-icon="F">Follow-up</h3><div class="kpi-row"><div class="kpi"><div class="k-label">Owner</div><div class="k-value" style="font-size:22px;">${htmlSafe(p.followup_owner||'Common')}</div></div><div class="kpi"><div class="k-label">Due</div><div class="k-value" style="font-size:22px;">${htmlSafe(patientDueText(p))}</div></div><div class="kpi"><div class="k-label">Status</div><div class="k-value" style="font-size:22px;">${htmlSafe(followupStatusText(p.followup_status))}</div></div></div><div style="overflow-x:auto;"><table class="dt"><thead><tr><th>Follow-up No.</th><th>Date of Review</th><th>Seen By</th><th>Status</th><th>Nursing Report</th><th>Action</th></tr></thead><tbody>${patientInterfaceAppointmentRows()}</tbody></table></div></div>`;
-  }
-  return `<div class="patient-interface-section"><div class="empty">Select a section.</div></div>`;
 }
 try{Object.assign(window,{openFollowupSeenReviewPage,returnFromFollowupSeenReview,saveFollowupSeenEpisode,openAppointmentReviewCard,toggleFuSeenOther,fuSeenUpdateCodePreview,fuSeenUpdateMultiPreview,fuSeenRemoveMulti,renderPatientInterfaceSection,followupReviewEpisodeNumber,followupReviewEpisodeRows,followupReviewEpisodeTableHTML,patientInterfaceAppointmentRows});}catch(e){console.warn('v34 Follow-up Seen episode exports skipped',e);}
 
@@ -15092,53 +14784,6 @@ function fuSeenFieldEqual(a,b){
   if(Array.isArray(a)||Array.isArray(b))return fuSeenArrayEqual(a,b);
   return String(a??'')===String(b??'');
 }
-function fuSeenEpisodeDataFromRow(row){
-  if(!row)return null;
-  const ed=row.episode_data||{};
-  return {
-    reviewDate:ed.reviewDate||row.review_date||TODAY,
-    firstName:ed.firstName||String(row.patient_name||'').split(' ')[0]||'',
-    surname:ed.surname||String(row.patient_name||'').split(' ').slice(1).join(' ')||'',
-    idcard:ed.idcard||row.patient_id_card||'',
-    phone:ed.phone||row.phone_number||'',
-    stomaColour:ed.stomaColour||row.stoma_colour||'',
-    stomaColourOther:ed.stomaColourOther||row.stoma_colour_other||'',
-    stomaFunction:ed.stomaFunction||row.stoma_function||'',
-    stomaFunctionOther:ed.stomaFunctionOther||row.stoma_function_other||'',
-    peristomalSkin:ed.peristomalSkin||row.peristomal_skin||'',
-    peristomalSkinOther:ed.peristomalSkinOther||row.peristomal_skin_other||'',
-    appliances:ed.appliances||row.appliances_used||[],
-    accessories:ed.accessories||row.accessories_used||[],
-    owner:ed.owner||row.followup_owner||'Common',
-    year:Number(ed.year||row.followup_year)||new Date().getFullYear(),
-    month:Number(ed.month||row.followup_due_month)||new Date().getMonth()+1,
-    followupStatus:ed.followupStatus||row.followup_status||'active',
-    nursingReport:ed.nursingReport||row.nursing_report||''
-  };
-}
-function fuSeenParseNotesFallback(appt,patient){
-  const txt=String(appt?.notes||'');
-  if(!txt.trim())return null;
-  const line=(label)=>{const m=txt.match(new RegExp(label+':\\s*([^\\n]+)','i'));return m?m[1].trim():'';};
-  const splitOther=(v)=>{const parts=String(v||'').split(/\s+—\s+/);return {value:parts[0]||'', other:parts.slice(1).join(' — ')};};
-  const col=splitOther(line('Stoma colour'));
-  const fun=splitOther(line('Function'));
-  const skin=splitOther(line('Peristomal skin'));
-  const report=(txt.match(/Nursing Report:\s*([\s\S]*)$/i)||[])[1]||'';
-  const reviewDate=line('Date of review')||appt?.appt_date||TODAY;
-  return {
-    reviewDate,
-    firstName:patient?.first_name||'',surname:patient?.surname||'',idcard:patient?.id_card||'',phone:patient?.phone_number||'',
-    stomaColour:col.value,stomaColourOther:col.other,stomaFunction:fun.value,stomaFunctionOther:fun.other,peristomalSkin:skin.value,peristomalSkinOther:skin.other,
-    appliances:(line('Appliances used')||'').split(',').map(x=>x.trim()).filter(Boolean),
-    accessories:(line('Accessories')||'').split(',').map(x=>x.trim()).filter(Boolean),
-    owner:line('Follow-up owner')||patient?.followup_owner||'Common',
-    year:Number(patient?.followup_year)||new Date().getFullYear(),
-    month:Number(patient?.followup_due_month)||new Date().getMonth()+1,
-    followupStatus:normaliseFollowupStatus(patient?.followup_status||'active'),
-    nursingReport:report.trim()
-  };
-}
 async function fuSeenLatestEpisodeForAppointment(apptId){
   const {data,error}=await SB.from('followup_seen_episodes')
     .select('*')
@@ -15170,83 +14815,12 @@ function fuSeenSetRadio(name,value,other){
   const otherEl=document.getElementById(`${name}-other`);
   if(otherEl)otherEl.value=other||'';
 }
-function fuSeenSetMulti(id,values){
-  const s=new Set(values||[]);
-  const root=document.getElementById(id);
-  if(root)root.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=s.has(cb.value);});
-  fuSeenUpdateMultiPreview(id,`${id}-preview`);
-}
-function fuSeenCollectFormData(){
-  const year=document.getElementById('of-year')?.value;
-  const monthSelect=document.getElementById('of-month');
-  return {
-    reviewDate:document.getElementById('of-review-date')?.value||TODAY,
-    firstName:document.getElementById('of-fn')?.value.trim()||'',
-    surname:document.getElementById('of-sn')?.value.trim()||'',
-    idcard:normaliseIdCard(document.getElementById('of-idcard')?.value||''),
-    phone:document.getElementById('of-phone')?.value.trim()||'',
-    stomaColour:fuSeenRadioValue('fu-stoma-colour'),
-    stomaColourOther:fuSeenRadioOtherValue('fu-stoma-colour'),
-    stomaFunction:fuSeenRadioValue('fu-function'),
-    stomaFunctionOther:fuSeenRadioOtherValue('fu-function'),
-    peristomalSkin:fuSeenRadioValue('fu-skin'),
-    peristomalSkinOther:fuSeenRadioOtherValue('fu-skin'),
-    appliances:fuSeenSelectedValues('fu-appliances'),
-    accessories:fuSeenSelectedValues('fu-accessories'),
-    owner:document.getElementById('of-owner')?.value||'Common',
-    year:Number(year)||null,
-    month:resolveMonthValueFromSelect(monthSelect,year),
-    rawMonthChoice:String(monthSelect?.value||''),
-    followupStatus:normaliseFollowupStatus(document.getElementById('of-followup-status')?.value||'active'),
-    nursingReport:document.getElementById('fu-nursing-report')?.value.trim()||''
-  };
-}
-function fuSeenChangedFields(original,current){
-  const labels={reviewDate:'Date of review',firstName:'Name',surname:'Surname',idcard:'ID card',phone:'Phone',stomaColour:'Stoma colour',stomaColourOther:'Stoma colour other comment',stomaFunction:'Function',stomaFunctionOther:'Function other comment',peristomalSkin:'Peristomal skin',peristomalSkinOther:'Peristomal skin other comment',appliances:'Appliances used',accessories:'Accessories',owner:'Follow-up owner',year:'Follow-up year',month:'Follow-up month',followupStatus:'Follow-up status',nursingReport:'Nursing report'};
-  const changed={};
-  if(!original)return changed;
-  Object.keys(labels).forEach(k=>{
-    if(!fuSeenFieldEqual(original[k],current[k]))changed[k]={label:labels[k],old:original[k]??'',new:current[k]??''};
-  });
-  return changed;
-}
-function fuSeenApplyChangeHighlights(){
-  const current=fuSeenCollectFormData();
-  const changed=fuSeenChangedFields(followupSeenOriginalData,current);
-  document.querySelectorAll('.fu-changed').forEach(el=>el.classList.remove('fu-changed'));
-  const mark=(id,key)=>{const el=document.getElementById(id); if(el&&changed[key])el.classList.add('fu-changed');};
-  mark('of-review-date','reviewDate');mark('of-idcard','idcard');mark('of-phone','phone');mark('of-fn','firstName');mark('of-sn','surname');mark('of-owner','owner');mark('of-year','year');mark('of-month','month');mark('of-followup-status','followupStatus');mark('fu-nursing-report','nursingReport');
-  [['fu-stoma-colour','stomaColour','stomaColourOther'],['fu-function','stomaFunction','stomaFunctionOther'],['fu-skin','peristomalSkin','peristomalSkinOther']].forEach(([name,k,ok])=>{
-    if(changed[k])document.querySelector(`input[name="${name}"]:checked`)?.closest('.fu-radio-chip')?.classList.add('fu-changed');
-    if(changed[ok])document.getElementById(`${name}-other`)?.classList.add('fu-changed');
-  });
-  if(changed.appliances){document.getElementById('fu-appliances')?.classList.add('fu-changed');document.querySelectorAll('#fu-appliances-preview .fu-selected-pill').forEach(e=>e.classList.add('fu-changed'));}
-  if(changed.accessories){document.getElementById('fu-accessories')?.classList.add('fu-changed');document.querySelectorAll('#fu-accessories-preview .fu-selected-pill').forEach(e=>e.classList.add('fu-changed'));}
-  const note=document.getElementById('fu-change-summary');
-  if(note){
-    const rows=Object.values(changed);
-    note.innerHTML=rows.length?`<div class="fu-change-note">Changes detected and shown in red. Saving will create the next version.</div><ul class="fu-change-list">${rows.map(r=>`<li>${htmlSafe(r.label)}</li>`).join('')}</ul>`:'';
-  }
-  return changed;
-}
 function fuSeenBindChangeTracking(){
   document.querySelectorAll('#page-followup-seen-review input,#page-followup-seen-review select,#page-followup-seen-review textarea').forEach(el=>{
     el.addEventListener('input',fuSeenApplyChangeHighlights);
     el.addEventListener('change',()=>{setTimeout(fuSeenApplyChangeHighlights,0);});
   });
   setTimeout(fuSeenApplyChangeHighlights,0);
-}
-function fuSeenPrefillPage(data){
-  if(!data)return;
-  const setVal=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v??'';};
-  setVal('of-review-date',data.reviewDate||TODAY);setVal('of-idcard',data.idcard||'');setVal('of-phone',data.phone||'');setVal('of-fn',data.firstName||'');setVal('of-sn',data.surname||'');
-  fuSeenSetRadio('fu-stoma-colour',data.stomaColour,data.stomaColourOther);
-  fuSeenSetRadio('fu-function',data.stomaFunction,data.stomaFunctionOther);
-  fuSeenSetRadio('fu-skin',data.peristomalSkin,data.peristomalSkinOther);
-  fuSeenSetMulti('fu-appliances',data.appliances||[]);fuSeenSetMulti('fu-accessories',data.accessories||[]);
-  setVal('fu-nursing-report',data.nursingReport||'');
-  setVal('of-owner',normaliseFollowupOwner(data.owner||'Common'));setVal('of-year',data.year||new Date().getFullYear());setVal('of-month',data.month||'');setVal('of-followup-status',normaliseFollowupStatus(data.followupStatus||'active'));
-  fuSeenUpdateCodePreview();updateOutcomeAvailabilityPreview();
 }
 function fuSeenStatusBadgeText(status){return followupStatusText?followupStatusText(status):String(status||'Active');}
 async function openFollowupSeenReviewPage(apptId,mode='seen',episodeId=''){
@@ -15315,43 +14889,6 @@ async function openFollowupSeenReviewPage(apptId,mode='seen',episodeId=''){
   else {fuSeenUpdateMultiPreview('fu-appliances','fu-appliances-preview');fuSeenUpdateMultiPreview('fu-accessories','fu-accessories-preview');}
   updateOutcomeAvailabilityPreview();
   fuSeenBindChangeTracking();
-}
-function fuSeenEpisodePayloadFromData(data,p,code,base,version,user,changed){
-  return {
-    patient_id:followupSeenReviewContext.patient_id,
-    appointment_id:followupSeenReviewContext.id,
-    /* episode_code is kept for compatibility with earlier SQL table versions. */
-    episode_code:code,
-    base_episode_code:base,
-    version_number:Number(version),
-    full_episode_code:code,
-    review_date:data.reviewDate,
-    patient_id_card:data.idcard,
-    patient_name:`${data.firstName||''} ${data.surname||''}`.trim(),
-    phone_number:data.phone||null,
-    stoma_colour:data.stomaColour,
-    stoma_colour_other:data.stomaColour==='Other'?data.stomaColourOther:null,
-    stoma_function:data.stomaFunction,
-    stoma_function_other:data.stomaFunction==='Other'?data.stomaFunctionOther:null,
-    peristomal_skin:data.peristomalSkin,
-    peristomal_skin_other:data.peristomalSkin==='Other'?data.peristomalSkinOther:null,
-    appliances_used:data.appliances,
-    accessories_used:data.accessories,
-    followup_owner:data.owner,
-    followup_due_month:Number(data.month),
-    followup_year:Number(data.year),
-    followup_status:data.followupStatus,
-    nursing_report:data.nursingReport,
-    episode_data:data,
-    changed_fields:changed||{},
-    edited_from_episode_id:followupSeenOriginalEpisode?.id||null,
-    recorded_by_email:user.email||null,
-    recorded_by_name:user.name||null
-  };
-}
-function fuSeenReviewBlockFromData(data,code,user){
-  const lines=['--- Encounter: Follow-up Review ---',`Follow-up Episode Code: ${code}`,`Date of review: ${data.reviewDate}`,`Version: ${code.includes('-V')?code.split('-V').pop():'Original'}`,`Recorded by: ${user.name||user.email||'Logged-in nurse'}`,`Patient: ${(data.firstName||'')+' '+(data.surname||'')}`,`ID Card: ${data.idcard}`,`Phone: ${data.phone||'—'}`,`Stoma colour: ${data.stomaColour}${data.stomaColour==='Other'&&data.stomaColourOther?' — '+data.stomaColourOther:''}`,`Function: ${data.stomaFunction}${data.stomaFunction==='Other'&&data.stomaFunctionOther?' — '+data.stomaFunctionOther:''}`,`Peristomal skin: ${data.peristomalSkin}${data.peristomalSkin==='Other'&&data.peristomalSkinOther?' — '+data.peristomalSkinOther:''}`,`Appliances used: ${data.appliances.join(', ')}`,`Accessories: ${data.accessories.join(', ')}`,`Follow-up status: ${fuSeenStatusBadgeText(data.followupStatus)}`,`Follow-up owner: ${data.owner}`,`Next follow-up due: ${followupDueLabel(data.month,data.year)}`,'Nursing Report:',data.nursingReport||'—'];
-  return lines.join('\n');
 }
 async function saveFollowupSeenEpisode(){
   const appt=followupSeenReviewContext;
@@ -20239,105 +19776,6 @@ table thead th.v63-name-title,
   window.openPostOperativeDailyReviewFromPatient=(id)=>openDaily(id,{reviewDate:homeDate()});
   window.savePostOperativeEncounter=saveDaily; window.closePostOperativeEpisode=goHome; window.returnFromPostOperativeDailyReview=goHome; window.switchTabSafeHome=goHome; window.openTodaysReviewPage=openToday; window.editTodaysReview=editToday;
   // NEW: Pathway Buckets — derived from episodes, replaces/augments Surgery Watchlist
-  async function renderHomePathwayBuckets(){
-    const home = document.getElementById('page-home');
-    if(!home) return;
-
-    try {
-      // Query all open episodes
-      const {data:episodes, error:epErr} = await SB.from('episodes')
-        .select('*')
-        .eq('status', 'open')
-        .order('created_at', {ascending:false});
-
-      if(epErr) {
-        console.warn('Failed to load episodes:', epErr);
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // Derive buckets
-      const patientsReview = []; // pre-surgery, awaiting siting
-      const surgeryToday = []; // surgery_date = today, pre-op
-      const inpatientsToReview = []; // post-op, not discharged
-
-      for(const ep of (episodes||[])){
-        const patientId = ep.patient_id;
-        const {data:p} = await SB.from('patients').select('*').eq('id', patientId).single();
-
-        if(!p) continue;
-
-        // Classify by pathway stage
-        if(ep.post_op_start) {
-          inpatientsToReview.push({...p, episode:ep, label:'Record Daily Review'});
-        } else if(ep.surgery_date && ep.surgery_date.slice(0,10) === today) {
-          surgeryToday.push({...p, episode:ep, label:'Record Operation'});
-        } else {
-          patientsReview.push({...p, episode:ep, label:'Awaiting Siting Session'});
-        }
-      }
-
-      // Render buckets
-      let bucketsHTML = '';
-
-      // Bucket 1: Patients Review (pre-surgery)
-      if(patientsReview.length > 0){
-        bucketsHTML += `<div class="home-card pathway-bucket">
-          <div class="home-card-head"><span class="home-card-symbol">📋</span><div><div class="home-card-title">Patients Review</div><div class="home-card-sub">Pre-surgery: awaiting siting session</div></div></div>
-          <div class="home-card-body">`;
-        patientsReview.forEach(p=>{
-          bucketsHTML += `<div class="bucket-row"><div><strong>${p.first_name} ${p.surname}</strong> (${p.id_card})</div><button class="btn-add" onclick="openStomaSittingSession('${p.id}')">Stoma Siting Session</button></div>`;
-        });
-        bucketsHTML += `</div></div>`;
-      }
-
-      // Bucket 2: Surgery Today (surgery_date = today, pre-op)
-      if(surgeryToday.length > 0){
-        bucketsHTML += `<div class="home-card pathway-bucket">
-          <div class="home-card-head" style="border-left-color:#f0ad4e"><span class="home-card-symbol" style="background:#f0ad4e">🔪</span><div><div class="home-card-title">Surgery Today</div><div class="home-card-sub">Surgery scheduled for today — record operative details</div></div></div>
-          <div class="home-card-body">`;
-        surgeryToday.forEach(p=>{
-          bucketsHTML += `<div class="bucket-row"><div><strong>${htmlSafe(p.first_name)} ${htmlSafe(p.surname)}</strong> (${htmlSafe(p.id_card)})<br/><small>Surgery: ${p.episode.surgery_date.slice(0,10)}</small></div><button class="btn-add" style="background:#f0ad4e;color:#333;font-weight:700;" onclick="openClinicalOperativeRecord('${p.id}','${p.episode.id}')">📋 Record Operation</button></div>`;
-        });
-        bucketsHTML += `</div></div>`;
-      }
-
-      // Bucket 3: Inpatients (post-op, not discharged)
-      if(inpatientsToReview.length > 0){
-        bucketsHTML += `<div class="home-card pathway-bucket">
-          <div class="home-card-head" style="border-left-color:#ef4444"><span class="home-card-symbol" style="background:#ef4444">🏥</span><div><div class="home-card-title">Inpatients Still to Review</div><div class="home-card-sub">Post-operative patients awaiting discharge</div></div></div>
-          <div class="home-card-body">`;
-        inpatientsToReview.forEach(p=>{
-          const postOpDaysAgo = Math.floor((new Date() - new Date(p.episode.post_op_start)) / (1000*60*60*24));
-          bucketsHTML += `<div class="bucket-row"><div><strong>${p.first_name} ${p.surname}</strong> (${p.id_card})<br/><small>Post-op day ${postOpDaysAgo}</small></div><button class="btn-cancel" style="background:#ef4444" onclick="openDailyReview('${p.id}', '${p.episode.id}')">Record Daily Review</button></div>`;
-        });
-        bucketsHTML += `</div></div>`;
-      }
-
-      if(!bucketsHTML){
-        bucketsHTML = '<div class="home-card"><div class="home-card-body" style="text-align:center;padding:20px;color:#666;">No active episodes. <button class="btn-add" onclick="switchTab(\'admission-route-menu\',document.querySelector(\'[data-tab=&quot;admission-route-menu&quot;]\'))">Add a new patient</button></div></div>';
-      }
-
-      // Inject or update the buckets container
-      let bucketsContainer = document.getElementById('home-pathway-buckets');
-      if(!bucketsContainer){
-        bucketsContainer = document.createElement('div');
-        bucketsContainer.id = 'home-pathway-buckets';
-        // Place buckets after the home-quick-actions, or at top of home if not found
-        const placement = home.querySelector('.home-quick-actions') || home.firstChild;
-        if(placement && placement.insertAdjacentElement){
-          placement.insertAdjacentElement('afterend', bucketsContainer);
-        } else {
-          home.appendChild(bucketsContainer);
-        }
-      }
-      bucketsContainer.innerHTML = bucketsHTML;
-
-    } catch(err){
-      console.error('renderHomePathwayBuckets error:', err);
-    }
-  }
 
   // Suppress renderHomePathwayBuckets — pathway buckets are shown inline in v87 card; the separate container causes a duplicate top card
   const ORIGINAL_loadHomeDashboard = window.loadHomeDashboard;
