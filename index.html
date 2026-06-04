@@ -19986,32 +19986,91 @@ table thead th.v63-name-title,
   /* ============================================================
      1ST POST-OP REVIEW PAGE
   ============================================================ */
+  function fprStomaBlock(idx){
+    const n=idx+1;
+    const removeBtn=idx>0?`<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="fprRemoveStoma(${idx})">Remove</button>`:'';
+    return `<div class="elective-section-card fpr-stoma-block" id="fpr-stoma-block-${idx}" style="border-color:#0d7377;margin-bottom:16px;">
+      <div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma ${n} ${removeBtn}</div>
+      <div class="cor-2col">
+        <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type-${idx}"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
+        <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site-${idx}"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
+      </div>
+      <div class="fg" style="max-width:260px;"><label>Stoma Formed On *</label><input type="date" id="fpr-stoma-formed-${idx}"/></div>
+      <div class="elective-section-label" style="font-size:13px;color:#475569;margin:14px 0 8px;">Stoma Review</div>
+      <div class="cor-2col">
+        <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour-${idx}"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
+        <div class="fg"><label>Peristomal Skin</label><select id="fpr-peristomal-${idx}"><option value="">-- Select --</option><option>Intact</option><option>Mild irritation</option><option>Excoriation</option><option>Ulceration</option></select></div>
+      </div>
+      <div class="cor-2col">
+        <div class="fg"><label>Stoma Output</label><select id="fpr-output-${idx}"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>
+        <div class="fg"><label>Appliance Used</label><input type="text" id="fpr-appliance-${idx}" placeholder="Type and size"/></div>
+      </div>
+      <div class="fg"><label>Stoma Review Notes</label><textarea id="fpr-stoma-notes-${idx}" placeholder="Clinical observations, patient concerns, teaching started" style="height:80px;"></textarea></div>
+    </div>`;
+  }
+  window.fprRemoveStoma=function(idx){
+    const block=document.getElementById('fpr-stoma-block-'+idx);
+    if(block)block.remove();
+    window._fprRenumberStomas();
+  };
+  window._fprRenumberStomas=function(){
+    const blocks=document.querySelectorAll('.fpr-stoma-block');
+    blocks.forEach((b,i)=>{
+      const lbl=b.querySelector('.elective-section-label');
+      if(lbl){
+        const removeBtn=i>0?`<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="fprRemoveStoma(${i})">Remove</button>`:'';
+        lbl.innerHTML=`Stoma ${i+1} ${removeBtn}`;
+      }
+    });
+  };
+  window.fprAddStoma=function(){
+    const container=document.getElementById('fpr-stoma-container');
+    if(!container)return;
+    const idx=container.querySelectorAll('.fpr-stoma-block').length;
+    const div=document.createElement('div');
+    div.innerHTML=fprStomaBlock(idx);
+    container.appendChild(div.firstElementChild);
+  };
+
   window.openFirstPostOpReviewPage=async function(patientId,episodeId){
     try{
-      const [{data:pt}]=await Promise.all([SB.from('patients').select('*').eq('id',patientId).maybeSingle()]);
+      const {data:pt}=await SB.from('patients').select('*').eq('id',patientId).maybeSingle();
       const patient=pt||{};
       const fullName=((patient.first_name||'')+' '+(patient.surname||'')).trim();
       const idCard=patient.id_card||'';
       const surgDate=patient.surgery_date||patient.planned_surgery_date||'';
-      const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
-      const epNum='EP-'+idCard+'-0001';
+      const sexKind=(typeof patientInterfaceSexKind==='function')?patientInterfaceSexKind(patient):'male';
+      const demoStyle=(typeof patientInterfaceDemographicStyle==='function')?patientInterfaceDemographicStyle(sexKind):'';
+      const diItem=(typeof patientInterfaceDemographicItem==='function')?patientInterfaceDemographicItem:function(l,v){return `<div class="pi-demo-item"><span class="pi-demo-lbl">${l}</span><span class="pi-demo-val">${v}</span></div>`;};
       const page=ensurePage('page-first-postop-review');
       page.innerHTML=`<div class="elective-page-shell">
-        <div class="elective-hero">
-          <div class="elective-hero-text">
-            <div class="elective-page-title">1st Post-Operative Review</div>
-            <div class="elective-page-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ID: ${esc(idCard)} &nbsp;·&nbsp; ${esc(epNum)}</div>
-          </div>
+        <div style="display:flex;justify-content:flex-end;padding:12px 0 0;">
           <button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button>
+        </div>
+
+        <div class="patient-interface-demographics stoma-sitting-demographics ${esc(sexKind)}" style="${esc(demoStyle)}">
+          <div class="patient-avatar ${esc(sexKind)}" aria-label="${esc(sexKind)} patient silhouette"></div>
+          <div>
+            <div class="pi-demo-head">
+              <div>
+                <div class="pi-demo-title">1st Post-Operative Review</div>
+                <div class="pi-demo-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ${esc(idCard||'No ID')}</div>
+              </div>
+            </div>
+            <div class="pi-demo-grid">
+              ${diItem('ID Number',esc(patient.id_card||'—'))}
+              ${diItem('Surname',esc(patient.surname||'—'))}
+              ${diItem('First Name',esc(patient.first_name||'—'))}
+              ${diItem('Date of Birth',esc(patient.dob||patient.date_of_birth||'—'))}
+              ${diItem('Locality',esc(patient.locality||'—'))}
+              ${diItem('Phone',esc(patient.phone_number||'—'))}
+            </div>
+          </div>
         </div>
 
         <div class="elective-section-card">
           <div class="elective-section-label">Clinical Operative Record</div>
-          <div class="fg"><label>Operation Performed *</label><input type="text" id="fpr-operation" placeholder="e.g., Ileostomy formation, Colostomy"/></div>
-          <div class="cor-2col">
-            <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
-            <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
-          </div>
+          <div class="fg"><label>Operation Performed *</label><textarea id="fpr-operation" placeholder="e.g., Ileostomy formation, Colostomy — describe the procedure in full" style="height:90px;"></textarea></div>
           <div class="cor-2col">
             <div class="fg"><label>Surgeon Name</label><input type="text" id="fpr-surgeon" placeholder="Operating surgeon"/></div>
             <div class="fg"><label>Consultant</label><input type="text" id="fpr-consultant" placeholder="Responsible consultant"/></div>
@@ -20021,22 +20080,10 @@ table thead th.v63-name-title,
           <div class="fg"><label>Complications (if any)</label><textarea id="fpr-complications" placeholder="Any post-operative complications or concerns" style="height:60px;"></textarea></div>
         </div>
 
-        <div class="elective-section-card">
-          <div class="elective-section-label">Stoma Review</div>
-          <div class="cor-2col">
-            <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
-            <div class="fg"><label>Peristomal Skin</label><select id="fpr-peristomal"><option value="">-- Select --</option><option>Intact</option><option>Mild irritation</option><option>Excoriation</option><option>Ulceration</option></select></div>
-          </div>
-          <div class="cor-2col">
-            <div class="fg"><label>Stoma Output</label><select id="fpr-output"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>
-            <div class="fg"><label>Appliance Used</label><input type="text" id="fpr-appliance" placeholder="Type and size"/></div>
-          </div>
-          <div class="fg"><label>Stoma Review Notes</label><textarea id="fpr-stoma-notes" placeholder="Clinical observations, patient concerns, teaching started" style="height:80px;"></textarea></div>
-        </div>
+        <div id="fpr-stoma-container">${fprStomaBlock(0)}</div>
 
-        <div class="elective-section-card" style="background:#fffbeb;border-color:#fde68a;">
-          <div class="elective-section-label" style="color:#92400e;">Post-Operative Planning</div>
-          <div class="fg" style="max-width:240px;"><label>Post-Op Day 1 Date *</label><input type="date" id="fpr-postop-start" value="${esc(tomorrow)}"/><div style="font-size:11px;color:#666;margin-top:3px;">Date when daily reviews begin.</div></div>
+        <div style="margin-bottom:20px;">
+          <button type="button" onclick="fprAddStoma()" style="background:#0d7377;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button>
         </div>
 
         <div id="fpr-note" style="padding:10px;border-radius:6px;margin:12px 0;font-size:13px;display:none;"></div>
@@ -20054,29 +20101,41 @@ table thead th.v63-name-title,
     const note=el('fpr-note');
     const showNote=(msg,ok)=>{if(note){note.style.display='block';note.style.background=ok?'#e8f4f8':'#fef2f2';note.style.color=ok?'#0d7377':'#b91c1c';note.textContent=msg;}};
     const operation=(el('fpr-operation')?.value||'').trim();
-    const stomaType=(el('fpr-stoma-type')?.value||'').trim();
-    const stomaSite=(el('fpr-stoma-site')?.value||'').trim();
     const surgDate=(el('fpr-surgery-date')?.value||'').trim();
-    const postOpStart=(el('fpr-postop-start')?.value||'').trim();
     if(!operation){showNote('Please enter Operation Performed.');return;}
-    if(!stomaType){showNote('Please select Stoma Type.');return;}
-    if(!stomaSite){showNote('Please select Stoma Site.');return;}
     if(!surgDate){showNote('Please enter Date of Operation.');return;}
-    if(!postOpStart){showNote('Please enter Post-Op Day 1 Date.');return;}
     const surgeon=(el('fpr-surgeon')?.value||'').trim();
     const consultant=(el('fpr-consultant')?.value||'').trim();
     const findings=(el('fpr-findings')?.value||'').trim();
     const complications=(el('fpr-complications')?.value||'').trim();
-    const stomaColour=(el('fpr-stoma-colour')?.value||'').trim();
-    const peristomal=(el('fpr-peristomal')?.value||'').trim();
-    const output=(el('fpr-output')?.value||'').trim();
-    const appliance=(el('fpr-appliance')?.value||'').trim();
-    const stomaNotes=(el('fpr-stoma-notes')?.value||'').trim();
+    const stomaBlocks=document.querySelectorAll('.fpr-stoma-block');
+    const stomas=[];
+    for(let i=0;i<stomaBlocks.length;i++){
+      const b=stomaBlocks[i];
+      const bid=b.id.replace('fpr-stoma-block-','');
+      const sType=(document.getElementById('fpr-stoma-type-'+bid)?.value||'').trim();
+      const sSite=(document.getElementById('fpr-stoma-site-'+bid)?.value||'').trim();
+      const sFormed=(document.getElementById('fpr-stoma-formed-'+bid)?.value||'').trim();
+      if(!sType){showNote(`Please select Stoma Type for Stoma ${i+1}.`);return;}
+      if(!sSite){showNote(`Please select Stoma Site for Stoma ${i+1}.`);return;}
+      if(!sFormed){showNote(`Please enter Stoma Formed On date for Stoma ${i+1}.`);return;}
+      stomas.push({
+        stoma_number:i+1,
+        stoma_type:sType,stoma_site:sSite,stoma_formed_on:sFormed,
+        stoma_colour:(document.getElementById('fpr-stoma-colour-'+bid)?.value||'').trim(),
+        peristomal_skin:(document.getElementById('fpr-peristomal-'+bid)?.value||'').trim(),
+        stoma_output:(document.getElementById('fpr-output-'+bid)?.value||'').trim(),
+        appliance:(document.getElementById('fpr-appliance-'+bid)?.value||'').trim(),
+        stoma_notes:(document.getElementById('fpr-stoma-notes-'+bid)?.value||'').trim()
+      });
+    }
+    if(stomas.length===0){showNote('At least one stoma is required.');return;}
+    const stoma_type_summary=stomas.map(s=>s.stoma_type+(s.stoma_site?' at '+s.stoma_site:'')).join(', ');
     showNote('Saving...', true);
     try{
       const{error:pErr}=await SB.from('patients').update({
         operation_performed:operation,
-        stoma_type_summary:stomaType+' at '+stomaSite,
+        stoma_type_summary,
         consultant,surgery_date:surgDate,
         inpatient_type:'actual_inpatient',
         patient_status_raw:'Inpatient',
@@ -20084,7 +20143,7 @@ table thead th.v63-name-title,
       }).eq('id',patientId);
       if(pErr)throw new Error(pErr.message);
       try{await SB.from('episodes').update({status:'in_progress'}).eq('id',episodeId);}catch(_){}
-      const stepData={operation,stoma_type:stomaType,stoma_site:stomaSite,surgeon,consultant,surgery_date:surgDate,findings,complications,stoma_colour:stomaColour,peristomal_skin:peristomal,stoma_output:output,appliance,stoma_notes:stomaNotes,recorded_date:new Date().toISOString().slice(0,10)};
+      const stepData={operation,surgeon,consultant,surgery_date:surgDate,findings,complications,stomas,recorded_date:new Date().toISOString().slice(0,10)};
       await Promise.all([
         SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4).catch(()=>{}),
         SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5).catch(()=>{})
