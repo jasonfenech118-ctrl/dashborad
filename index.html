@@ -13886,7 +13886,7 @@ function continueEpisodeButton(p){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
     const title=op?`Surgery date: ${patientDateText(op)}`:'Surgery date not yet recorded';
-    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">1st Post-Op Review</button>`;
+    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">Post-Op Clinical Assessment</button>`;
   }
   const cls=continueEpisodeUrgencyClass(p);
   const title=p?.planned_surgery_date?`Planned sitting: ${patientDateText(p.planned_surgery_date)}`:'Sitting date not recorded';
@@ -19691,7 +19691,7 @@ table thead th.v63-name-title,
       }).map(p=>{
         const sd=surgDateOf(p);
         const meta='ID '+esc(p.id_card||'—')+(sd?' · Surgery: '+esc(dText(sd)):' · No surgery date recorded');
-        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">1st Post-Op Review</button></div>':'';
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">Post-Op Clinical Assessment</button></div>':'';
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+urgencyBadge(sd)+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
       });
 
@@ -19984,7 +19984,7 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open 1st Post-Op Review</button></div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Post-Op Clinical Assessment</button></div>';
         }
         return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
@@ -20151,7 +20151,7 @@ table thead th.v63-name-title,
           <div>
             <div class="pi-demo-head">
               <div>
-                <div class="pi-demo-title">1st Post-Operative Review</div>
+                <div class="pi-demo-title">Post-Op Clinical Assessment</div>
                 <div class="pi-demo-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ${esc(idCard||'No ID')}</div>
               </div>
             </div>
@@ -20191,7 +20191,7 @@ table thead th.v63-name-title,
         </div>
       </div>`;
       showElectivePage(page);
-    }catch(e){alert('Could not open 1st Post-Op Review: '+(e?.message||e));}
+    }catch(e){alert('Could not open Post-Op Clinical Assessment: '+(e?.message||e));}
   };
   window.backToInpatients=backToInpatients;
 
@@ -20332,7 +20332,7 @@ table thead th.v63-name-title,
     }catch(e){alert('Error closing episode: '+(e?.message||e));}
   };
 
-  // Re-open Post-Op Centre from Inpatients "Open 1st Post-Op Review" button for already-operated patients
+  // Re-open Post-Op Centre from Inpatients "Open Post-Op Clinical Assessment" button for already-operated patients
   const _prevOpenClinicalRecord=window.openClinicalRecordForPatient;
   window.openClinicalRecordForPatient=async function(patientId){
     try{
