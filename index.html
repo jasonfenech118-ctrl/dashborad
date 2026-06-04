@@ -14120,15 +14120,11 @@ async function saveStomaSittingSession(options={}){
       await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',ep.id).eq('step_no',4);
     }
   }catch(e){console.warn('episode update failed',e);}
-  if(note){note.style.color='var(--green)';note.textContent='Sitting session saved. Opening 1st Post-Op Review...';}
-  // Navigate to 1st Post-Op Review page
-  setTimeout(async ()=>{
-    try{
-      const{data:ep}=await SB.from('episodes').select('id').eq('patient_id',p.id).eq('status','open').maybeSingle();
-      const eid=ep?.id||null;
-      if(eid&&typeof openFirstPostOpReviewPage==='function'){openFirstPostOpReviewPage(p.id,eid);}
-      else{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
-    }catch(e){switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
+  if(note){note.style.color='var(--green)';note.textContent='Sitting session saved successfully.';}
+  // Return to home dashboard
+  setTimeout(()=>{
+    try{switchTab('home',document.querySelector('[data-tab="home"]'));}
+    catch(e){if(typeof loadHomeDashboard==='function')loadHomeDashboard();}
   },800);
 }
 
