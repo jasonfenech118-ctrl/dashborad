@@ -7387,35 +7387,33 @@ async function renderSitingSlotGrid(){
       });
     }
     // Build the HTML table
-    let html=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="background:#0d7377;color:#fff;padding:8px;text-align:left;border:1px solid #ddd;">Time</th>`;
+    let html=`<table class="ss-slot-table"><thead><tr><th>Time</th>`;
     columns.forEach(c=>{
-      const tag=c.type==='ot'?' (OT)':c.type==='til-in'?' (TIL)':c.type==='common'?' (Common)':'';
-      html+=`<th style="background:#0d7377;color:#fff;padding:8px;text-align:left;border:1px solid #ddd;">${htmlSafe(c.name)}${tag}</th>`;
+      const label=c.type==='common'?'Common':c.name+(c.type==='ot'?' · OT':c.type==='til-in'?' · TIL':'');
+      html+=`<th>${htmlSafe(label)}</th>`;
     });
     html+=`</tr></thead><tbody>`;
     slots.forEach((slot)=>{
       const pair=slotPairs[slot];
       const endTime=pair[1]==='09:00'?'09:30':pair[1]==='10:00'?'10:30':pair[1]==='11:00'?'11:30':pair[1]==='12:00'?'12:30':'13:30';
-      html+=`<tr><td style="padding:8px;border:1px solid #ddd;font-weight:600;background:#f9f9f9;">${slot} – ${endTime}</td>`;
+      html+=`<tr><td class="ss-time-cell">${slot}<br><span style="font-size:10px;font-weight:400;color:#64748b;">– ${endTime}</span></td>`;
       columns.forEach(c=>{
-        // Check BOTH sub-slots
         const bookedA=isBooked(c.id,pair[0]);
         const bookedB=isBooked(c.id,pair[1]);
         if(bookedA||bookedB){
-          // Identify who's booked
           const bk=bookedA||bookedB;
           const pName=bk.patients?`${bk.patients.first_name||''} ${bk.patients.surname||''}`.trim():'Booked';
-          html+=`<td style="padding:8px;border:1px solid #ddd;background:#e5e7eb;color:#6b7280;font-style:italic;text-align:center;">${htmlSafe(pName||'Booked')}</td>`;
+          html+=`<td class="ss-cell-booked"><span class="ss-booked-name">${htmlSafe(pName||'Booked')}</span></td>`;
         }else{
           const colId=c.id===null?'null':c.id;
           const colName=String(c.name).replace(/'/g,"\\'");
           const colType=c.type;
-          html+=`<td style="padding:0;border:1px solid #ddd;background:#d1fae5;text-align:center;"><button onclick="confirmSitingSessionBooking('${slot}','${pair[1]}','${colId}','${colName}','${colType}')" style="background:#10b981;color:#fff;border:none;padding:10px;cursor:pointer;font-weight:600;width:100%;">+ Book</button></td>`;
+          html+=`<td class="ss-cell-avail"><button class="ss-book-btn" onclick="confirmSitingSessionBooking('${slot}','${pair[1]}','${colId}','${colName}','${colType}')">+ Book</button></td>`;
         }
       });
       html+=`</tr>`;
     });
-    html+=`</tbody></table><div style="margin-top:10px;font-size:11px;color:#666;"><span style="display:inline-block;width:12px;height:12px;background:#d1fae5;border:1px solid #ddd;margin-right:4px;vertical-align:middle;"></span>Available (1 hour) · <span style="display:inline-block;width:12px;height:12px;background:#e5e7eb;border:1px solid #ddd;margin-right:4px;margin-left:10px;vertical-align:middle;"></span>Booked or partially booked</div>`;
+    html+=`</tbody></table><div class="ss-legend"><span class="ss-legend-dot avail"></span>Available (1 hour) &nbsp;·&nbsp; <span class="ss-legend-dot booked"></span>Booked</div>`;
     container.innerHTML=html;
   }catch(err){
     console.error('renderSitingSlotGrid error',err);
@@ -20481,6 +20479,26 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /fix/inpatient-registry-awaiting-sitting-button -->
+
+<style id="ss-slot-table-styles">
+.ss-slot-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;}
+.ss-slot-table thead tr th{background:#0d7377;color:#fff;padding:10px 8px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.3px;border-right:1px solid rgba(255,255,255,.15);}
+.ss-slot-table thead tr th:first-child{text-align:left;padding-left:12px;}
+.ss-slot-table thead tr th:last-child{border-right:none;}
+.ss-slot-table tbody tr:nth-child(odd){background:#fafafa;}
+.ss-slot-table tbody tr:nth-child(even){background:#fff;}
+.ss-slot-table tbody tr:hover{background:#f0fafa;}
+.ss-time-cell{padding:10px 12px;font-weight:700;font-size:12px;color:#1a2e4a;white-space:nowrap;border-right:1px solid #e2e8f0;min-width:64px;}
+.ss-cell-avail{padding:4px;text-align:center;border-right:1px solid #e2e8f0;}
+.ss-cell-booked{padding:6px 8px;text-align:center;background:#f1f5f9;border-right:1px solid #e2e8f0;}
+.ss-book-btn{background:#0d7377;color:#fff;border:none;border-radius:7px;padding:9px 6px;width:100%;font-weight:800;font-size:12px;cursor:pointer;transition:filter .15s;}
+.ss-book-btn:hover{filter:brightness(1.1);}
+.ss-booked-name{font-size:11px;color:#64748b;font-style:italic;font-weight:600;}
+.ss-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:#64748b;}
+.ss-legend-dot{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid #ddd;}
+.ss-legend-dot.avail{background:#0d7377;}
+.ss-legend-dot.booked{background:#e5e7eb;}
+</style>
 
 <!-- elective-pathway-postop-pages -->
 <style>
