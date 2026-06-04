@@ -11359,19 +11359,6 @@ function renderEpisodePageSection(){
   if(tab==='close')return `<div class="episode-section-card"><h3>Close Care Episode</h3><button class="btn-add" onclick="openGenericEncounterModal('${p.id}','general_note')">Add Closure Note</button></div>`;
   return '<div class="episode-section-card"><div class="empty">Select a care episode tab.</div></div>';
 }
-function renderEpisodePage(){
-  const body=document.getElementById('episode-page-body');
-  const p=episodePagePatient;
-  if(!body)return;
-  if(!p){body.innerHTML='<div class="card"><div class="empty">Open a care episode from Patient Interface.</div></div>';return;}
-  const fullName=`${p.first_name||''} ${p.surname||''}`.trim()||'Patient';
-  const showTimeline=isFirstElectiveEmergencyEpisode(p);
-  if(!showTimeline && episodePageActiveTab==='timeline')episodePageActiveTab='encounters';
-  const tabs=(showTimeline?
-    [['timeline','Timeline',''],['details','Details',''],['stoma-care','Care',''],['encounters','Encounters',''],['postop','Post-op',''],['teaching','Teaching',''],['discharge','Discharge',''],['followup','Follow-up Plan',''],['close','Close','']]:
-    [['details','Details',''],['stoma-care','Care',''],['encounters','Encounters',''],['teaching','Teaching',''],['discharge','Discharge',''],['followup','Follow-up Plan',''],['close','Close','']]);
-  body.innerHTML=`<div class="episode-page-header"><div class="patient-episode-head"><div><div class="patient-episode-title">${htmlSafe(careEpisodeNumber(p))} · ${htmlSafe(episodeTypeText(p))}</div><div class="patient-episode-sub">${htmlSafe(fullName)} · ${htmlSafe(p.id_card||'No ID')}</div></div><span class="episode-status-pill ${currentEpisodeStatus(p).toLowerCase().includes('closed')?'closed':''}">${htmlSafe(currentEpisodeStatus(p))}</span></div><div class="episode-header-grid">${patientInterfaceDemographicItem('Care episode start',patientDateText(careEpisodeStartDate(p)))}${patientInterfaceDemographicItem('Current stoma',patientStomaTypeText(p.stoma_type_summary))}${patientInterfaceDemographicItem('Follow-up owner',htmlSafe(p.followup_owner||'—'))}${patientInterfaceDemographicItem('Current due',htmlSafe(patientDueText(p)))}</div></div><div class="episode-nav">${tabs.map(([key,label,sub])=>`<button type="button" class="nav-tile tile-teal ${episodePageActiveTab===key?'active':''}" onclick="setEpisodePageTab('${key}')"><span class="nav-tile-icon">${htmlSafe(label.charAt(0))}</span><span class="nav-tile-text"><span class="nav-tile-label">${htmlSafe(label)}</span><span class="nav-tile-sub">${htmlSafe(sub)}</span></span><span class="nav-tile-arrow">›</span></button>`).join('')}</div>${renderEpisodePageSection()}`;
-}
 
 
 /* =========================================================
@@ -11449,16 +11436,6 @@ async function saveGenericEncounter(){
 
 try{Object.assign(window,{careEpisodeNumber,followupReviewEpisodeNumber,openGenericEncounterModal,setEncounterType,saveGenericEncounter,openAppointmentReviewCard,renderEpisodeTimeline,handleEpisodeTimelineAction,renderPatientInterfaceSection,renderPatientInterface,renderEpisodePageSection,renderEpisodePage});}catch(e){console.warn('Care/follow-up episode split globals skipped',e);}
 
-function clinicAppointmentActionsHTML(a,closeAfter=false){
-  const closeCode=closeAfter?'closeModal();':'';
-  return `<div class="clinic-list-actions">
-    ${a.status!=='attended'?`<button class="ncb-btn ncb-attended" title="Seen" onclick="setOutcome('${a.id}','attended');${closeCode}">✅ Seen</button>`:''}
-    ${a.status!=='did_not_attend'?`<button class="ncb-btn ncb-dna" title="DNTU" onclick="setOutcome('${a.id}','did_not_attend');${closeCode}">DNTU</button>`:''}
-    ${a.status!=='cancelled'?`<button class="ncb-btn ncb-cancel" title="Cancel Appointment" onclick="setOutcome('${a.id}','cancelled');${closeCode}">Cancel Appointment</button>`:''}
-    <button class="ncb-btn" title="Edit" onclick="editAppointment('${a.id}')" style="background:#e8f5f4;color:var(--teal);">Edit</button>
-    <button class="ncb-btn ncb-del" title="Delete" onclick="delFromAudit('${a.id}');${closeCode}">🗑</button>
-  </div>`;
-}
 function clinicAppointmentCardHTML(a,closeAfter=false,showActions=true){
   const patientName=clinicPatientName(a);
   const metaHtml=showActions
