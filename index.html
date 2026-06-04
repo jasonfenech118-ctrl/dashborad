@@ -13873,22 +13873,23 @@ function stomaSittingCompleted(p){
   return f.includes('stoma sitting session')||raw.includes('sitting session complete')||raw.includes('awaiting surgery');
 }
 function postOperativeEncounterStarted(p){
+  if(String(p?.inpatient_type||'').toLowerCase()==='actual_inpatient')return true;
   const f=String(p?.findings||'').toLowerCase();
   const raw=String(p?.patient_status_raw||'').toLowerCase();
   return f.includes('post operative daily review')||f.includes('post-operative daily review')||raw.includes('post operative encounter')||raw.includes('postop');
 }
 function continueEpisodeButton(p){
   if(postOperativeEncounterStarted(p)){
-    return `<button class="ncb-btn add-encounter-button" title="Add a fresh post-operative encounter" onclick="openPostOperativeDailyReviewFromPatient('${p.id}',true)">Add Encounter</button>`;
+    return `<button class="ncb-btn add-encounter-button" onclick="openPostOpCentreForPatient('${p.id}')">Open Post-Op Centre</button>`;
   }
   if(stomaSittingCompleted(p)){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
-    const title=op?`Operation date: ${patientDateText(op)}`:'Operation date not recorded yet';
-    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openPostOperativeDailyReviewFromPatient('${p.id}',true)">Awaiting Surgery</button>`;
+    const title=op?`Surgery date: ${patientDateText(op)}`:'Surgery date not yet recorded';
+    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">1st Post-Op Review</button>`;
   }
   const cls=continueEpisodeUrgencyClass(p);
-  const title=p?.planned_surgery_date?`Planned sitting session: ${patientDateText(p.planned_surgery_date)}`:'Planned sitting session date not recorded';
+  const title=p?.planned_surgery_date?`Planned sitting: ${patientDateText(p.planned_surgery_date)}`:'Sitting date not recorded';
   return `<button class="ncb-btn continue-episode-button ${cls}" title="${htmlSafe(title)}" onclick="openStomaSittingSession('${p.id}')">Open Sitting Session</button>`;
 }
 function patientEpisodeAction(p){
@@ -14104,18 +14105,18 @@ async function saveStomaSittingSession(options={}){
   };
   const{error:pErr}=await SB.from('patients').update(patientPayload).eq('id',p.id);
   if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not save session: '+(pErr.message||'Unknown');}return;}
-  // 2. Update the associated episode: set surgery_date, mark step 3 complete, step 4 in_progress
+  // 2. Mark step 3 (siting_session) complete with STO encounter code, step 4 in_progress
+  const _stoIdCard=String(p.id_card||'').replace(/\s+/g,'').toUpperCase()||'NOID';
   try{
     const{data:ep}=await SB.from('episodes').select('id').eq('patient_id',p.id).eq('status','open').maybeSingle();
     if(ep?.id){
-      await SB.from('episodes').update({surgery_date:surgeryDate}).eq('id',ep.id);
-      // Mark step 3 (siting_session) as complete
+      let sitCount=1;
+      try{const sc=await SB.from('episode_steps').select('id').eq('episode_id',ep.id).eq('step_key','siting_session').eq('status','complete');if(sc.data)sitCount=(sc.data.length||0)+1;}catch(_){}
+      const stoCode='STO-'+_stoIdCard+'-'+String(sitCount).padStart(3,'0');
       await SB.from('episode_steps').update({
         status:'complete',
-        data:{checklist:data.items,signature:data.signature,session_date:data.date,surgery_date:surgeryDate},
-        completed_at:new Date().toISOString()
+        data:{checklist:data.items,signature:data.signature,session_date:data.date,surgery_date:surgeryDate,encounter_code:stoCode}
       }).eq('episode_id',ep.id).eq('step_no',3);
-      // Mark step 4 (clinical_operative) as in_progress
       await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',ep.id).eq('step_no',4);
     }
   }catch(e){console.warn('episode update failed',e);}
@@ -14468,10 +14469,12 @@ function updateGenericEncounterAvailabilityPreview(){
 }
 
 async function openGenericEncounterModal(patientId,type='followup_review',appointmentId=''){
+  if(type==='discharge_planning'){if(typeof openDischargePlanningPage==='function')openDischargePlanningPage(patientId);else alert('Discharge planning page not loaded.');return;}
+  if(type==='teaching_session'){if(typeof openTeachingSessionPage==='function')openTeachingSessionPage(patientId);else alert('Teaching session page not loaded.');return;}
+  if(type==='stoma_review'||type==='appliance_accessories'){if(typeof openAppliancePage==='function')openAppliancePage(patientId);else alert('Appliance page not loaded.');return;}
   if(type!=='followup_review'){
-    if(__v33B_previousOpenGenericEncounterModal)return __v33B_previousOpenGenericEncounterModal(patientId,type,appointmentId);
-    alert('Encounter card is not available.');
-    return;
+    if(__v33B_previousOpenGenericEncounterModal&&__v33B_previousOpenGenericEncounterModal!==openGenericEncounterModal)return __v33B_previousOpenGenericEncounterModal(patientId,type,appointmentId);
+    alert('Encounter type not supported: '+type);return;
   }
   if(!patientId){alert('No patient selected.');return;}
   let p=(patientInterfacePatient&&patientInterfacePatient.id===patientId)?patientInterfacePatient:(episodePagePatient&&episodePagePatient.id===patientId)?episodePagePatient:null;
@@ -14537,6 +14540,8 @@ try{Object.assign(window,{openGenericEncounterModal,refreshGenericEncounterMonth
    ========================================================= */
 const FU_SEEN_APPLIANCE_OPTIONS = ["Closed Bag 45mm", "Closed Bag 57mm", "Closed Bag 70mm", "Deep Convexity 45/22mm", "Deep Convexity 57/41mm", "Deep Convexity Flange 45/25mm", "Deep Convexity Flange 45/28mm", "Deep Convexity Flange 45/32mm", "Deep Convexity Flange 45/35mm", "Deep Convexity Flange 57/38mm", "Drainable Bag 100mm", "Drainable Bag 45mm", "Drainable Bag 57mm", "Drainable Bag 70mm", "Esteem", "Hollister 24730 – Urostomy Bag 45mm", "Hollister 25300 – Convex Floating Flange 55mm", "Hollister 25760 – Drainable Bag 55mm", "Hollister 27300 – Convex Floating Flange 70mm", "Hollister 27420 – Closed Bag 70mm", "Hollister 27830 – Urostomy Bag 70mm", "Hollister 29500 – Flat One-Piece Urostomy Bag 15-55mm", "Hollister 34200 – Flat Floating Flange 45mm", "Lentell 201102M (70mm)", "Lentell 201108-1 (70mm trans)", "Lentell 201142 (90mm)", "Lentell 2011446M", "Lentell 201148 (80mm)", "Lentell 201156-1 (100mm)", "Little Ones", "Microporous Flange 45mm", "Microporous Flange 57mm", "Microporous Flange 70mm", "Salts NAL1390", "Salts NDAL13", "Salts XND1352", "Salts XNL1352", "Stomadress", "Stomahesive Flange 100mm", "Stomahesive Flange 45mm", "Stomahesive Flange 57mm", "Stomahesive Flange 70mm", "Urostomy Bag 45mm", "Urostomy Bag 57mm", "Urostomy Bag 70mm", "Welland 201148", "Welland MHCS513", "Welland XFM535", "Welland XMDS513", "Welland XMHCS513", "Welland XMHDX213", "Welland XMHNDS513", "Welland XNHNDL913", "Welland XPOP513"];
 const FU_SEEN_ACCESSORY_OPTIONS = ["Deodorant", "Filler Paste", "Flange Extenders", "Gelling Agents", "Hydrocolloid 20x20", "Hydrocolloid 5x20", "Powder", "Protective Wipes", "Stoma Belt", "Stoma Seals", "None"];
+window.FU_SEEN_APPLIANCE_OPTIONS=FU_SEEN_APPLIANCE_OPTIONS;
+window.FU_SEEN_ACCESSORY_OPTIONS=FU_SEEN_ACCESSORY_OPTIONS;
 const FU_SEEN_STOMA_COLOUR_OPTIONS = ['Pink / healthy','Pale','Bruised','Flush / retracted','Other'];
 const FU_SEEN_FUNCTION_OPTIONS = ['Nil output at time of visit','Green / bilious','Liquid stool','Blood','Semi-formed / formed','Other'];
 const FU_SEEN_SKIN_OPTIONS = ['Healthy / intact','Red','Broken / excoriated','Other'];
@@ -20098,17 +20103,17 @@ table thead th.v63-name-title,
           <div class="poc-card-title">Daily Review</div>
           <div class="poc-card-sub">Record today's post-operative daily review</div>
         </div>
-        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','discharge_planning')">
+        <div class="poc-card" onclick="openDischargePlanningPage('${esc(patientId)}','${esc(episodeId)}')">
           <div class="poc-icon" style="background:#1a2e4a;">🏠</div>
           <div class="poc-card-title">Discharge Planning</div>
           <div class="poc-card-sub">Plan and document patient discharge</div>
         </div>
-        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','teaching_session')">
+        <div class="poc-card" onclick="openTeachingSessionPage('${esc(patientId)}','${esc(episodeId)}')">
           <div class="poc-icon" style="background:#7c3aed;">🎓</div>
           <div class="poc-card-title">Teaching &amp; Education</div>
           <div class="poc-card-sub">Record stoma teaching and education sessions</div>
         </div>
-        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','stoma_review')">
+        <div class="poc-card" onclick="openAppliancePage('${esc(patientId)}','${esc(episodeId)}')">
           <div class="poc-icon" style="background:#d97706;">🩺</div>
           <div class="poc-card-title">Appliance &amp; Accessories</div>
           <div class="poc-card-sub">Record appliance changes and accessories used</div>
@@ -20163,5 +20168,230 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /elective-pathway-postop-pages -->
+
+<!-- elective-pathway-dedicated-pages -->
+<script>
+(function(){
+  const _SB=window.SB;
+  function _esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function _el(id){return document.getElementById(id);}
+  function _showPage(page){
+    document.querySelectorAll('.page,.section').forEach(x=>{x.classList.remove('active');x.style.display='none';});
+    page.classList.add('active');page.style.display='block';window.scrollTo(0,0);
+  }
+  function _ensurePage(id){
+    let p=document.getElementById(id);
+    if(!p){p=document.createElement('div');p.id=id;p.className='page';(document.querySelector('.main')||document.body).appendChild(p);}
+    return p;
+  }
+  async function _getEpisodeId(patientId){
+    try{const r=await _SB.from('episodes').select('id').eq('patient_id',patientId).in('status',['open','in_progress']).order('created_at',{ascending:false}).limit(1).maybeSingle();return r.data?.id||null;}catch(_){return null;}
+  }
+  async function _getPatient(patientId){
+    try{const r=await _SB.from('patients').select('*').eq('id',patientId).maybeSingle();return r.data||{};}catch(_){return {};}
+  }
+  function _backToPOC(patientId,episodeId){
+    if(typeof window.openPostOpCentre==='function')window.openPostOpCentre(patientId,episodeId);
+    else if(typeof window.backToInpatients==='function')window.backToInpatients();
+  }
+  function _pageHero(title,sub,patientId,episodeId){
+    return `<div class="elective-hero"><div class="elective-hero-text"><div class="elective-page-title">${_esc(title)}</div><div class="elective-page-sub">${_esc(sub)}</div></div><button class="btn-cancel" onclick="openPostOpCentre('${_esc(patientId)}','${_esc(episodeId)}')">← Post-Op Centre</button></div>`;
+  }
+  function _showMsg(id,msg,ok){const el=document.getElementById(id);if(el){el.style.display='block';el.style.background=ok?'#e8f4f8':'#fef2f2';el.style.color=ok?'#0d7377':'#b91c1c';el.textContent=msg;}}
+
+  /* ---- openPostOpCentreForPatient ---- */
+  window.openPostOpCentreForPatient=async function(patientId){
+    try{
+      let ep=null;
+      const r=await _SB.from('episodes').select('id').eq('patient_id',patientId).in('status',['open','in_progress']).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      ep=r.data;
+      if(!ep){
+        const ins=await _SB.from('episodes').insert({patient_id:patientId,status:'in_progress'}).select('id').single();
+        if(ins.error)throw new Error(ins.error.message);
+        ep=ins.data;
+      }
+      window.openPostOpCentre(patientId,ep.id);
+    }catch(e){alert('Could not open Post-Op Centre: '+(e.message||e));}
+  };
+
+  /* ================================================================
+     DISCHARGE PLANNING PAGE
+  ================================================================ */
+  window.openDischargePlanningPage=async function(patientId,episodeId){
+    if(!episodeId)episodeId=await _getEpisodeId(patientId);
+    const pt=await _getPatient(patientId);
+    const fullName=((pt.first_name||'')+' '+(pt.surname||'')).trim()||'Patient';
+    let ed={};
+    if(episodeId){try{const r=await _SB.from('episode_steps').select('data').eq('episode_id',episodeId).eq('step_no',6).maybeSingle();ed=r.data?.data||{};}catch(_){}}
+    const page=_ensurePage('page-discharge-planning');
+    page.innerHTML=`<div class="elective-page-shell">
+      ${_pageHero('Discharge Planning',fullName+' · ID: '+(pt.id_card||'—'),patientId,episodeId||'')}
+      <div class="elective-section-card">
+        <div class="elective-section-label">Discharge Details</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Expected Discharge Date</label><input type="date" id="dp-date" value="${_esc(ed.discharge_date||'')}"/></div>
+          <div class="fg"><label>Discharge Destination</label><select id="dp-dest"><option value="">-- Select --</option><option ${ed.destination==='Home'?'selected':''}>Home</option><option ${ed.destination==='Family home'?'selected':''}>Family home</option><option ${ed.destination==='Nursing home'?'selected':''}>Nursing home</option><option ${ed.destination==='Rehabilitation'?'selected':''}>Rehabilitation</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Self-Care Ability</label><select id="dp-self-care"><option value="">-- Select --</option><option ${ed.self_care==='Independent'?'selected':''}>Independent</option><option ${ed.self_care==='Supervised'?'selected':''}>Supervised</option><option ${ed.self_care==='Dependent'?'selected':''}>Dependent</option></select></div>
+          <div class="fg"><label>Community Nursing Referral</label><select id="dp-comm-nursing"><option value="">-- Select --</option><option ${ed.community_nursing==='Yes'?'selected':''}>Yes</option><option ${ed.community_nursing==='No'?'selected':''}>No</option><option ${ed.community_nursing==='Not required'?'selected':''}>Not required</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Follow-up Appointment Booked</label><select id="dp-fu-booked"><option value="">-- Select --</option><option ${ed.followup_booked==='Yes'?'selected':''}>Yes</option><option ${ed.followup_booked==='No'?'selected':''}>No</option></select></div>
+          <div class="fg"><label>Supply Arranged</label><select id="dp-supply"><option value="">-- Select --</option><option ${ed.supply_arranged==='Yes'?'selected':''}>Yes</option><option ${ed.supply_arranged==='No'?'selected':''}>No</option></select></div>
+        </div>
+        <div class="fg" style="max-width:200px;"><label>Supply (weeks)</label><input type="number" id="dp-weeks" min="1" max="52" value="${_esc(ed.supply_weeks||'')}"/></div>
+        <div class="fg"><label>Discharge Notes</label><textarea id="dp-notes" style="height:90px;" placeholder="Summary and instructions">${_esc(ed.notes||'')}</textarea></div>
+      </div>
+      <div id="dp-msg" style="display:none;padding:10px;border-radius:6px;margin:10px 0;font-size:13px;"></div>
+      <div class="elective-actions">
+        <button class="btn-cancel" onclick="openPostOpCentre('${_esc(patientId)}','${_esc(episodeId||'')}')">Cancel</button>
+        <button class="btn-save" onclick="saveDischargePlanningPage('${_esc(patientId)}','${_esc(episodeId||'')}')">Save Discharge Plan</button>
+      </div>
+    </div>`;
+    _showPage(page);
+  };
+  window.saveDischargePlanningPage=async function(patientId,episodeId){
+    _showMsg('dp-msg','Saving...',true);
+    const d={discharge_date:_el('dp-date')?.value||'',destination:_el('dp-dest')?.value||'',self_care:_el('dp-self-care')?.value||'',community_nursing:_el('dp-comm-nursing')?.value||'',followup_booked:_el('dp-fu-booked')?.value||'',supply_arranged:_el('dp-supply')?.value||'',supply_weeks:_el('dp-weeks')?.value||'',notes:_el('dp-notes')?.value||'',recorded_date:new Date().toISOString().slice(0,10)};
+    try{
+      if(episodeId){
+        const ex=await _SB.from('episode_steps').select('id').eq('episode_id',episodeId).eq('step_no',6).maybeSingle();
+        if(ex.data?.id){await _SB.from('episode_steps').update({status:'complete',data:d}).eq('id',ex.data.id);}
+        else{await _SB.from('episode_steps').insert({episode_id:episodeId,step_no:6,step_key:'discharge_planning',status:'complete',data:d});}
+      }
+      _showMsg('dp-msg','Discharge plan saved.',true);
+      setTimeout(()=>_backToPOC(patientId,episodeId),700);
+    }catch(e){_showMsg('dp-msg','Error: '+(e.message||e),false);}
+  };
+
+  /* ================================================================
+     TEACHING & EDUCATION PAGE
+  ================================================================ */
+  const _TEACH_TOPICS=['Stoma care basics','Bag change procedure','Empty drainable bag','Diet & nutrition','Lifestyle & activities','Swimming & bathing','Sexual health & relationships','Medications & stoma','When to seek help','Support groups'];
+
+  window.openTeachingSessionPage=async function(patientId,episodeId){
+    if(!episodeId)episodeId=await _getEpisodeId(patientId);
+    const pt=await _getPatient(patientId);
+    const fullName=((pt.first_name||'')+' '+(pt.surname||'')).trim()||'Patient';
+    let sessionNum=1;
+    try{const r=await _SB.from('episode_steps').select('data').eq('episode_id',episodeId).eq('step_no',7).maybeSingle();const arr=r.data?.data?.sessions;if(Array.isArray(arr))sessionNum=arr.length+1;}catch(_){}
+    const today=new Date().toISOString().slice(0,10);
+    const page=_ensurePage('page-teaching-session');
+    page.innerHTML=`<div class="elective-page-shell">
+      ${_pageHero('Teaching & Education',fullName+' · Session '+sessionNum,patientId,episodeId||'')}
+      <div class="elective-section-card">
+        <div class="elective-section-label">Session Details</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Session Date *</label><input type="date" id="ts-date" value="${_esc(today)}"/></div>
+          <div class="fg"><label>Teaching Method</label><select id="ts-method"><option value="">-- Select --</option><option>Demonstration</option><option>Verbal instruction</option><option>Written materials</option><option>Video</option><option>Combined</option></select></div>
+        </div>
+      </div>
+      <div class="elective-section-card">
+        <div class="elective-section-label">Topics Covered</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          ${_TEACH_TOPICS.map((t,i)=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="ts-topic-${i}" value="${_esc(t)}" style="width:16px;height:16px;"/> ${_esc(t)}</label>`).join('')}
+        </div>
+      </div>
+      <div class="elective-section-card">
+        <div class="elective-section-label">Assessment</div>
+        <div class="fg"><label>Patient Understanding *</label><div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="ts-understanding" value="Good"/> Good</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="ts-understanding" value="Needs reinforcement"/> Needs reinforcement</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="ts-understanding" value="Unable to retain"/> Unable to retain at this time</label>
+        </div></div>
+        <div class="fg" style="margin-top:12px;"><label>Session Notes</label><textarea id="ts-notes" style="height:80px;" placeholder="Key points, questions, follow-up actions"></textarea></div>
+      </div>
+      <div id="ts-msg" style="display:none;padding:10px;border-radius:6px;margin:10px 0;font-size:13px;"></div>
+      <div class="elective-actions">
+        <button class="btn-cancel" onclick="openPostOpCentre('${_esc(patientId)}','${_esc(episodeId||'')}')">Cancel</button>
+        <button class="btn-save" onclick="saveTeachingSessionPage('${_esc(patientId)}','${_esc(episodeId||'')}')">Save Teaching Session</button>
+      </div>
+    </div>`;
+    _showPage(page);
+  };
+  window.saveTeachingSessionPage=async function(patientId,episodeId){
+    const date=_el('ts-date')?.value||'';
+    if(!date){_showMsg('ts-msg','Please enter session date.',false);return;}
+    const understanding=document.querySelector('input[name="ts-understanding"]:checked')?.value||'';
+    if(!understanding){_showMsg('ts-msg','Please select patient understanding.',false);return;}
+    const topics=Array.from(document.querySelectorAll('[id^="ts-topic-"]:checked')).map(x=>x.value);
+    const session={date,method:_el('ts-method')?.value||'',topics,understanding,notes:_el('ts-notes')?.value||'',recorded_date:new Date().toISOString().slice(0,10)};
+    _showMsg('ts-msg','Saving...',true);
+    try{
+      let sessions=[session];
+      if(episodeId){
+        const ex=await _SB.from('episode_steps').select('id,data').eq('episode_id',episodeId).eq('step_no',7).maybeSingle();
+        if(ex.data?.id){const prev=ex.data.data?.sessions;if(Array.isArray(prev))sessions=[...prev,session];await _SB.from('episode_steps').update({status:'in_progress',data:{sessions}}).eq('id',ex.data.id);}
+        else{await _SB.from('episode_steps').insert({episode_id:episodeId,step_no:7,step_key:'teaching',status:'in_progress',data:{sessions}});}
+      }
+      _showMsg('ts-msg','Teaching session saved.',true);
+      setTimeout(()=>_backToPOC(patientId,episodeId),700);
+    }catch(e){_showMsg('ts-msg','Error: '+(e.message||e),false);}
+  };
+
+  /* ================================================================
+     APPLIANCE & ACCESSORIES PAGE
+  ================================================================ */
+  const _APP_OPTS=window.FU_SEEN_APPLIANCE_OPTIONS||['Closed Bag 45mm','Closed Bag 57mm','Drainable Bag 45mm','Drainable Bag 57mm','Urostomy Bag 45mm','Stomahesive Flange 45mm','Stomahesive Flange 57mm'];
+  const _ACC_OPTS=window.FU_SEEN_ACCESSORY_OPTIONS||['Deodorant','Filler Paste','Flange Extenders','Powder','Protective Wipes','Stoma Belt','Stoma Seals','None'];
+
+  window.openAppliancePage=async function(patientId,episodeId){
+    if(!episodeId)episodeId=await _getEpisodeId(patientId);
+    const pt=await _getPatient(patientId);
+    const fullName=((pt.first_name||'')+' '+(pt.surname||'')).trim()||'Patient';
+    const today=new Date().toISOString().slice(0,10);
+    const appOpts=_APP_OPTS.map(a=>`<option>${_esc(a)}</option>`).join('');
+    const accChecks=_ACC_OPTS.map((a,i)=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="ap-acc-${i}" value="${_esc(a)}" style="width:16px;height:16px;"/> ${_esc(a)}</label>`).join('');
+    const page=_ensurePage('page-appliance-accessories');
+    page.innerHTML=`<div class="elective-page-shell">
+      ${_pageHero('Appliance & Accessories',fullName+' · ID: '+(pt.id_card||'—'),patientId,episodeId||'')}
+      <div class="elective-section-card">
+        <div class="elective-section-label">Appliance Issued</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Date *</label><input type="date" id="ap-date" value="${_esc(today)}"/></div>
+          <div class="fg"><label>Quantity</label><input type="number" id="ap-qty" min="1" max="200" value="30" style="max-width:120px;"/></div>
+        </div>
+        <div class="fg"><label>Appliance Type *</label><select id="ap-appliance"><option value="">-- Select appliance --</option>${appOpts}</select></div>
+      </div>
+      <div class="elective-section-card">
+        <div class="elective-section-label">Accessories Issued</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">${accChecks}</div>
+      </div>
+      <div class="elective-section-card">
+        <div class="elective-section-label">Notes</div>
+        <div class="fg"><textarea id="ap-notes" style="height:70px;" placeholder="Fitting notes, adjustments, patient feedback"></textarea></div>
+      </div>
+      <div id="ap-msg" style="display:none;padding:10px;border-radius:6px;margin:10px 0;font-size:13px;"></div>
+      <div class="elective-actions">
+        <button class="btn-cancel" onclick="openPostOpCentre('${_esc(patientId)}','${_esc(episodeId||'')}')">Cancel</button>
+        <button class="btn-save" onclick="saveAppliancePage('${_esc(patientId)}','${_esc(episodeId||'')}')">Save Record</button>
+      </div>
+    </div>`;
+    _showPage(page);
+  };
+  window.saveAppliancePage=async function(patientId,episodeId){
+    const date=_el('ap-date')?.value||'';
+    const appliance=_el('ap-appliance')?.value||'';
+    if(!date){_showMsg('ap-msg','Please enter the date.',false);return;}
+    if(!appliance){_showMsg('ap-msg','Please select an appliance.',false);return;}
+    const accessories=Array.from(document.querySelectorAll('[id^="ap-acc-"]:checked')).map(x=>x.value);
+    const record={date,appliance,quantity:_el('ap-qty')?.value||'30',accessories,notes:_el('ap-notes')?.value||'',recorded_date:new Date().toISOString().slice(0,10)};
+    _showMsg('ap-msg','Saving...',true);
+    try{
+      if(episodeId){
+        const r=await _SB.from('episode_steps').select('id,data').eq('episode_id',episodeId).eq('step_key','appliance_accessories').maybeSingle();
+        if(r.data?.id){const prev=r.data.data?.records;const records=Array.isArray(prev)?[...prev,record]:[record];await _SB.from('episode_steps').update({status:'in_progress',data:{records}}).eq('id',r.data.id);}
+        else{const sr=await _SB.from('episode_steps').select('step_no').eq('episode_id',episodeId).order('step_no',{ascending:false}).limit(1).maybeSingle();const n=(sr.data?.step_no||7)+1;await _SB.from('episode_steps').insert({episode_id:episodeId,step_no:n,step_key:'appliance_accessories',status:'in_progress',data:{records:[record]}});}
+      }
+      _showMsg('ap-msg','Record saved.',true);
+      setTimeout(()=>_backToPOC(patientId,episodeId),700);
+    }catch(e){_showMsg('ap-msg','Error: '+(e.message||e),false);}
+  };
+
+  console.log('Elective dedicated encounter pages loaded');
+})();
+</script>
+<!-- /elective-pathway-dedicated-pages -->
 </body>
 </html>
