@@ -14644,7 +14644,10 @@ try{
   if(typeof openFollowupHistory==='function') window.openFollowupHistory=openFollowupHistory;
   if(typeof openStomaSittingSession==='function') window.openStomaSittingSession=openStomaSittingSession;
   if(typeof saveStomaSittingSession==='function') window.saveStomaSittingSession=saveStomaSittingSession;
-  if(typeof returnFromStomaSittingSession==='function') window.returnFromStomaSittingSession=returnFromStomaSittingSession;
+  window.returnFromStomaSittingSession=function(){
+    try{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
+    catch(e){try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e2){}}
+  };
 }catch(e){console.warn('Global export setup skipped',e);}
 
 
