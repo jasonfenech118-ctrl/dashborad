@@ -11246,11 +11246,32 @@ function followupEpisodeActionHTML(a){
   return '<span class="patient-record-status followup">Planned</span>';
 }
 function followupReviewEpisodeRows(p){
-  const rows=followupAppointmentRowsForPatient();
-  if(!rows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
+  const rawRows=followupAppointmentRowsForPatient();
+  if(!rawRows.length)return '<tr><td colspan="7" class="empty">No follow-up review episodes recorded yet.</td></tr>';
+  // Detect sitting-session patient (awaiting surgery)
+  const isSitting=String(p?.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting')||String(p?.patient_status_raw||'').toLowerCase().includes('awaiting');
+  let rows=rawRows;
+  if(isSitting){
+    // Each sitting session is stored as 2 consecutive 30-min slots — keep only the first of each pair
+    const skipKeys=new Set();
+    rows=rawRows.filter(a=>{
+      const t=String(a.appt_slot||'').slice(0,5);
+      const k=a.appt_date+'|'+t;
+      if(skipKeys.has(k))return false;
+      if(/^\d{2}:\d{2}$/.test(t)){
+        const [h,m]=t.split(':').map(Number);
+        const total=h*60+m+30;
+        const next=String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+        skipKeys.add(a.appt_date+'|'+next);
+        skipKeys.add(a.appt_date+'|'+next+':00');
+      }
+      return true;
+    });
+  }
   return rows.map((a,idx)=>{
     const nurse=a.staff?.full_name||a.bank_staff?.full_name||(!a.assigned_to&&!a.bank_staff_id?'Common':'—');
-    return `<tr><td><span class="patient-record-no">${htmlSafe(followupReviewEpisodeNumber(p,idx,a.appt_date))}</span></td><td>${patientDateText(a.appt_date)}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>Follow-up Review</td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td><div class="patient-record-actions">${followupEpisodeActionHTML(a)}</div></td></tr>`;
+    const type=isSitting?'Sitting Session':'Follow-up Review';
+    return `<tr><td><span class="patient-record-no">${htmlSafe(followupReviewEpisodeNumber(p,idx,a.appt_date))}</span></td><td>${patientDateText(a.appt_date)}</td><td><strong>${htmlSafe(String(a.appt_slot||'').slice(0,5)||'—')}</strong></td><td>${htmlSafe(type)}</td><td>${htmlSafe(nurse)}</td><td>${appointmentStatusBadgeHTML(a)}</td><td><div class="patient-record-actions">${followupEpisodeActionHTML(a)}</div></td></tr>`;
   }).join('');
 }
 function followupReviewEpisodeTableHTML(p){
