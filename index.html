@@ -7189,7 +7189,7 @@ async function saveNewPatientTab(options={}){
       if(!openEp||openEp.length===0){
         let createdBy='Logged-in nurse';
         try{const au=await getCurrentUserForAudit();createdBy=au.name||au.email||'Logged-in nurse';}catch(e){}
-        const {data:epRow,error:epErr}=await SB.from('episodes').insert({patient_id:epPatientId,pathway_type:'elective',status:'open',created_by:createdBy}).select('id').single();
+        const {data:epRow,error:epErr}=await SB.from('episodes').insert({patient_id:epPatientId,status:'open'}).select('id').single();
         if(!epErr&&epRow&&epRow.id){
           const nowIso=new Date().toISOString();
           const STEP_DEFS=[[1,'pathway','complete'],[2,'booking','complete'],[3,'siting','not_started'],[4,'clinical','not_started'],[5,'post_op_review','not_started'],[6,'discharge_planning','not_started'],[7,'teaching','not_started']];
@@ -7462,7 +7462,7 @@ async function confirmSitingSessionBooking(slot,nextSlot,colId,colName,colType){
   try{
     const planned=date+'T'+slot+':00';
     const{data:ep}=await SB.from('episodes').insert({
-      patient_id:newPat.id,pathway_type:'elective',status:'open',
+      patient_id:newPat.id,status:'open',
       surgery_date:null,post_op_start:null
     }).select().single();
     if(ep?.id){
@@ -9705,7 +9705,7 @@ async function doBook(slot,date,nurseIdParam,nurseType){
     try{
       const planned=date+'T'+String(slot).slice(0,5)+':00';
       const{data:ep}=await SB.from('episodes').insert({
-        patient_id:newPat.id,pathway_type:'elective',status:'open',
+        patient_id:newPat.id,status:'open',
         surgery_date:null,post_op_start:null
       }).select().single();
       if(ep?.id){
