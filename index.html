@@ -19625,7 +19625,9 @@ table thead th.v63-name-title,
     const body=card.querySelector('.home-card-body');
     try{
       const pts=typeof getPatients==='function'?await getPatients():[];
-      const inRows=(pts||[]).filter(isInpatientPatient).sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
+      const inpatients=(pts||[]).filter(isInpatientPatient);
+      const inpatientPidSet=new Set(inpatients.map(p=>String(p.id||'')));
+      const inRows=inpatients.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
         const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Planned '+esc(dText(p.planned_surgery_date));
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d)+'</div>';
@@ -19635,10 +19637,13 @@ table thead th.v63-name-title,
       try{
         const appts=typeof getAppointmentsForDate==='function'?await getAppointmentsForDate(d):[];
         const frows=typeof followupAppointmentRows==='function'?followupAppointmentRows(appts,false):appts;
-        // Deduplicate: sitting-session patients occupy 2×30-min slots — keep only the first
+        // Remove appointments for patients already shown in the Inpatients section above,
+        // and deduplicate: sitting-session patients occupy 2×30-min slots — keep only the first
         const seenSittingPids=new Set();
         const deduped=(frows||[]).filter(x=>{
           const ep=x.p||x.patients||{};const pid=x.patientId||ep.id||x.appt?.patient_id||'';
+          // If patient is already in the Inpatients section, skip them here entirely
+          if(pid&&inpatientPidSet.has(String(pid)))return false;
           const fp=(pid&&ptsById[String(pid)])||ep;
           const isSit=String(fp.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting')||String(fp.patient_status_raw||'').toLowerCase().includes('awaiting');
           if(isSit&&pid){if(seenSittingPids.has(String(pid)))return false;seenSittingPids.add(String(pid));}
