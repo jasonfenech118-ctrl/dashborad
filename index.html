@@ -14360,14 +14360,15 @@ async function saveStomaSittingSession(options={}){
       await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',ep.id).eq('step_no',4);
     }
   }catch(e){console.warn('episode update failed',e);}
-  if(note){note.style.color='var(--green)';note.textContent='Sitting session saved successfully.';}
-  // Return home or to inpatients
-  setTimeout(()=>{
-    if(options.goToInpatients){
-      switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));
-    }else{
-      switchTab('home',document.querySelector('[data-tab="home"]'));
-    }
+  if(note){note.style.color='var(--green)';note.textContent='Sitting session saved. Opening 1st Post-Op Review...';}
+  // Navigate to 1st Post-Op Review page
+  setTimeout(async ()=>{
+    try{
+      const{data:ep}=await SB.from('episodes').select('id').eq('patient_id',p.id).eq('status','open').maybeSingle();
+      const eid=ep?.id||null;
+      if(eid&&typeof openFirstPostOpReviewPage==='function'){openFirstPostOpReviewPage(p.id,eid);}
+      else{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
+    }catch(e){switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
   },800);
 }
 
@@ -20480,5 +20481,252 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /fix/inpatient-registry-awaiting-sitting-button -->
+
+<!-- elective-pathway-postop-pages -->
+<style>
+/* ---- Shared page shell ---- */
+.elective-page-shell{max-width:780px;margin:0 auto;padding:18px 16px 40px;}
+.elective-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.elective-hero-text{}
+.elective-page-title{font-size:22px;font-weight:900;color:#0d7377;line-height:1.2;}
+.elective-page-sub{font-size:13px;color:#536579;margin-top:3px;}
+.elective-section-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.elective-section-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#0d7377;border-bottom:2px solid #e8f4f8;padding-bottom:5px;margin-bottom:14px;}
+.elective-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;}
+
+/* ---- Post-Op Centre grid ---- */
+.poc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+@media(max-width:520px){.poc-grid{grid-template-columns:1fr;}}
+.poc-card{background:#fff;border:2px solid #e2e8f0;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .18s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.poc-card:hover{border-color:#0d7377;box-shadow:0 4px 16px rgba(13,115,119,.13);transform:translateY(-2px);}
+.poc-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;margin-bottom:4px;}
+.poc-card-title{font-size:15px;font-weight:800;color:#1a2e4a;}
+.poc-card-sub{font-size:12px;color:#64748b;line-height:1.4;}
+.poc-close{background:#fef2f2;border:2px solid #fecaca;border-radius:12px;padding:18px;text-align:center;margin-top:8px;}
+.poc-close-note{font-size:13px;color:#7f1d1d;margin-bottom:12px;}
+</style>
+
+<script>
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function el(id){return document.getElementById(id);}
+  function showElectivePage(page){
+    document.querySelectorAll('.page,.section').forEach(x=>{x.classList.remove('active');x.style.display='none';});
+    page.classList.add('active');
+    page.style.display='block';
+    window.scrollTo(0,0);
+  }
+  function ensurePage(id){
+    let p=document.getElementById(id);
+    if(!p){p=document.createElement('div');p.id=id;p.className='page';(document.querySelector('.main')||document.body).appendChild(p);}
+    return p;
+  }
+  function backToInpatients(){
+    try{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
+    catch(e){try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(_){}}
+  }
+
+  /* ============================================================
+     1ST POST-OP REVIEW PAGE
+  ============================================================ */
+  window.openFirstPostOpReviewPage=async function(patientId,episodeId){
+    try{
+      const [{data:pt}]=await Promise.all([SB.from('patients').select('*').eq('id',patientId).maybeSingle()]);
+      const patient=pt||{};
+      const fullName=((patient.first_name||'')+' '+(patient.surname||'')).trim();
+      const idCard=patient.id_card||'';
+      const surgDate=patient.surgery_date||patient.planned_surgery_date||'';
+      const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+      const epNum='EP-'+idCard+'-0001';
+      const page=ensurePage('page-first-postop-review');
+      page.innerHTML=`<div class="elective-page-shell">
+        <div class="elective-hero">
+          <div class="elective-hero-text">
+            <div class="elective-page-title">1st Post-Operative Review</div>
+            <div class="elective-page-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ID: ${esc(idCard)} &nbsp;·&nbsp; ${esc(epNum)}</div>
+          </div>
+          <button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button>
+        </div>
+
+        <div class="elective-section-card">
+          <div class="elective-section-label">Clinical Operative Record</div>
+          <div class="fg"><label>Operation Performed *</label><input type="text" id="fpr-operation" placeholder="e.g., Ileostomy formation, Colostomy"/></div>
+          <div class="cor-2col">
+            <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
+            <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
+          </div>
+          <div class="cor-2col">
+            <div class="fg"><label>Surgeon Name</label><input type="text" id="fpr-surgeon" placeholder="Operating surgeon"/></div>
+            <div class="fg"><label>Consultant</label><input type="text" id="fpr-consultant" placeholder="Responsible consultant"/></div>
+          </div>
+          <div class="fg" style="max-width:240px;"><label>Date of Operation *</label><input type="date" id="fpr-surgery-date" value="${esc(surgDate)}"/></div>
+          <div class="fg"><label>Operation Findings</label><textarea id="fpr-findings" placeholder="Intra-operative findings and notes" style="height:80px;"></textarea></div>
+          <div class="fg"><label>Complications (if any)</label><textarea id="fpr-complications" placeholder="Any post-operative complications or concerns" style="height:60px;"></textarea></div>
+        </div>
+
+        <div class="elective-section-card">
+          <div class="elective-section-label">Stoma Review</div>
+          <div class="cor-2col">
+            <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
+            <div class="fg"><label>Peristomal Skin</label><select id="fpr-peristomal"><option value="">-- Select --</option><option>Intact</option><option>Mild irritation</option><option>Excoriation</option><option>Ulceration</option></select></div>
+          </div>
+          <div class="cor-2col">
+            <div class="fg"><label>Stoma Output</label><select id="fpr-output"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>
+            <div class="fg"><label>Appliance Used</label><input type="text" id="fpr-appliance" placeholder="Type and size"/></div>
+          </div>
+          <div class="fg"><label>Stoma Review Notes</label><textarea id="fpr-stoma-notes" placeholder="Clinical observations, patient concerns, teaching started" style="height:80px;"></textarea></div>
+        </div>
+
+        <div class="elective-section-card" style="background:#fffbeb;border-color:#fde68a;">
+          <div class="elective-section-label" style="color:#92400e;">Post-Operative Planning</div>
+          <div class="fg" style="max-width:240px;"><label>Post-Op Day 1 Date *</label><input type="date" id="fpr-postop-start" value="${esc(tomorrow)}"/><div style="font-size:11px;color:#666;margin-top:3px;">Date when daily reviews begin.</div></div>
+        </div>
+
+        <div id="fpr-note" style="padding:10px;border-radius:6px;margin:12px 0;font-size:13px;display:none;"></div>
+        <div class="elective-actions">
+          <button class="btn-cancel" onclick="backToInpatients()">Cancel</button>
+          <button class="btn-save" onclick="saveFirstPostOpReview('${esc(patientId)}','${esc(episodeId)}')">Save &amp; Open Post-Op Centre →</button>
+        </div>
+      </div>`;
+      showElectivePage(page);
+    }catch(e){alert('Could not open 1st Post-Op Review: '+(e?.message||e));}
+  };
+  window.backToInpatients=backToInpatients;
+
+  window.saveFirstPostOpReview=async function(patientId,episodeId){
+    const note=el('fpr-note');
+    const showNote=(msg,ok)=>{if(note){note.style.display='block';note.style.background=ok?'#e8f4f8':'#fef2f2';note.style.color=ok?'#0d7377':'#b91c1c';note.textContent=msg;}};
+    const operation=(el('fpr-operation')?.value||'').trim();
+    const stomaType=(el('fpr-stoma-type')?.value||'').trim();
+    const stomaSite=(el('fpr-stoma-site')?.value||'').trim();
+    const surgDate=(el('fpr-surgery-date')?.value||'').trim();
+    const postOpStart=(el('fpr-postop-start')?.value||'').trim();
+    if(!operation){showNote('Please enter Operation Performed.');return;}
+    if(!stomaType){showNote('Please select Stoma Type.');return;}
+    if(!stomaSite){showNote('Please select Stoma Site.');return;}
+    if(!surgDate){showNote('Please enter Date of Operation.');return;}
+    if(!postOpStart){showNote('Please enter Post-Op Day 1 Date.');return;}
+    const surgeon=(el('fpr-surgeon')?.value||'').trim();
+    const consultant=(el('fpr-consultant')?.value||'').trim();
+    const findings=(el('fpr-findings')?.value||'').trim();
+    const complications=(el('fpr-complications')?.value||'').trim();
+    const stomaColour=(el('fpr-stoma-colour')?.value||'').trim();
+    const peristomal=(el('fpr-peristomal')?.value||'').trim();
+    const output=(el('fpr-output')?.value||'').trim();
+    const appliance=(el('fpr-appliance')?.value||'').trim();
+    const stomaNotes=(el('fpr-stoma-notes')?.value||'').trim();
+    showNote('Saving...', true);
+    try{
+      const{error:pErr}=await SB.from('patients').update({
+        operation_performed:operation,
+        stoma_type_summary:stomaType+' at '+stomaSite,
+        consultant,surgery_date:surgDate,
+        inpatient_type:'actual_inpatient',
+        patient_status_raw:'Inpatient',
+        last_outcome_date:new Date().toISOString().slice(0,10)
+      }).eq('id',patientId);
+      if(pErr)throw new Error(pErr.message);
+      try{await SB.from('episodes').update({status:'in_progress'}).eq('id',episodeId);}catch(_){}
+      const stepData={operation,stoma_type:stomaType,stoma_site:stomaSite,surgeon,consultant,surgery_date:surgDate,findings,complications,stoma_colour:stomaColour,peristomal_skin:peristomal,stoma_output:output,appliance,stoma_notes:stomaNotes,recorded_date:new Date().toISOString().slice(0,10)};
+      await Promise.all([
+        SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4).catch(()=>{}),
+        SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5).catch(()=>{})
+      ]);
+      showNote('Saved successfully. Opening Post-Operative Centre...', true);
+      setTimeout(()=>window.openPostOpCentre(patientId,episodeId),700);
+    }catch(e){showNote('Error saving: '+(e?.message||e),false);}
+  };
+
+  /* ============================================================
+     POST-OPERATIVE CENTRE
+  ============================================================ */
+  window.openPostOpCentre=async function(patientId,episodeId){
+    let patient={};
+    try{const r=await SB.from('patients').select('*').eq('id',patientId).maybeSingle();patient=r.data||{};}catch(_){}
+    const fullName=((patient.first_name||'')+' '+(patient.surname||'')).trim();
+    const idCard=patient.id_card||'';
+    const epNum='EP-'+idCard+'-0001';
+    const today=new Date().toISOString().slice(0,10);
+    const page=ensurePage('page-postop-centre');
+    page.innerHTML=`<div class="elective-page-shell">
+      <div class="elective-hero">
+        <div class="elective-hero-text">
+          <div class="elective-page-title">Post-Operative Centre</div>
+          <div class="elective-page-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ID: ${esc(idCard)} &nbsp;·&nbsp; ${esc(epNum)}</div>
+        </div>
+        <button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button>
+      </div>
+
+      <div class="poc-grid">
+        <div class="poc-card" onclick="openPatientDailyReviewFromPatientsReview('${esc(patientId)}','${esc(today)}')">
+          <div class="poc-icon" style="background:#0d7377;">📋</div>
+          <div class="poc-card-title">Daily Review</div>
+          <div class="poc-card-sub">Record today's post-operative daily review</div>
+        </div>
+        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','discharge_planning')">
+          <div class="poc-icon" style="background:#1a2e4a;">🏠</div>
+          <div class="poc-card-title">Discharge Planning</div>
+          <div class="poc-card-sub">Plan and document patient discharge</div>
+        </div>
+        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','teaching_session')">
+          <div class="poc-icon" style="background:#7c3aed;">🎓</div>
+          <div class="poc-card-title">Teaching &amp; Education</div>
+          <div class="poc-card-sub">Record stoma teaching and education sessions</div>
+        </div>
+        <div class="poc-card" onclick="openGenericEncounterModal('${esc(patientId)}','stoma_review')">
+          <div class="poc-icon" style="background:#d97706;">🩺</div>
+          <div class="poc-card-title">Appliance &amp; Accessories</div>
+          <div class="poc-card-sub">Record appliance changes and accessories used</div>
+        </div>
+      </div>
+
+      <div class="poc-close">
+        <div class="poc-close-note">When the patient is ready for discharge, close the episode below. This marks the care episode as complete and moves the patient out of Inpatients.</div>
+        <button class="btn-save" style="background:#b91c1c;color:white;font-size:15px;padding:12px 32px;border-radius:8px;border:none;cursor:pointer;font-weight:800;" onclick="confirmCloseElectiveEpisode('${esc(patientId)}','${esc(episodeId)}')">Close Episode &amp; Discharge Patient</button>
+      </div>
+    </div>`;
+    showElectivePage(page);
+  };
+
+  window.confirmCloseElectiveEpisode=async function(patientId,episodeId){
+    if(!confirm('Close this episode and discharge the patient? This marks the care episode as complete.'))return;
+    try{
+      await SB.from('episodes').update({status:'closed'}).eq('id',episodeId).catch(()=>{});
+      await SB.from('patients').update({patient_status_raw:'Discharged',inpatient_type:null,active_registry:false}).eq('id',patientId).catch(()=>{});
+      alert('Episode closed. Patient discharged successfully.');
+      backToInpatients();
+    }catch(e){alert('Error closing episode: '+(e?.message||e));}
+  };
+
+  // Re-open Post-Op Centre from Inpatients "Open 1st Post-Op Review" button for already-operated patients
+  const _prevOpenClinicalRecord=window.openClinicalRecordForPatient;
+  window.openClinicalRecordForPatient=async function(patientId){
+    try{
+      let ep=null;
+      const r1=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').limit(1).maybeSingle();
+      ep=r1.data||null;
+      if(!ep){const r2=await SB.from('episodes').select('id').eq('patient_id',patientId).order('created_at',{ascending:false}).limit(1).maybeSingle();ep=r2.data||null;}
+      if(!ep){
+        const ins=await SB.from('episodes').insert({patient_id:patientId,status:'open'}).select('id').single();
+        if(ins.error||!ins.data){alert('Could not create episode: '+(ins.error?.message||'Unknown'));return;}
+        ep=ins.data;
+        try{await SB.from('episode_steps').insert([
+          {episode_id:ep.id,step_no:1,step_key:'pathway_selection',status:'complete',data:{route:'Elective surgery'}},
+          {episode_id:ep.id,step_no:2,step_key:'siting_booking',status:'complete',data:{}},
+          {episode_id:ep.id,step_no:3,step_key:'siting_session',status:'complete',data:{}},
+          {episode_id:ep.id,step_no:4,step_key:'clinical_operative',status:'in_progress',data:{}},
+          {episode_id:ep.id,step_no:5,step_key:'post_op_review',status:'not_started',data:{}},
+          {episode_id:ep.id,step_no:6,step_key:'daily_reviews',status:'not_started',data:{}},
+          {episode_id:ep.id,step_no:7,step_key:'discharge',status:'not_started',data:{}}
+        ]);}catch(_){}
+      }
+      window.openFirstPostOpReviewPage(patientId,ep.id);
+    }catch(e){alert('Could not open: '+(e?.message||e));}
+  };
+
+  console.log('Elective pathway post-op pages loaded');
+})();
+</script>
+<!-- /elective-pathway-postop-pages -->
 </body>
 </html>
