@@ -20070,11 +20070,15 @@ table thead th.v63-name-title,
     const removeBtn=idx>0?`<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="fprRemoveStoma(${idx})">Remove</button>`:'';
     return `<div class="elective-section-card fpr-stoma-block" id="fpr-stoma-block-${idx}" style="border-color:#0d7377;margin-bottom:16px;">
       <div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma ${n} ${removeBtn}</div>
+      <div style="margin:-6px 0 12px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span>
+        <span id="fpr-stoma-id-display-${idx}" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span>
+      </div>
       <div class="cor-2col">
         <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type-${idx}"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
         <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site-${idx}"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option><option value="Umbilical">Umbilical</option></select></div>
       </div>
-      <div class="fg" style="max-width:260px;"><label>Stoma Formed On *</label><input type="date" id="fpr-stoma-formed-${idx}"/></div>
+      <div class="fg" style="max-width:260px;"><label>Stoma Formed On *</label><input type="date" id="fpr-stoma-formed-${idx}" onchange="fprUpdateStomaIdPreview(${idx})"/></div>
       <div class="elective-section-label" style="font-size:13px;color:#475569;margin:14px 0 8px;">Stoma Review</div>
       <div class="cor-2col">
         <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour-${idx}"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
@@ -20101,6 +20105,17 @@ table thead th.v63-name-title,
         lbl.innerHTML=`Stoma ${i+1} ${removeBtn}`;
       }
     });
+  };
+  const _FPR_MONTH=['A','B','C','D','E','F','G','H','I','J','K','L'];
+  window.fprUpdateStomaIdPreview=function(idx){
+    const dateVal=document.getElementById('fpr-stoma-formed-'+idx)?.value;
+    const display=document.getElementById('fpr-stoma-id-display-'+idx);
+    if(!display)return;
+    const idCard=(document.getElementById('fpr-stoma-container')?.dataset?.idcard)||'···';
+    if(!dateVal){display.textContent='STO – – –';return;}
+    const letter=_FPR_MONTH[new Date(dateVal+'T12:00:00').getMonth()];
+    display.textContent='STO-'+idCard+'-'+letter+'????';
+    display.title='Full ID assigned on save';
   };
   window.fprAddStoma=function(){
     const container=document.getElementById('fpr-stoma-container');
@@ -20150,16 +20165,16 @@ table thead th.v63-name-title,
         <div class="elective-section-card">
           <div class="elective-section-label">Clinical Operative Record</div>
           <div class="fg"><label>Operation Performed *</label><textarea id="fpr-operation" placeholder="e.g., Ileostomy formation, Colostomy — describe the procedure in full" style="height:90px;"></textarea></div>
+          <div class="fg"><label>Operation Findings</label><textarea id="fpr-findings" placeholder="Intra-operative findings and notes" style="height:80px;"></textarea></div>
+          <div class="fg"><label>Complications (if any)</label><textarea id="fpr-complications" placeholder="Any post-operative complications or concerns" style="height:60px;"></textarea></div>
           <div class="cor-2col">
             <div class="fg"><label>Surgeon Name</label><input type="text" id="fpr-surgeon" placeholder="Operating surgeon"/></div>
             <div class="fg"><label>Consultant</label><input type="text" id="fpr-consultant" placeholder="Responsible consultant"/></div>
           </div>
           <div class="fg" style="max-width:240px;"><label>Date of Operation *</label><input type="date" id="fpr-surgery-date" value="${esc(surgDate)}"/></div>
-          <div class="fg"><label>Operation Findings</label><textarea id="fpr-findings" placeholder="Intra-operative findings and notes" style="height:80px;"></textarea></div>
-          <div class="fg"><label>Complications (if any)</label><textarea id="fpr-complications" placeholder="Any post-operative complications or concerns" style="height:60px;"></textarea></div>
         </div>
 
-        <div id="fpr-stoma-container">${fprStomaBlock(0)}</div>
+        <div id="fpr-stoma-container" data-idcard="${esc(idCard)}">${fprStomaBlock(0)}</div>
 
         <div style="margin-bottom:20px;">
           <button type="button" onclick="fprAddStoma()" style="background:#0d7377;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button>
@@ -20199,6 +20214,7 @@ table thead th.v63-name-title,
       if(!sSite){showNote(`Please select Stoma Site for Stoma ${i+1}.`);return;}
       if(!sFormed){showNote(`Please enter Stoma Formed On date for Stoma ${i+1}.`);return;}
       stomas.push({
+        _bid:bid,
         stoma_number:i+1,
         stoma_type:sType,stoma_site:sSite,stoma_formed_on:sFormed,
         stoma_colour:(document.getElementById('fpr-stoma-colour-'+bid)?.value||'').trim(),
@@ -20209,6 +20225,27 @@ table thead th.v63-name-title,
       });
     }
     if(stomas.length===0){showNote('At least one stoma is required.');return;}
+    // Generate STO-{id_card}-{MonthLetter}{0001} IDs (globally sequential)
+    const _MLET=['A','B','C','D','E','F','G','H','I','J','K','L'];
+    const ptIdCard=(document.getElementById('fpr-stoma-container')?.dataset?.idcard)||String(patientId).slice(-6);
+    let nextStomaSeq=1;
+    try{
+      const{data:allSteps}=await SB.from('episode_steps').select('data').eq('step_no',4);
+      (allSteps||[]).forEach(row=>{
+        ((row?.data?.stomas)||[]).forEach(s=>{
+          const m=String(s.stoma_id||'').match(/STO-[^-]+-[A-L](\d{4})$/);
+          if(m){const n=parseInt(m[1],10);if(n>=nextStomaSeq)nextStomaSeq=n+1;}
+        });
+      });
+    }catch(_){}
+    stomas.forEach(s=>{
+      const letter=_MLET[new Date(s.stoma_formed_on+'T12:00:00').getMonth()];
+      s.stoma_id='STO-'+ptIdCard+'-'+letter+String(nextStomaSeq++).padStart(4,'0');
+      // Update the badge in the form so the user sees the assigned ID
+      const disp=document.getElementById('fpr-stoma-id-display-'+s._bid);
+      if(disp){disp.textContent=s.stoma_id;disp.style.color='#0d7377';disp.style.background='#e6f4f4';}
+      delete s._bid;
+    });
     const stoma_type_summary=stomas.map(s=>s.stoma_type+(s.stoma_site?' at '+s.stoma_site:'')).join(', ');
     showNote('Saving...', true);
     try{
