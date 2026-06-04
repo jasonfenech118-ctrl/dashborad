@@ -20362,11 +20362,13 @@ table thead th.v63-name-title,
     }
   }
 
-  // Call from loadHomeDashboard
+  // Suppress renderHomePathwayBuckets — pathway buckets are shown inline in v87 card; the separate container causes a duplicate top card
   const ORIGINAL_loadHomeDashboard = window.loadHomeDashboard;
   window.loadHomeDashboard = async function(){
     if(ORIGINAL_loadHomeDashboard) await ORIGINAL_loadHomeDashboard();
-    await renderHomePathwayBuckets();
+    // Clear the buckets container so no duplicate card appears
+    const bc = document.getElementById('home-pathway-buckets');
+    if(bc) bc.innerHTML = '';
   };
 
   try{console.log('MDH manual v88 stable core loaded');}catch(e){}
