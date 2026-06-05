@@ -5666,13 +5666,16 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div class="route-page-card">
         <div class="route-stoma-care" style="margin-top:0;padding-top:0;border-top:none;">
           <div class="new-patient-grid">
-            <div class="fg"><label>Surgery Date *</label><input type="date" class="route-surgery-date" required/></div>
-            <div class="fg"><label>Rod in situ</label><div class="choice-group"><label class="choice-chip"><input type="radio" name="emergency-rod-in-situ" value="Yes" onchange="toggleEmergencyRodRemovalDate()"/> Yes</label><label class="choice-chip"><input type="radio" name="emergency-rod-in-situ" value="No" onchange="toggleEmergencyRodRemovalDate()"/> No</label></div></div>
-            <div class="fg" id="emergency-rod-removal-wrap" style="display:none;"><label>Date of rod removal *</label><input type="date" id="emergency-rod-removal-date" onchange="syncEmergencyRodData()"/></div>
+            <div class="fg"><label>Surgery Date *</label><input type="date" class="route-surgery-date" onchange="emergUpdateAllStomaIdPreviews()" required/></div>
             <div class="fg full"><label>Operation Performed</label><textarea class="route-operation-performed" placeholder="Operation performed"></textarea></div>
-            <div class="fg full"><label>Findings</label><textarea class="route-findings" placeholder="Findings"></textarea></div>
-            <div class="fg full"><label>Stoma Type *</label><div class="choice-group"><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-emergency" value="Ileostomy" required/> Ileostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-emergency" value="Colostomy" required/> Colostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-emergency" value="Urostomy" required/> Urostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-emergency" value="Other" required/> Other</label></div></div>
+            <div class="fg full"><label>Operation Findings</label><textarea class="route-findings" placeholder="Findings"></textarea></div>
+            <div class="fg full"><label>Complications (if any)</label><input type="text" id="emrg-complications" placeholder="e.g. haemorrhage, anastomotic leak"/></div>
+            <div class="fg full"><label>Surgeon / Consultant</label><input type="text" id="emrg-surgeon" placeholder="Surgeon name or consultant"/></div>
           </div>
+          <div class="new-patient-section-title" style="margin-top:18px;">Stoma Details</div>
+          <div id="emrg-stoma-container"></div>
+          <div style="margin:6px 0 4px;"><button type="button" onclick="emergAddStoma()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button></div>
+          <input type="hidden" id="emrg-data-json" value=""/>
         </div>
         <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Emergency surgery','page-admission-emergency',{next:'daily-review'})">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
       </div>
@@ -7060,9 +7063,9 @@ function newPatientNote(text,type=''){
   note.textContent=text;
 }
 function clearNewPatientForm(){
-  ['np-id','np-sn','np-fn','np-dob','np-locality','np-sex','np-phone','np-surgery-date','np-planned-surgery-date','np-elective-planned-date','np-inpatient-type','np-admission-route','np-operation-performed','np-findings','np-stoma-type-hidden','np-rod-in-situ','np-rod-removal-date','np-pmh','np-psh','np-medication-other','np-medication-notes','np-social-history','np-followup-month','np-followup-year'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.querySelectorAll('input[name="np-med-history"],input[name="np-dpa"],input[name="np-stoma-type"],input[name="emergency-rod-in-situ"]').forEach(el=>{el.checked=false;});
-  toggleEmergencyRodRemovalDate();
+  ['np-id','np-sn','np-fn','np-dob','np-locality','np-sex','np-phone','np-surgery-date','np-planned-surgery-date','np-elective-planned-date','np-inpatient-type','np-admission-route','np-operation-performed','np-findings','np-stoma-type-hidden','emrg-complications','emrg-surgeon','emrg-data-json','np-pmh','np-psh','np-medication-other','np-medication-notes','np-social-history','np-followup-month','np-followup-year'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('input[name="np-med-history"],input[name="np-dpa"],input[name="np-stoma-type"]').forEach(el=>{el.checked=false;});
+  try{const c=document.getElementById('emrg-stoma-container');if(c){c.innerHTML='';if(typeof emergAddStoma==='function')emergAddStoma();}}catch(e){}
   selectedAdmissionRouteForNewPatient='';
   const menuDate=document.getElementById('menu-elective-sitting-date'); if(menuDate)menuDate.value='';
   refreshNewPatientRouteUI();
@@ -7513,26 +7516,8 @@ function handleAdmissionRouteChange(sel){
 }
 
 
-function syncEmergencyRodData(){
-  const selected=document.querySelector('input[name="emergency-rod-in-situ"]:checked')?.value||'';
-  const removal=document.getElementById('emergency-rod-removal-date')?.value||'';
-  const rodHidden=document.getElementById('np-rod-in-situ');
-  const removalHidden=document.getElementById('np-rod-removal-date');
-  if(rodHidden)rodHidden.value=selected;
-  if(removalHidden)removalHidden.value=removal;
-}
-function toggleEmergencyRodRemovalDate(){
-  const selected=document.querySelector('input[name="emergency-rod-in-situ"]:checked')?.value||'';
-  const wrap=document.getElementById('emergency-rod-removal-wrap');
-  const removal=document.getElementById('emergency-rod-removal-date');
-  const needsRemoval=selected==='Yes';
-  if(wrap)wrap.style.display=needsRemoval?'block':'none';
-  if(removal){
-    removal.required=needsRemoval;
-    if(!needsRemoval)removal.value='';
-  }
-  syncEmergencyRodData();
-}
+function syncEmergencyRodData(){}
+function toggleEmergencyRodRemovalDate(){}
 
 function collectRouteStomaCare(pageId,showAlert=true){
   const page=document.getElementById(pageId);
@@ -7543,13 +7528,7 @@ function collectRouteStomaCare(pageId,showAlert=true){
   const findings=page.querySelector('.route-findings')?.value?.trim()||'';
   const stoma=page.querySelector('.route-stoma-type:checked')?.value||'';
   if(pageId==='page-admission-emergency'){
-    syncEmergencyRodData();
-    const rodInSitu=document.querySelector('input[name="emergency-rod-in-situ"]:checked')?.value||'';
-    const rodRemoval=document.getElementById('emergency-rod-removal-date')?.value||'';
-    if(showAlert&&rodInSitu==='Yes'&&!rodRemoval){
-      alert('Please enter the required Date of rod removal because Rod in situ is marked Yes.');
-      return false;
-    }
+    return (typeof emergCollect==='function')?emergCollect(showAlert):true;
   }
   if(showAlert&&(!surgery||!stoma)){
     alert('Please complete Surgery Date and Stoma Type before completing the patient record.');
@@ -7705,9 +7684,16 @@ function appendEmergencyStomaDailyReviewToFindings(){
   const data=emergencyReviewCurrentFormData();
   const emergencyPage=document.getElementById('page-admission-emergency');
   const baseFindings=emergencyPage?.querySelector('.route-findings')?.value?.trim()||'';
-  const rodInSitu=document.getElementById('np-rod-in-situ')?.value||document.querySelector('input[name="emergency-rod-in-situ"]:checked')?.value||'';
-  const rodRemoval=document.getElementById('np-rod-removal-date')?.value||document.getElementById('emergency-rod-removal-date')?.value||'';
-  const rodText=[rodInSitu?`Rod in situ: ${rodInSitu}`:'',rodInSitu==='Yes'&&rodRemoval?`Date of rod removal: ${fmtLabel(rodRemoval)}`:''].filter(Boolean).join('\n');
+  let rodText='';
+  try{
+    const emrgData=JSON.parse(document.getElementById('emrg-data-json')?.value||'{}');
+    const stomas=Array.isArray(emrgData.stomas)?emrgData.stomas:[];
+    rodText=stomas.filter(s=>s.rod_in_situ).map((s,i)=>{
+      const lines=['Stoma '+(i+1)+' rod in situ: '+(s.rod_in_situ||'')];
+      if(s.rod_in_situ==='Yes'&&s.rod_removal_date)lines.push('Date of rod removal: '+fmtLabel(s.rod_removal_date));
+      return lines.join('\n');
+    }).join('\n');
+  }catch(e){}
   const reviewText=[
     'Post Operative Daily Review',
     `Review Date: ${fmtLabel(data.review_date)}`,
@@ -7737,7 +7723,8 @@ async function saveEmergencyDailyReviewPatient(){
   renderEmergencyStomaDailyReview();
   if(!validateEmergencyStomaDailyReview())return;
   appendEmergencyStomaDailyReviewToFindings();
-  saveNewPatientTab();
+  const pid=await saveNewPatientTab();
+  if(pid&&typeof emergFinaliseSave==='function')await emergFinaliseSave(pid);
 }
 function selectAdmissionRouteTile(value){
   setAdmissionRouteValue(value);
@@ -20820,5 +20807,196 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /outside-mdh-pathway -->
+
+<!-- emergency-pathway -->
+<script id="emergency-pathway-script">
+(function(){
+  const EMRG_MONTH=['A','B','C','D','E','F','G','H','I','J','K','L'];
+  function v(id){return (document.getElementById(id)?.value||'').trim();}
+
+  window.emergStomaBlock=function(idx){
+    const n=idx+1;
+    const removeBtn=idx>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="emergRemoveStoma('+idx+')">Remove</button>':'';
+    return '<div class="elective-section-card emrg-stoma-block" id="emrg-stoma-block-'+idx+'" style="border:1px solid #dc2626;border-radius:12px;padding:14px;margin-bottom:14px;">'
+      +'<div class="elective-section-label" style="color:#dc2626;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
+      +'<div style="margin:-2px 0 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span><span id="emrg-sid-'+idx+'" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span></div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Type *</label><select id="emrg-stype-'+idx+'"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>'
+        +'<div class="fg"><label>Stoma Site *</label><select id="emrg-ssite-'+idx+'"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option></select></div>'
+      +'</div>'
+      +'<div class="fg" style="margin-bottom:10px;">'
+        +'<label style="margin-bottom:6px;display:block;">Rod in Situ</label>'
+        +'<div style="display:flex;gap:20px;align-items:center;">'
+          +'<label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:14px;"><input type="radio" name="emrg-rod-'+idx+'" value="Yes" onchange="emergToggleRodRemoval('+idx+')"> Yes</label>'
+          +'<label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:14px;"><input type="radio" name="emrg-rod-'+idx+'" value="No" onchange="emergToggleRodRemoval('+idx+')"> No</label>'
+        +'</div>'
+      +'</div>'
+      +'<div class="fg" id="emrg-rod-removal-wrap-'+idx+'" style="display:none;margin-bottom:10px;">'
+        +'<label>Date of Rod Removal</label>'
+        +'<input type="date" id="emrg-rod-removal-'+idx+'"/>'
+      +'</div>'
+      +'<div class="elective-section-label" style="font-size:13px;color:#475569;margin:12px 0 8px;">Stoma Review</div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Colour</label><select id="emrg-scolour-'+idx+'"><option value="">-- Select --</option><option>Pink / healthy</option><option>Pale</option><option>Dusky</option><option>Flush/Retracted</option><option>Aubergine</option><option>Other</option></select></div>'
+        +'<div class="fg"><label>Peristomal Skin</label><select id="emrg-sskin-'+idx+'"><option value="">-- Select --</option><option>Healthy/intact</option><option>Red</option><option>Broken/excoriated</option></select></div>'
+      +'</div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Output</label><select id="emrg-soutput-'+idx+'"><option value="">-- Select --</option><option>Haemoserous</option><option>Green/bilious</option><option>Liquid stool</option><option>Blood</option><option>Semi-formed/formed</option></select></div>'
+        +'<div class="fg"><label>Appliance Used</label><input type="text" id="emrg-sappliance-'+idx+'" placeholder="Type and size"/></div>'
+      +'</div>'
+      +'<div class="fg"><label>Accessories</label><input type="text" id="emrg-saccessories-'+idx+'" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>'
+      +'<div class="fg"><label>Stoma Review Notes</label><textarea id="emrg-snotes-'+idx+'" placeholder="Clinical observations, patient concerns, teaching started" style="height:72px;"></textarea></div>'
+    +'</div>';
+  };
+
+  window.emergAddStoma=function(){
+    const c=document.getElementById('emrg-stoma-container');if(!c)return;
+    const idx=c.querySelectorAll('.emrg-stoma-block').length;
+    const d=document.createElement('div');d.innerHTML=window.emergStomaBlock(idx);
+    c.appendChild(d.firstElementChild);
+    emergUpdateStomaIdPreview(idx);
+  };
+
+  window.emergRemoveStoma=function(idx){
+    const b=document.getElementById('emrg-stoma-block-'+idx);if(b)b.remove();
+    document.querySelectorAll('#emrg-stoma-container .emrg-stoma-block').forEach((blk,i)=>{
+      const lbl=blk.querySelector('.elective-section-label');
+      if(lbl){const rm=i>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="emergRemoveStoma('+i+')">Remove</button>':'';lbl.innerHTML='Stoma '+(i+1)+' '+rm;}
+    });
+  };
+
+  window.emergToggleRodRemoval=function(idx){
+    const checked=document.querySelector('input[name="emrg-rod-'+idx+'"]:checked')?.value;
+    const wrap=document.getElementById('emrg-rod-removal-wrap-'+idx);
+    if(wrap)wrap.style.display=(checked==='Yes')?'':'none';
+  };
+
+  function emergUpdateStomaIdPreview(idx){
+    const surgDate=(document.querySelector('#page-admission-emergency .route-surgery-date')?.value||'').trim();
+    const disp=document.getElementById('emrg-sid-'+idx);
+    if(!disp)return;
+    let idCard=(document.getElementById('np-id')?.value||'···').trim();
+    try{if(typeof normaliseIdCard==='function')idCard=normaliseIdCard(document.getElementById('np-id')?.value||'')||idCard;}catch(e){}
+    if(!surgDate){disp.textContent='STO – – –';return;}
+    const letter=EMRG_MONTH[new Date(surgDate+'T12:00:00').getMonth()];
+    disp.textContent='STO-'+idCard+'-'+letter+'????';
+    disp.title='Full ID assigned on save';
+  }
+
+  window.emergUpdateAllStomaIdPreviews=function(){
+    document.querySelectorAll('#emrg-stoma-container .emrg-stoma-block').forEach((_,i)=>emergUpdateStomaIdPreview(i));
+  };
+
+  window.emergCollect=function(showAlert){
+    const page=document.getElementById('page-admission-emergency');
+    const surgery=(page?.querySelector('.route-surgery-date')?.value||'').trim();
+    const operation=(page?.querySelector('.route-operation-performed')?.value||'').trim();
+    const findings=(page?.querySelector('.route-findings')?.value||'').trim();
+    const complications=v('emrg-complications');
+    const surgeon=v('emrg-surgeon');
+    const blocks=[...document.querySelectorAll('#emrg-stoma-container .emrg-stoma-block')];
+    const stomas=[];
+    for(let i=0;i<blocks.length;i++){
+      const bid=blocks[i].id.replace('emrg-stoma-block-','');
+      const t=(document.getElementById('emrg-stype-'+bid)?.value||'').trim();
+      const s=(document.getElementById('emrg-ssite-'+bid)?.value||'').trim();
+      if(!t&&!s)continue;
+      if(!t){if(showAlert)alert('Please select Stoma Type for Stoma '+(i+1)+'.');return false;}
+      if(!s){if(showAlert)alert('Please select Stoma Site for Stoma '+(i+1)+'.');return false;}
+      const rodInSitu=(document.querySelector('input[name="emrg-rod-'+bid+'"]:checked')?.value||'').trim();
+      const rodRemovalDate=(document.getElementById('emrg-rod-removal-'+bid)?.value||'').trim();
+      if(showAlert&&rodInSitu==='Yes'&&!rodRemovalDate){
+        alert('Please enter Date of Rod Removal for Stoma '+(i+1)+' (Rod in Situ is Yes).');
+        return false;
+      }
+      stomas.push({
+        stoma_number:stomas.length+1,
+        stoma_type:t,stoma_site:s,
+        rod_in_situ:rodInSitu,
+        rod_removal_date:rodRemovalDate,
+        stoma_colour:(document.getElementById('emrg-scolour-'+bid)?.value||'').trim(),
+        peristomal_skin:(document.getElementById('emrg-sskin-'+bid)?.value||'').trim(),
+        stoma_output:(document.getElementById('emrg-soutput-'+bid)?.value||'').trim(),
+        appliance:(document.getElementById('emrg-sappliance-'+bid)?.value||'').trim(),
+        accessories:(document.getElementById('emrg-saccessories-'+bid)?.value||'').trim(),
+        stoma_notes:(document.getElementById('emrg-snotes-'+bid)?.value||'').trim()
+      });
+    }
+    if(showAlert){
+      if(!surgery){alert('Please enter the Surgery Date.');return false;}
+      if(!stomas.length){alert('Please record at least one stoma (Type and Site).');return false;}
+    }
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+    set('np-surgery-date',surgery);
+    set('np-operation-performed',operation);
+    set('np-findings',findings);
+    set('np-stoma-type-hidden',stomas[0]?.stoma_type||'');
+    const data={surgery_date:surgery,operation,findings,complications,surgeon,stomas};
+    set('emrg-data-json',JSON.stringify(data));
+    return true;
+  };
+
+  async function nextEmrgSeqStart(){
+    let next=1;
+    try{
+      const {data}=await SB.from('episode_steps').select('data');
+      (data||[]).forEach(r=>{
+        const arr=(r&&r.data&&r.data.stomas)||[];
+        arr.forEach(s=>{const m=String(s&&s.stoma_id||'').match(/STO-[^-]+-[A-L](\d{4})$/);if(m){const k=parseInt(m[1],10);if(k>=next)next=k+1;}});
+      });
+    }catch(e){console.warn('emrg seq scan failed',e);}
+    return next;
+  }
+
+  window.emergFinaliseSave=async function(patientId){
+    if(!patientId)return;
+    let data={};
+    try{data=JSON.parse(v('emrg-data-json')||'{}')||{};}catch(e){data={};}
+    const stomas=Array.isArray(data.stomas)?data.stomas:[];
+    let idCard=(document.getElementById('np-id')?.value||'').trim();
+    try{if(typeof normaliseIdCard==='function')idCard=normaliseIdCard(idCard)||idCard;}catch(e){}
+    let seq=await nextEmrgSeqStart();
+    stomas.forEach(s=>{
+      const letter=EMRG_MONTH[new Date((data.surgery_date||'')+'T12:00:00').getMonth()]||'A';
+      s.stoma_id='STO-'+(idCard||String(patientId).slice(-6))+'-'+letter+String(seq++).padStart(4,'0');
+    });
+    const record={
+      route:'Emergency surgery',
+      surgery_date:data.surgery_date||'',
+      operation:data.operation||'',
+      findings:data.findings||'',
+      complications:data.complications||'',
+      surgeon:data.surgeon||'',
+      stomas,
+      recorded_date:new Date().toISOString().slice(0,10)
+    };
+    try{
+      const{data:epRow,error}=await SB.from('episodes').insert({patient_id:String(patientId),status:'open'}).select('id').single();
+      if(!error&&epRow&&epRow.id){
+        await SB.from('episode_steps').insert([
+          {episode_id:epRow.id,step_no:1,step_key:'pathway',status:'complete',data:{route:'Emergency surgery'}},
+          {episode_id:epRow.id,step_no:2,step_key:'operative_record',status:'complete',data:record}
+        ]);
+      }
+    }catch(e){console.warn('emrg episode create failed',e);}
+    try{
+      const summary=stomas.map(s=>s.stoma_type+(s.stoma_site?' at '+s.stoma_site:'')).join(', ');
+      if(summary)await SB.from('patients').update({stoma_type_summary:summary}).eq('id',String(patientId));
+    }catch(e){}
+    try{
+      ['emrg-complications','emrg-surgeon','emrg-data-json'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      const c=document.getElementById('emrg-stoma-container');if(c){c.innerHTML='';window.emergAddStoma();}
+    }catch(e){}
+    try{if(typeof loadPatientsList==='function')await loadPatientsList('patients-active');}catch(e){}
+    try{switchTab('patients-active',document.querySelector('[data-tab="patients-active"]'));}catch(e){}
+    try{alert('Emergency patient saved'+(stomas.length?' ('+stomas.map(s=>s.stoma_id).join(', ')+')'  :'')+'.');}catch(e){}
+  };
+
+  function init(){const c=document.getElementById('emrg-stoma-container');if(c&&!c.querySelector('.emrg-stoma-block'))window.emergAddStoma();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  console.log('Emergency pathway loaded');
+})();
+</script>
+<!-- /emergency-pathway -->
 </body>
 </html>
