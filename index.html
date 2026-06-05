@@ -20217,7 +20217,7 @@ table thead th.v63-name-title,
   function patientReviewedForDate(p,date){return !!latestReviewForDate(p,date);}
   function reviewButtonsForPatient(p,date){
     const id=esc(p.id||'');
-    return '<div class="home-card-actions"><button class="ncb-btn v86-input-review-button" onclick="openClinicalRecordForPatient(\''+id+'\')">Post-Op Clinical Assessment</button></div>';
+    return '<div class="home-card-actions"><button class="ncb-btn v86-input-review-button" onclick="openClinicalRecordForPatient(\''+id+'\')">Open Post-Op Centre</button></div>';
   }
 
   function ensureTodaysReviewPage(){
@@ -20419,7 +20419,7 @@ table thead th.v63-name-title,
   }
   function reviewButtons(p,date,hasOpenEpisode){
     const id=esc(p?.id||'');
-    return '<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+id+'\')">Post-Op Clinical Assessment</button></div>';
+    return '<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+id+'\')">Open Post-Op Centre</button></div>';
   }
   function sectionHtml(title,icon,items,extraClass){
     return '<div class="v78-ops-section '+(extraClass||'')+'"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.join('')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';
@@ -21039,7 +21039,7 @@ table thead th.v63-name-title,
         <div id="fpr-note" style="padding:10px;border-radius:6px;margin:12px 0;font-size:13px;display:none;"></div>
         <div class="elective-actions">
           <button class="btn-cancel" onclick="backToInpatients()">Cancel</button>
-          <button class="btn-save" onclick="saveFirstPostOpReview('${esc(patientId)}','${esc(episodeId)}')">Save &amp; Open Post-Op Centre →</button>
+          <button class="btn-save" onclick="saveFirstPostOpReview('${esc(patientId)}','${esc(episodeId)}')">Save and Close</button>
         </div>
       </div>`;
       showElectivePage(page);
@@ -21121,8 +21121,8 @@ table thead th.v63-name-title,
         (async()=>{try{await SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4);}catch(_){}})(),
         (async()=>{try{await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5);}catch(_){}})()
       ]);
-      showNote('Saved successfully. Opening Post-Operative Centre...', true);
-      setTimeout(()=>window.openPostOpCentre(patientId,episodeId),700);
+      showNote('Saved successfully.', true);
+      setTimeout(()=>{try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e){}try{if(typeof loadHomeDashboard==='function')loadHomeDashboard();}catch(e){}},700);
     }catch(e){showNote('Error saving: '+(e?.message||e),false);}
   };
 
