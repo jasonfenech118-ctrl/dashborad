@@ -5703,7 +5703,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <input type="hidden" id="np-stoma-daily-review-json" value=""/>
         <div id="emergency-daily-review-list" class="stoma-review-grid"></div>
-        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
+        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
       </div>
     </div>
 
@@ -20081,7 +20081,7 @@ table thead th.v63-name-title,
     if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
     const actions=document.getElementById('postop-review-actions');
     if(actions){
-      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
     }
     const note=document.getElementById('postop-review-note');
     if(note){
@@ -20404,9 +20404,12 @@ table thead th.v63-name-title,
     rows.sort((a,b)=>a.version-b.version||a.index-b.index);
     return rows.pop()||null;
   }
-  function reviewButtons(p,date){
+  function reviewButtons(p,date,hasOpenEpisode){
     const id=esc(p?.id||'');
     const d=esc(validDate(date)||selectedHomeDate());
+    if(hasOpenEpisode){
+      return '<div class="home-card-actions"><button class="ncb-btn" style="background:#1a2e4a;color:#fff;font-weight:900;" onclick="openPatientInterface(\''+id+'\')">Open Patient Center</button></div>';
+    }
     const done=!!latestReviewForDate(p,d);
     const inputClass=done?'v87-input-done':'v87-input-btn';
     const reviewed=done?'<button class="ncb-btn v87-reviewed-btn" onclick="openTodaysReviewPage(\''+id+'\',\''+d+'\')">Reviewed</button>':'';
@@ -20462,6 +20465,13 @@ table thead th.v63-name-title,
       const activePts=inpatientRaw.filter(p=>!isClosedPatient(p));
       const todayDate=new Date(d+'T12:00:00');
 
+      // ── fetch open episodes (single batch query) ──
+      let openEpPids=new Set();
+      try{
+        const{data:openEps}=await SB.from('episodes').select('patient_id').eq('status','open');
+        (openEps||[]).forEach(e=>{if(e.patient_id)openEpPids.add(String(e.patient_id));});
+      }catch(e){console.warn('open episodes fetch skipped',e);}
+
       // ── patient categorisation helpers ──
       const safePostOp=p=>{
         try{if(typeof postOperativeEncounterStarted==='function'&&postOperativeEncounterStarted(p))return true;}catch(e){}
@@ -20489,7 +20499,7 @@ table thead th.v63-name-title,
       const postOpRows=postOpPatients.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
         const meta='ID '+esc(p.id_card||'—')+' · '+chip;
-        return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d)+'</div>';
+        return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d,openEpPids.has(String(p.id||'')))+'</div>';
       });
 
       // ── Section 2: Pre-Op / Awaiting Surgery (sorted by surgery date, urgency badge) ──
@@ -20671,7 +20681,7 @@ table thead th.v63-name-title,
   }
   function updateActions(){
     const a=q('#postop-review-actions');
-    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
     const n=q('#postop-review-note'); if(n)n.innerHTML=editSource?'Editing <b>'+safe(editSource.code)+'</b>. Changes are shown in red and save as a new encounter version.':'Complete Daily Review. Saving returns to Home.';
   }
   function markRed(){
