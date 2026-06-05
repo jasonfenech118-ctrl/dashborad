@@ -5703,15 +5703,32 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       
       <div class="route-page-card">
         <div class="route-stoma-care" style="margin-top:0;padding-top:0;border-top:none;">
-          <div class="new-patient-section-title">Stoma and Care</div>
+          <div class="new-patient-section-title">Presentation</div>
           <div class="new-patient-grid">
-            <div class="fg"><label>Surgery Date *</label><input type="date" class="route-surgery-date" required/></div>
-            <div class="fg full"><label>Operation Performed</label><textarea class="route-operation-performed" placeholder="Operation performed"></textarea></div>
-            <div class="fg full"><label>Findings</label><textarea class="route-findings" placeholder="Findings"></textarea></div>
-            <div class="fg full"><label>Stoma Type *</label><div class="choice-group"><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-fistula" value="Ileostomy" required/> Ileostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-fistula" value="Colostomy" required/> Colostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-fistula" value="Urostomy" required/> Urostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-fistula" value="Other" required/> Other</label></div></div>
+            <div class="fg"><label>Date of presentation / referral *</label><input type="date" class="route-surgery-date" required/></div>
+            <div class="fg full"><label>Originating operation / cause</label><textarea class="route-operation-performed" placeholder="Surgery or event that led to the wound / fistula (if known)"></textarea></div>
           </div>
+
+          <div class="new-patient-section-title" style="margin-top:18px;">Wound / fistula assessment</div>
+          <div class="elective-section-card" style="border:1px solid #b7d8f0;border-radius:12px;padding:14px;margin-bottom:6px;">
+            <div class="cor-2col">
+              <div class="fg"><label>Wound / fistula site *</label><input type="text" id="fw-site" placeholder="e.g. midline laparotomy wound, RIF drain site"/></div>
+              <div class="fg"><label>Type *</label><select id="fw-type"><option value="">-- Select --</option><option>Enterocutaneous fistula</option><option>Enteroatmospheric fistula</option><option>Dehisced / open wound</option><option>Drain site</option><option>Pressure ulcer</option><option>Other</option></select></div>
+            </div>
+            <div class="cor-2col">
+              <div class="fg"><label>Output volume</label><select id="fw-output-volume"><option value="">-- Select --</option><option>Nil</option><option>Low (&lt;200ml/24h)</option><option>Moderate (200–500ml/24h)</option><option>High (&gt;500ml/24h)</option></select></div>
+              <div class="fg"><label>Output type</label><select id="fw-output-type"><option value="">-- Select --</option><option>Serous</option><option>Haemoserous</option><option>Enteric / faeculent</option><option>Bilious</option><option>Purulent</option><option>Other</option></select></div>
+            </div>
+            <div class="cor-2col">
+              <div class="fg"><label>Peri-wound skin</label><select id="fw-skin"><option value="">-- Select --</option><option>Intact</option><option>Erythema</option><option>Excoriated</option><option>Macerated</option><option>Ulcerated</option></select></div>
+              <div class="fg"><label>Pouch / appliance used</label><input type="text" id="fw-appliance" placeholder="e.g. fistula wound manager, high-output pouch"/></div>
+            </div>
+            <div class="fg"><label>Accessories</label><input type="text" id="fw-accessories" placeholder="e.g. adhesive remover, barrier wipes, paste, seals"/></div>
+            <div class="fg"><label>Management notes</label><textarea id="fw-notes" placeholder="Bagging / pouching plan, skin protection, patient concerns, escalation" style="height:80px;"></textarea></div>
+          </div>
+          <input type="hidden" id="fw-data-json" value=""/>
         </div>
-        <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Fistula/wound management – bagging advice','page-admission-fistula')">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
+        <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Fistula/wound management – bagging advice','page-admission-fistula',{fistulaWound:true})">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
       </div>
     </div>
 
@@ -7066,6 +7083,7 @@ function clearNewPatientForm(){
   ['np-id','np-sn','np-fn','np-dob','np-locality','np-sex','np-phone','np-surgery-date','np-planned-surgery-date','np-elective-planned-date','np-inpatient-type','np-admission-route','np-operation-performed','np-findings','np-stoma-type-hidden','emrg-complications','emrg-surgeon','emrg-data-json','np-pmh','np-psh','np-medication-other','np-medication-notes','np-social-history','np-followup-month','np-followup-year'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll('input[name="np-med-history"],input[name="np-dpa"],input[name="np-stoma-type"]').forEach(el=>{el.checked=false;});
   try{const c=document.getElementById('emrg-stoma-container');if(c){c.innerHTML='';if(typeof emergAddStoma==='function')emergAddStoma();}}catch(e){}
+  ['fw-site','fw-type','fw-output-volume','fw-output-type','fw-skin','fw-appliance','fw-accessories','fw-notes','fw-data-json'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   selectedAdmissionRouteForNewPatient='';
   const menuDate=document.getElementById('menu-elective-sitting-date'); if(menuDate)menuDate.value='';
   refreshNewPatientRouteUI();
@@ -7149,7 +7167,7 @@ async function saveNewPatientTab(options={}){
   if(!socialHistory){alert('Social History is required.');return;}
   if(false){/* v92: siting date is set when the appointment slot is booked, not typed here */}
   if(!awaitingSurgery&&!surgeryDate&&!options.isElectiveNewCase){alert('Please choose an Admission Route and complete Surgery Date in the Stoma and Care step.');return;}
-  if(!awaitingSurgery&&!options.isElectiveNewCase&&!stomaType){alert('Please choose an Admission Route and select Stoma Type in the Stoma and Care step.');return;}
+  if(!awaitingSurgery&&!options.isElectiveNewCase&&!options.fistulaWound&&!stomaType){alert('Please choose an Admission Route and select Stoma Type in the Stoma and Care step.');return;}
   if(!dpaStatus){alert('Please select DPA: Yes, No, or N/A.');return;}
   const medicationValues=getCheckedValues('np-med-history');
   const medicationOther=newPatientInputValue('np-medication-other');
@@ -7523,6 +7541,7 @@ function collectRouteStomaCare(pageId,showAlert=true){
   const page=document.getElementById(pageId);
   if(!page)return false;
   if(pageId==='page-admission-outside-mdh'){return (typeof omdhCollect==='function')?omdhCollect(showAlert):true;}
+  if(pageId==='page-admission-fistula'){return (typeof fwCollect==='function')?fwCollect(showAlert):true;}
   const surgery=page.querySelector('.route-surgery-date')?.value||'';
   const operation=page.querySelector('.route-operation-performed')?.value?.trim()||'';
   const findings=page.querySelector('.route-findings')?.value?.trim()||'';
@@ -7829,15 +7848,26 @@ function renderAdmissionReview(){
   const btn=document.getElementById('admission-review-confirm-btn'); if(btn)btn.textContent=p.options?.next==='daily-review'?'Confirm and Continue':(p.options?.awaitingSurgery?'Confirm and Save':'Confirm and Save');
   const grid=document.getElementById('admission-review-grid');
   if(grid){
+    const isFistula=!!p.options?.fistulaWound;
+    let fw={};
+    if(isFistula){try{fw=JSON.parse(document.getElementById('fw-data-json')?.value||'{}')||{};}catch(e){fw={};}}
+    const clinicalFields=isFistula?[
+      admissionReviewField('Presentation date',clinical.surgery),
+      admissionReviewField('Wound / fistula site',fw.site||''),
+      admissionReviewField('Type',fw.type||''),
+      admissionReviewField('Output',[fw.output_volume,fw.output_type].filter(Boolean).join(' — '))
+    ]:[
+      admissionReviewField('Surgery date',clinical.surgery),
+      admissionReviewField('Stoma type',clinical.stoma),
+      admissionReviewField('Operation',clinical.operation)
+    ];
     grid.innerHTML=[
       admissionReviewField('Patient',name),
       admissionReviewField('ID Number',normaliseIdCard(document.getElementById('np-id')?.value||'')),
       admissionReviewField('Pathway',admissionRouteShortLabel(route)),
       admissionReviewField('Status after saving',status),
       admissionReviewField('Sitting / planned date',planned),
-      admissionReviewField('Surgery date',clinical.surgery),
-      admissionReviewField('Stoma type',clinical.stoma),
-      admissionReviewField('Operation',clinical.operation),
+      ...clinicalFields,
       admissionReviewField('Next action',next)
     ].join('');
   }
@@ -7873,6 +7903,19 @@ function confirmAdmissionReviewSave(){
           pendingAdmissionReview=null;
         }
       }catch(e){console.warn('Outside MDH finalise failed',e);}
+    })();
+    return;
+  }
+  if(p.options?.fistulaWound){
+    if(p.pageId&&!collectRouteStomaCare(p.pageId,true))return;
+    (async()=>{
+      try{
+        const pid=await saveNewPatientTab({fistulaWound:true});
+        if(pid){
+          if(typeof fwFinaliseSave==='function')await fwFinaliseSave(pid);
+          pendingAdmissionReview=null;
+        }
+      }catch(e){console.warn('Fistula/wound finalise failed',e);}
     })();
     return;
   }
@@ -20998,5 +21041,77 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /emergency-pathway -->
+
+<!-- fistula-wound-pathway -->
+<script id="fistula-wound-pathway-script">
+(function(){
+  function v(id){return (document.getElementById(id)?.value||'').trim();}
+
+  // Validate + serialise the single wound/fistula assessment.
+  // Populates the np-* hidden fields the generic patient save reads.
+  window.fwCollect=function(showAlert){
+    const page=document.getElementById('page-admission-fistula');
+    const presentation=(page?.querySelector('.route-surgery-date')?.value||'').trim();
+    const origin=(page?.querySelector('.route-operation-performed')?.value||'').trim();
+    const site=v('fw-site');
+    const type=v('fw-type');
+    const outputVolume=v('fw-output-volume');
+    const outputType=v('fw-output-type');
+    const skin=v('fw-skin');
+    const appliance=v('fw-appliance');
+    const accessories=v('fw-accessories');
+    const notes=v('fw-notes');
+    if(showAlert){
+      if(!presentation){alert('Please enter the Date of presentation / referral.');return false;}
+      if(!site){alert('Please enter the Wound / fistula site.');return false;}
+      if(!type){alert('Please select the Type (fistula / wound).');return false;}
+    }
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+    set('np-surgery-date',presentation);
+    set('np-operation-performed',origin);
+    set('np-stoma-type-hidden','');
+    const findings=[
+      'Fistula / wound management',
+      site?'Site: '+site:'',
+      type?'Type: '+type:'',
+      outputVolume?'Output volume: '+outputVolume:'',
+      outputType?'Output type: '+outputType:'',
+      skin?'Peri-wound skin: '+skin:'',
+      appliance?'Appliance: '+appliance:'',
+      accessories?'Accessories: '+accessories:'',
+      notes?'Management notes: '+notes:''
+    ].filter(Boolean).join('\n');
+    set('np-findings',findings);
+    const data={presentation_date:presentation,origin,site,type,output_volume:outputVolume,output_type:outputType,skin,appliance,accessories,notes};
+    set('fw-data-json',JSON.stringify(data));
+    return true;
+  };
+
+  // After the patient row is saved, attach the fistula/wound episode.
+  window.fwFinaliseSave=async function(patientId){
+    if(!patientId)return;
+    let data={};
+    try{data=JSON.parse(v('fw-data-json')||'{}')||{};}catch(e){data={};}
+    const record=Object.assign({route:'Fistula/wound management'},data,{recorded_date:new Date().toISOString().slice(0,10)});
+    try{
+      const{data:epRow,error}=await SB.from('episodes').insert({patient_id:String(patientId),status:'open'}).select('id').single();
+      if(!error&&epRow&&epRow.id){
+        await SB.from('episode_steps').insert([
+          {episode_id:epRow.id,step_no:1,step_key:'pathway',status:'complete',data:{route:'Fistula/wound management'}},
+          {episode_id:epRow.id,step_no:2,step_key:'fistula_wound_assessment',status:'complete',data:record}
+        ]);
+      }
+    }catch(e){console.warn('fistula/wound episode create failed',e);}
+    // Reset the assessment block for the next entry.
+    try{['fw-site','fw-type','fw-output-volume','fw-output-type','fw-skin','fw-appliance','fw-accessories','fw-notes','fw-data-json'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});}catch(e){}
+    try{if(typeof loadPatientsList==='function')await loadPatientsList('patients-active');}catch(e){}
+    try{switchTab('patients-active',document.querySelector('[data-tab="patients-active"]'));}catch(e){}
+    try{alert('Fistula / wound patient saved.');}catch(e){}
+  };
+
+  console.log('Fistula / wound pathway loaded');
+})();
+</script>
+<!-- /fistula-wound-pathway -->
 </body>
 </html>
