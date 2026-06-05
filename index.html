@@ -14050,6 +14050,9 @@ function continueEpisodeButton(p){
   if(postOperativeEncounterStarted(p)){
     return `<button class="ncb-btn add-encounter-button" onclick="openPostOpCentreForPatient('${p.id}')">Open Post-Op Centre</button>`;
   }
+  if(p?.surgery_date){
+    return `<button class="ncb-btn continue-episode-button" style="background:#1a2e4a;color:#fff;" onclick="openPostOperativeDailyReviewFromPatient('${htmlSafe(p.id)}')">Input Daily Review</button>`;
+  }
   if(stomaSittingCompleted(p)){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
@@ -20491,6 +20494,7 @@ table thead th.v63-name-title,
 
       // ── patient categorisation helpers ──
       const safePostOp=p=>{
+        if(p?.surgery_date)return true;
         try{if(typeof postOperativeEncounterStarted==='function'&&postOperativeEncounterStarted(p))return true;}catch(e){}
         const itype=String(p?.inpatient_type||'').toLowerCase().trim();
         return itype==='actual_inpatient'||itype==='post_operative'||itype==='post-operative';
