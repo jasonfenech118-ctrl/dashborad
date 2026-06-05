@@ -20123,6 +20123,17 @@ table thead th.v63-name-title,
         <div class="fg"><label>Stoma Type *</label><select id="fpr-stoma-type-${idx}"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
         <div class="fg"><label>Stoma Site *</label><select id="fpr-stoma-site-${idx}"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option></select></div>
       </div>
+      <div class="fg" style="margin-bottom:10px;">
+        <label style="margin-bottom:6px;display:block;">Rod in Situ</label>
+        <div style="display:flex;gap:20px;align-items:center;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:14px;"><input type="radio" name="fpr-rod-${idx}" value="Yes" onchange="fprToggleRodRemoval(${idx})"> Yes</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:14px;"><input type="radio" name="fpr-rod-${idx}" value="No" onchange="fprToggleRodRemoval(${idx})"> No</label>
+        </div>
+      </div>
+      <div class="fg" id="fpr-rod-removal-wrap-${idx}" style="display:none;margin-bottom:10px;">
+        <label>Date of Rod Removal</label>
+        <input type="date" id="fpr-rod-removal-${idx}"/>
+      </div>
       <div class="elective-section-label" style="font-size:13px;color:#475569;margin:14px 0 8px;">Stoma Review</div>
       <div class="cor-2col">
         <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour-${idx}"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
@@ -20164,6 +20175,11 @@ table thead th.v63-name-title,
   };
   window.fprUpdateAllStomaIdPreviews=function(){
     document.querySelectorAll('.fpr-stoma-block').forEach((_,i)=>window.fprUpdateStomaIdPreview(i));
+  };
+  window.fprToggleRodRemoval=function(idx){
+    const checked=document.querySelector(`input[name="fpr-rod-${idx}"]:checked`)?.value;
+    const wrap=document.getElementById('fpr-rod-removal-wrap-'+idx);
+    if(wrap)wrap.style.display=(checked==='Yes')?'':'none';
   };
   window.fprAddStoma=function(){
     const container=document.getElementById('fpr-stoma-container');
@@ -20268,7 +20284,9 @@ table thead th.v63-name-title,
         stoma_output:(document.getElementById('fpr-output-'+bid)?.value||'').trim(),
         appliance:(document.getElementById('fpr-appliance-'+bid)?.value||'').trim(),
         accessories:(document.getElementById('fpr-accessories-'+bid)?.value||'').trim(),
-        stoma_notes:(document.getElementById('fpr-stoma-notes-'+bid)?.value||'').trim()
+        stoma_notes:(document.getElementById('fpr-stoma-notes-'+bid)?.value||'').trim(),
+        rod_in_situ:(document.querySelector(`input[name="fpr-rod-${bid}"]:checked`)?.value||'').trim(),
+        rod_removal_date:(document.getElementById('fpr-rod-removal-'+bid)?.value||'').trim()
       });
     }
     if(stomas.length===0){showNote('At least one stoma is required.');return;}
