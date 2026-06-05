@@ -5713,20 +5713,29 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-outside-mdh">
-      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
+      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span><span class="pathway-title-sub">Ostomy formed at another hospital — record the existing stoma and take over follow-up care.</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Outside MDH" data-step="clinical"></div>
-      
+
       <div class="route-page-card">
         <div class="route-stoma-care" style="margin-top:0;padding-top:0;border-top:none;">
-          <div class="new-patient-section-title">Stoma and Care</div>
+          <!-- Section 1: Where the stoma was formed -->
+          <div class="new-patient-section-title">Where the stoma was formed</div>
           <div class="new-patient-grid">
-            <div class="fg"><label>Surgery Date *</label><input type="date" class="route-surgery-date" required/></div>
-            <div class="fg full"><label>Operation Performed</label><textarea class="route-operation-performed" placeholder="Operation performed"></textarea></div>
-            <div class="fg full"><label>Findings</label><textarea class="route-findings" placeholder="Findings"></textarea></div>
-            <div class="fg full"><label>Stoma Type *</label><div class="choice-group"><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-outside" value="Ileostomy" required/> Ileostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-outside" value="Colostomy" required/> Colostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-outside" value="Urostomy" required/> Urostomy</label><label class="choice-chip"><input type="radio" class="route-stoma-type" name="route-stoma-outside" value="Other" required/> Other</label></div></div>
+            <div class="fg"><label>Originating hospital / facility *</label><input type="text" id="omdh-hospital" placeholder="e.g. St James Hospital"/></div>
+            <div class="fg"><label>Country / location</label><input type="text" id="omdh-country" placeholder="e.g. United Kingdom"/></div>
+            <div class="fg"><label>Date stoma formed *</label><input type="date" class="route-surgery-date" id="omdh-formed-date" onchange="omdhUpdateAllPreviews()"/></div>
+            <div class="fg"><label>Planned reversal date</label><input type="date" id="omdh-reversal-date"/></div>
+            <div class="fg full"><label>Original operation / indication</label><textarea class="route-operation-performed" id="omdh-operation" placeholder="What operation was performed and why, as known"></textarea></div>
+            <div class="fg full"><label>Findings (as known)</label><textarea class="route-findings" id="omdh-findings" placeholder="Any findings from the originating hospital"></textarea></div>
           </div>
+
+          <!-- Section 2 + 3: Stoma details & first MDH assessment (repeater) -->
+          <div class="new-patient-section-title" style="margin-top:18px;">Stoma details &amp; first MDH assessment</div>
+          <div id="omdh-stoma-container"></div>
+          <div style="margin:6px 0 4px;"><button type="button" onclick="omdhAddStoma()" style="background:#0d7377;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button></div>
+          <input type="hidden" id="omdh-data-json" value=""/>
         </div>
-        <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Outside MDH – ostomy formed elsewhere','page-admission-outside-mdh')">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
+        <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Outside MDH – ostomy formed elsewhere','page-admission-outside-mdh',{outsideMdh:true})">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
       </div>
     </div>
 
@@ -7212,6 +7221,7 @@ async function saveNewPatientTab(options={}){
   if(document.getElementById('page-staff-audit')?.classList.contains('active'))loadStaffAudit();
   if(document.getElementById('page-dntu-policy')?.classList.contains('active'))loadDntuPolicy();
   if(document.getElementById('page-reports')?.classList.contains('active'))loadReports();
+  return saved.patient?.id||null;
 }
 async function saveElectiveAwaitingSurgery(event){
   if(event){event.preventDefault();event.stopPropagation();}
@@ -7527,6 +7537,7 @@ function toggleEmergencyRodRemovalDate(){
 function collectRouteStomaCare(pageId,showAlert=true){
   const page=document.getElementById(pageId);
   if(!page)return false;
+  if(pageId==='page-admission-outside-mdh'){return (typeof omdhCollect==='function')?omdhCollect(showAlert):true;}
   const surgery=page.querySelector('.route-surgery-date')?.value||'';
   const operation=page.querySelector('.route-operation-performed')?.value?.trim()||'';
   const findings=page.querySelector('.route-findings')?.value?.trim()||'';
@@ -7863,6 +7874,19 @@ function confirmAdmissionReviewSave(){
   if(!p){alert('No pathway review is ready. Please start again from Add Patient.');return;}
   if(p.options?.next==='daily-review'){
     continueEmergencyToStomaDailyReview();
+    return;
+  }
+  if(p.options?.outsideMdh){
+    if(p.pageId&&!collectRouteStomaCare(p.pageId,true))return;
+    (async()=>{
+      try{
+        const pid=await saveNewPatientTab({outsideMdh:true});
+        if(pid){
+          if(typeof omdhFinaliseTakeover==='function')await omdhFinaliseTakeover(pid);
+          pendingAdmissionReview=null;
+        }
+      }catch(e){console.warn('Outside MDH finalise failed',e);}
+    })();
     return;
   }
   if(p.options?.awaitingSurgery){
@@ -20608,5 +20632,175 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /elective-pathway-dedicated-pages -->
+
+<!-- outside-mdh-pathway -->
+<script id="outside-mdh-pathway-script">
+(function(){
+  const MONTH=['A','B','C','D','E','F','G','H','I','J','K','L'];
+  function v(id){return (document.getElementById(id)?.value||'').trim();}
+  function escAttr(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  window.omdhStomaBlock=function(idx){
+    const n=idx+1;
+    const removeBtn=idx>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="omdhRemoveStoma('+idx+')">Remove</button>':'';
+    return '<div class="elective-section-card omdh-stoma-block" id="omdh-stoma-block-'+idx+'" style="border:1px solid #0d7377;border-radius:12px;padding:14px;margin-bottom:14px;">'
+      +'<div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
+      +'<div style="margin:-2px 0 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span><span id="omdh-sid-'+idx+'" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span></div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Type *</label><select id="omdh-stype-'+idx+'"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>'
+        +'<div class="fg"><label>Stoma Site *</label><select id="omdh-ssite-'+idx+'"><option value="">-- Select --</option><option value="RIF">Right Iliac Fossa (RIF)</option><option value="LIF">Left Iliac Fossa (LIF)</option><option value="RUQ">Right Upper Quadrant (RUQ)</option><option value="LUQ">Left Upper Quadrant (LUQ)</option></select></div>'
+      +'</div>'
+      +'<div class="elective-section-label" style="font-size:13px;color:#475569;margin:12px 0 8px;">First MDH Assessment</div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Colour</label><select id="omdh-scolour-'+idx+'"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>'
+        +'<div class="fg"><label>Peristomal Skin</label><select id="omdh-sskin-'+idx+'"><option value="">-- Select --</option><option>Intact</option><option>Mild irritation</option><option>Excoriation</option><option>Ulceration</option></select></div>'
+      +'</div>'
+      +'<div class="cor-2col">'
+        +'<div class="fg"><label>Stoma Output</label><select id="omdh-soutput-'+idx+'"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>'
+        +'<div class="fg"><label>Appliance Used</label><input type="text" id="omdh-sappliance-'+idx+'" placeholder="Type and size"/></div>'
+      +'</div>'
+      +'<div class="fg"><label>Accessories</label><input type="text" id="omdh-saccessories-'+idx+'" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>'
+      +'<div class="fg"><label>Assessment Notes</label><textarea id="omdh-snotes-'+idx+'" placeholder="Clinical observations, patient concerns, teaching started" style="height:72px;"></textarea></div>'
+    +'</div>';
+  };
+  window.omdhAddStoma=function(){
+    const c=document.getElementById('omdh-stoma-container');if(!c)return;
+    const idx=c.querySelectorAll('.omdh-stoma-block').length;
+    const d=document.createElement('div');d.innerHTML=window.omdhStomaBlock(idx);
+    c.appendChild(d.firstElementChild);
+  };
+  window.omdhRemoveStoma=function(idx){
+    const b=document.getElementById('omdh-stoma-block-'+idx);if(b)b.remove();
+    // renumber labels
+    document.querySelectorAll('#omdh-stoma-container .omdh-stoma-block').forEach((blk,i)=>{
+      const lbl=blk.querySelector('.elective-section-label');
+      if(lbl){const rm=i>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="omdhRemoveStoma('+i+')">Remove</button>':'';lbl.innerHTML='Stoma '+(i+1)+' '+rm;}
+    });
+  };
+  window.omdhUpdateStomaIdPreview=function(idx){
+    const formed=v('omdh-formed-date');
+    const disp=document.getElementById('omdh-sid-'+idx);
+    if(!disp)return;
+    let idCard=v('np-id')||'···';
+    try{if(typeof normaliseIdCard==='function')idCard=normaliseIdCard(v('np-id'))||idCard;}catch(e){}
+    if(!formed){disp.textContent='STO – – –';return;}
+    const letter=MONTH[new Date(formed+'T12:00:00').getMonth()];
+    disp.textContent='STO-'+idCard+'-'+letter+'????';
+    disp.title='Full ID assigned on save';
+  };
+  window.omdhUpdateAllPreviews=function(){
+    document.querySelectorAll('#omdh-stoma-container .omdh-stoma-block').forEach((_,i)=>window.omdhUpdateStomaIdPreview(i));
+  };
+
+  // Validate + serialise. Populates the hidden np-* fields the generic save reads.
+  window.omdhCollect=function(showAlert){
+    const hospital=v('omdh-hospital');
+    const formed=v('omdh-formed-date');
+    const operation=v('omdh-operation');
+    const findings=v('omdh-findings');
+    const country=v('omdh-country');
+    const reversal=v('omdh-reversal-date');
+    const blocks=[...document.querySelectorAll('#omdh-stoma-container .omdh-stoma-block')];
+    const stomas=[];
+    for(let i=0;i<blocks.length;i++){
+      const bid=blocks[i].id.replace('omdh-stoma-block-','');
+      const t=v('omdh-stype-'+bid), s=v('omdh-ssite-'+bid);
+      if(!t&&!s)continue; // skip wholly-empty block
+      if(!t){if(showAlert)alert('Please select Stoma Type for Stoma '+(i+1)+'.');return false;}
+      if(!s){if(showAlert)alert('Please select Stoma Site for Stoma '+(i+1)+'.');return false;}
+      stomas.push({
+        stoma_number:stomas.length+1,
+        stoma_type:t, stoma_site:s,
+        stoma_colour:v('omdh-scolour-'+bid),
+        peristomal_skin:v('omdh-sskin-'+bid),
+        stoma_output:v('omdh-soutput-'+bid),
+        appliance:v('omdh-sappliance-'+bid),
+        accessories:v('omdh-saccessories-'+bid),
+        stoma_notes:v('omdh-snotes-'+bid)
+      });
+    }
+    if(showAlert){
+      if(!hospital){alert('Please enter the originating hospital / facility.');return false;}
+      if(!formed){alert('Please enter the Date stoma formed.');return false;}
+      if(!stomas.length){alert('Please record at least one stoma (Type and Site).');return false;}
+    }
+    // Feed the generic patient-save hidden fields
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+    set('np-surgery-date',formed);
+    set('np-operation-performed',operation);
+    set('np-findings',findings);
+    set('np-stoma-type-hidden',stomas[0]?.stoma_type||'');
+    const data={origin_hospital:hospital,origin_country:country,stoma_formed_on:formed,planned_reversal_date:reversal,original_operation:operation,findings,stomas};
+    set('omdh-data-json',JSON.stringify(data));
+    return true;
+  };
+
+  // Find the next global stoma sequence number across all saved episode steps.
+  async function nextSeqStart(){
+    let next=1;
+    try{
+      const {data}=await SB.from('episode_steps').select('data');
+      (data||[]).forEach(r=>{
+        const arr=(r&&r.data&&r.data.stomas)||[];
+        arr.forEach(s=>{const m=String(s&&s.stoma_id||'').match(/STO-[^-]+-[A-L](\d{4})$/);if(m){const k=parseInt(m[1],10);if(k>=next)next=k+1;}});
+      });
+    }catch(e){console.warn('omdh seq scan failed',e);}
+    return next;
+  }
+
+  // After the patient row is saved, attach the takeover episode + stoma IDs.
+  window.omdhFinaliseTakeover=async function(patientId){
+    if(!patientId)return;
+    let data={};
+    try{data=JSON.parse(v('omdh-data-json')||'{}')||{};}catch(e){data={};}
+    const stomas=Array.isArray(data.stomas)?data.stomas:[];
+    let idCard=v('np-id');
+    try{if(typeof normaliseIdCard==='function')idCard=normaliseIdCard(idCard)||idCard;}catch(e){}
+    let seq=await nextSeqStart();
+    stomas.forEach(s=>{
+      const letter=MONTH[new Date((s.stoma_formed_on||data.stoma_formed_on||'')+'T12:00:00').getMonth()]||'A';
+      s.stoma_id='STO-'+(idCard||String(patientId).slice(-6))+'-'+letter+String(seq++).padStart(4,'0');
+    });
+    const takeover={
+      route:'Outside MDH',
+      origin_hospital:data.origin_hospital||'',
+      origin_country:data.origin_country||'',
+      stoma_formed_on:data.stoma_formed_on||'',
+      planned_reversal_date:data.planned_reversal_date||'',
+      original_operation:data.original_operation||'',
+      findings:data.findings||'',
+      stomas,
+      recorded_date:new Date().toISOString().slice(0,10)
+    };
+    try{
+      const {data:epRow,error}=await SB.from('episodes').insert({patient_id:patientId,status:'open'}).select('id').single();
+      if(!error&&epRow&&epRow.id){
+        await SB.from('episode_steps').insert([
+          {episode_id:epRow.id,step_no:1,step_key:'pathway',status:'complete',data:{route:'Outside MDH'}},
+          {episode_id:epRow.id,step_no:2,step_key:'outside_takeover',status:'complete',data:takeover}
+        ]);
+      }
+    }catch(e){console.warn('omdh episode create failed',e);}
+    try{
+      const summary=stomas.map(s=>s.stoma_type+(s.stoma_site?' at '+s.stoma_site:'')).join(', ');
+      if(summary)await SB.from('patients').update({stoma_type_summary:summary}).eq('id',patientId);
+    }catch(e){}
+    // Reset the form for the next entry and return to the active patients list.
+    try{
+      ['omdh-hospital','omdh-country','omdh-formed-date','omdh-reversal-date','omdh-operation','omdh-findings','omdh-data-json'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      const c=document.getElementById('omdh-stoma-container');if(c){c.innerHTML='';window.omdhAddStoma();}
+    }catch(e){}
+    try{if(typeof loadPatientsList==='function')await loadPatientsList('patients-active');}catch(e){}
+    try{switchTab('patients-active',document.querySelector('[data-tab="patients-active"]'));}catch(e){}
+    try{alert('Outside MDH patient saved and stoma takeover recorded'+(stomas.length?(' ('+stomas.map(s=>s.stoma_id).join(', ')+')'):'')+'.');}catch(e){}
+  };
+
+  // Ensure one stoma block exists when the page is first available.
+  function init(){const c=document.getElementById('omdh-stoma-container');if(c&&!c.querySelector('.omdh-stoma-block'))window.omdhAddStoma();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  console.log('Outside MDH pathway loaded');
+})();
+</script>
+<!-- /outside-mdh-pathway -->
 </body>
 </html>
