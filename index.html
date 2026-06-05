@@ -5690,7 +5690,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <input type="hidden" id="np-stoma-daily-review-json" value=""/>
         <div id="emergency-daily-review-list" class="stoma-review-grid"></div>
-        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="confirmPostOperativeDailyReview()" style="background:#e6a817;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
+        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
       </div>
     </div>
 
@@ -5823,7 +5823,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 
 
     <!-- EPISODE PAGE -->
-    <div class="page" id="page-episode-page">
+    <div class="page" id="page-patient-episode">
       <div class="phdr">
         <div><h2>Episode Page</h2><p>Manage this patient episode, encounters and planning in one place.</p></div>
         <button class="btn-add btn-return" onclick="returnFromEpisodePage()">← Return</button>
@@ -18033,6 +18033,17 @@ table thead th.v63-name-title,
     if(typeof renderEpisodePage==='function') renderEpisodePage();
   };
   window.v73OpenFormationEpisode=function(patientId){ return openEpisode(patientId,'encounters'); };
+  // Return from the Episode Page back to the patient's interface (it is opened from there),
+  // falling back to the inpatients list and then home.
+  window.returnFromEpisodePage=function(){
+    try{
+      const p=(typeof episodePagePatient!=='undefined'&&episodePagePatient)||window.episodePagePatient;
+      if(p&&p.id&&typeof openPatientInterface==='function'){openPatientInterface(p.id);return;}
+    }catch(e){}
+    try{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
+    catch(e){try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e2){}}
+  };
+  try{returnFromEpisodePage=window.returnFromEpisodePage;}catch(e){}
 
   function ensureAddModal(){
     let m=document.getElementById('v73-reversal-modal');
@@ -19275,7 +19286,7 @@ table thead th.v63-name-title,
     if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
     const actions=document.getElementById('postop-review-actions');
     if(actions){
-      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="confirmPostOperativeDailyReview()" style="background:#e6a817;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
     }
     const note=document.getElementById('postop-review-note');
     if(note){
@@ -19861,7 +19872,7 @@ table thead th.v63-name-title,
   }
   function updateActions(){
     const a=q('#postop-review-actions');
-    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="try{confirmPostOperativeDailyReview()}catch(e){}" style="background:#e6a817;color:#111827;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-save" onclick="patientDischargePostOperativeEpisode()" style="background:#b91c1c;color:white;">Patient Discharge</button>';
+    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
     const n=q('#postop-review-note'); if(n)n.innerHTML=editSource?'Editing <b>'+safe(editSource.code)+'</b>. Changes are shown in red and save as a new encounter version.':'Complete Daily Review. Saving returns to Home.';
   }
   function markRed(){
