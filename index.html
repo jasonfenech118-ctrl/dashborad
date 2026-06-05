@@ -14050,10 +14050,7 @@ function continueEpisodeButton(p){
   if(postOperativeEncounterStarted(p)){
     return `<button class="ncb-btn add-encounter-button" onclick="openPostOpCentreForPatient('${p.id}')">Open Post-Op Centre</button>`;
   }
-  if(p?.surgery_date){
-    return `<button class="ncb-btn continue-episode-button" style="background:#1a2e4a;color:#fff;" onclick="openPostOperativeDailyReviewFromPatient('${htmlSafe(p.id)}')">Input Daily Review</button>`;
-  }
-  if(stomaSittingCompleted(p)){
+  if(stomaSittingCompleted(p)||p?.surgery_date){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
     const title=op?`Surgery date: ${patientDateText(op)}`:'Surgery date not yet recorded';
@@ -20219,12 +20216,8 @@ table thead th.v63-name-title,
   function selectedHomeDate(){try{return validDate(document.getElementById('home-date-filter')?.value)||today();}catch(e){return today();}}
   function patientReviewedForDate(p,date){return !!latestReviewForDate(p,date);}
   function reviewButtonsForPatient(p,date){
-    const latest=latestReviewForDate(p,date);
     const id=esc(p.id||'');
-    const d=esc(validDate(date)||today());
-    const inputClass=latest?'v86-review-ready':'v86-input-review-button';
-    const reviewed=latest?'<button class="ncb-btn v86-reviewed-button" onclick="openTodaysReviewPage(\''+id+'\',\''+d+'\')">Reviewed</button>':'';
-    return '<div class="home-card-actions"><button class="ncb-btn '+inputClass+'" onclick="openPatientDailyReviewFromPatientsReview(\''+id+'\',\''+d+'\')">Input Daily Review</button>'+reviewed+'</div>';
+    return '<div class="home-card-actions"><button class="ncb-btn v86-input-review-button" onclick="openClinicalRecordForPatient(\''+id+'\')">Post-Op Clinical Assessment</button></div>';
   }
 
   function ensureTodaysReviewPage(){
@@ -20426,14 +20419,7 @@ table thead th.v63-name-title,
   }
   function reviewButtons(p,date,hasOpenEpisode){
     const id=esc(p?.id||'');
-    const d=esc(validDate(date)||selectedHomeDate());
-    if(hasOpenEpisode){
-      return '<div class="home-card-actions"><button class="ncb-btn" style="background:#1a2e4a;color:#fff;font-weight:900;" onclick="openPatientInterface(\''+id+'\')">Open Patient Center</button></div>';
-    }
-    const done=!!latestReviewForDate(p,d);
-    const inputClass=done?'v87-input-done':'v87-input-btn';
-    const reviewed=done?'<button class="ncb-btn v87-reviewed-btn" onclick="openTodaysReviewPage(\''+id+'\',\''+d+'\')">Reviewed</button>':'';
-    return '<div class="home-card-actions"><button class="ncb-btn '+inputClass+'" onclick="openPatientDailyReviewFromPatientsReview(\''+id+'\',\''+d+'\')">Input Daily Review</button>'+reviewed+'</div>';
+    return '<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+id+'\')">Post-Op Clinical Assessment</button></div>';
   }
   function sectionHtml(title,icon,items,extraClass){
     return '<div class="v78-ops-section '+(extraClass||'')+'"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.join('')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';
