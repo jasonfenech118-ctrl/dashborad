@@ -5380,7 +5380,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <button type="button" class="tab tab-single active" data-tab="home" onclick="switchTab('home',this)"><span class="tab-pic" aria-hidden="true">⌂</span><span class="tab-title">Home</span></button>
     <button type="button" class="tab tab-single" data-tab="admission-route-menu" data-tabs="admission-route-menu,new-patient,admission-elective,admission-emergency,admission-fistula,admission-outside-mdh,admission-review,admission-emergency-daily-review" onclick="switchTab('admission-route-menu',this)"><span class="tab-pic" aria-hidden="true">＋</span><span class="tab-title">Add Patient</span></button>
     <div class="tab-group">
-      <button type="button" class="tab" data-tabs="patients-all,patients-active,patients-inpatients,patients-reversed,patients-deceased,patients-relocated-overseas,patients-relocated-gozo" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">☷</span><span class="tab-title">Patients Registry</span> <span class="tab-caret">▾</span></button>
+      <button type="button" class="tab" data-tabs="patients-all,patients-active,patients-inpatients,patients-pathway,patients-sitting-sessions,patients-fistula-wounds,patients-reversed,patients-deceased,patients-relocated-overseas,patients-relocated-gozo" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">☷</span><span class="tab-title">Patients Registry</span> <span class="tab-caret">▾</span></button>
       <div class="tab-dd-menu">
         <button type="button" class="tab-dd-item" data-tab="patients-all" onclick="switchTab('patients-all',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">☷</span><span class="tab-dd-label">All Patients</span></span><small>Full register</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-active" onclick="switchTab('patients-active',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">✓</span><span class="tab-dd-label">Active Patients</span></span><small>Current</small></button>
@@ -5389,6 +5389,15 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <button type="button" class="tab-dd-item" data-tab="patients-deceased" onclick="switchTab('patients-deceased',this)" ><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">✝</span><span class="tab-dd-label">Deceased Patients</span></span><small>Register</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-relocated-overseas" onclick="switchTab('patients-relocated-overseas',this)" ><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⇢</span><span class="tab-dd-label">Relocated Overseas Patients</span></span><small>Register</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-relocated-gozo" onclick="switchTab('patients-relocated-gozo',this)" ><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⌾</span><span class="tab-dd-label">Relocated to Gozo Patients</span></span><small>Register</small></button>
+      </div>
+    </div>
+    <div class="tab-group">
+      <button type="button" class="tab" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Center</span> <span class="tab-caret">▾</span></button>
+      <div class="tab-dd-menu">
+        <button type="button" class="tab-dd-item" data-tab="patient-center" onclick="switchTab('patient-center',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊕</span><span class="tab-dd-label">Patient Center</span></span><small>Overview</small></button>
+        <button type="button" class="tab-dd-item" data-tab="patients-pathway" onclick="switchTab('patients-pathway',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⟶</span><span class="tab-dd-label">Patient Pathway</span></span><small>Pre-op</small></button>
+        <button type="button" class="tab-dd-item" data-tab="patients-sitting-sessions" onclick="switchTab('patients-sitting-sessions',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">◎</span><span class="tab-dd-label">Stoma Sitting Sessions</span></span><small>Pre-op</small></button>
+        <button type="button" class="tab-dd-item" data-tab="patients-fistula-wounds" onclick="switchTab('patients-fistula-wounds',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊘</span><span class="tab-dd-label">Fistula &amp; Wounds</span></span><small>Pathway</small></button>
       </div>
     </div>
     <div class="tab-group">
@@ -5787,6 +5796,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <option value="patients-all">All Patients</option>
           <option value="patients-active">Active Patients</option>
           <option value="patients-inpatients">Inpatients</option>
+          <option value="patients-pathway">Patient Pathway</option>
+          <option value="patients-sitting-sessions">Stoma Sitting Sessions</option>
+          <option value="patients-fistula-wounds">Fistula &amp; Wounds</option>
           <option value="patients-reversed">Reversed Patients</option>
           <option value="patients-deceased">Deceased Patients</option>
           <option value="patients-relocated-overseas">Relocated Overseas</option>
@@ -5876,11 +5888,60 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
 
+    <!-- PATIENT CENTER -->
+    <div class="page" id="page-patient-center">
+      <div class="phdr">
+        <div><h2>Patient Center</h2><p>Navigate to any patient group or care pathway.</p></div>
+      </div>
+      <div class="patient-center-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;padding:10px 0;">
+        <div class="patient-center-tile" onclick="switchTab('patients-pathway',document.querySelector('[data-tab=\'patients-pathway\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(13,115,119,.13)';this.style.borderColor='#0d7377'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">⟶</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Patient Pathway</div>
+          <div style="font-size:0.85rem;color:#64748b;">Patients awaiting surgery or elective stoma formation. No surgery date recorded yet.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-sitting-sessions',document.querySelector('[data-tab=\'patients-sitting-sessions\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(13,115,119,.13)';this.style.borderColor='#0d7377'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">◎</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Stoma Sitting Sessions</div>
+          <div style="font-size:0.85rem;color:#64748b;">Pre-operative sitting session patients. Documents education and site selection without requiring a surgery date.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-fistula-wounds',document.querySelector('[data-tab=\'patients-fistula-wounds\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(13,115,119,.13)';this.style.borderColor='#0d7377'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">⊘</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Fistula &amp; Wounds</div>
+          <div style="font-size:0.85rem;color:#64748b;">Patients on the fistula and wound management pathway.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-inpatients',document.querySelector('[data-tab=\'patients-inpatients\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(2980,185,.13)';this.style.borderColor='#2980b9'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">▣</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Inpatients</div>
+          <div style="font-size:0.85rem;color:#64748b;">Post-operative and currently admitted patients. Excludes awaiting surgery and sitting session patients.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-active',document.querySelector('[data-tab=\'patients-active\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(39,174,96,.13)';this.style.borderColor='#27ae60'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">✓</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Active / Outpatients</div>
+          <div style="font-size:0.85rem;color:#64748b;">Active outpatients with ongoing follow-up care.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-all',document.querySelector('[data-tab=\'patients-all\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(26,46,74,.13)';this.style.borderColor='#1a2e4a'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">☷</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Master Patient List</div>
+          <div style="font-size:0.85rem;color:#64748b;">Full register. Search by name, ID card or phone number.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-deceased',document.querySelector('[data-tab=\'patients-deceased\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(100,116,139,.13)';this.style.borderColor='#64748b'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">✝</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Deceased Patients</div>
+          <div style="font-size:0.85rem;color:#64748b;">Read-only archive of deceased patients.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-reversed',document.querySelector('[data-tab=\'patients-reversed\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(100,116,139,.13)';this.style.borderColor='#64748b'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">↺</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Reversed / Discharged</div>
+          <div style="font-size:0.85rem;color:#64748b;">Patients who have had their stoma reversed or been discharged from the service.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- STOMA SITTING SESSION -->
     <div class="page" id="page-stoma-sitting-session">
       <div class="phdr">
         <div><h2>Stoma Sitting Session</h2><p>Pre-operative sitting session for patients awaiting elective surgery.</p></div>
-        <button class="btn-add btn-return" onclick="returnFromStomaSittingSession()">← Return to Inpatients</button>
+        <button class="btn-add btn-return" onclick="returnFromStomaSittingSession()">← Return</button>
       </div>
       <div id="stoma-sitting-body" class="stoma-sitting-shell">
         <div class="card"><div class="empty">Select Open Sitting Session from Inpatients to open the Stoma Sitting Session.</div></div>
@@ -6941,7 +7002,7 @@ async function loadHomeDashboard(){
       <div class="home-kpi"><div class="hk-label">Appointments</div><div class="hk-value">${activeToday.length}</div><div class="hk-sub">active bookings on ${htmlSafe(dateLabel)}</div></div>
       <div class="home-kpi green"><div class="hk-label">Seen Today</div><div class="hk-value">${seenToday.length}</div><div class="hk-sub">marked attended / seen</div></div>
       <div class="home-kpi gold"><div class="hk-label">Follow-up Due</div><div class="hk-value">${dueThisMonth.length}</div><div class="hk-sub">active patients due ${htmlSafe(dObj.toLocaleDateString('en-MT',{month:'long',year:'numeric'}))}</div></div>
-      <div class="home-kpi blue"><div class="hk-label">Inpatients</div><div class="hk-value">${inpatients.length}</div><div class="hk-sub">actual + awaiting surgery</div></div>
+      <div class="home-kpi blue"><div class="hk-label">Inpatients</div><div class="hk-value">${inpatients.length}</div><div class="hk-sub">post-op and admitted only</div></div>
       <div class="home-kpi red"><div class="hk-label">Alerts</div><div class="hk-value">${dntuToday.length+cancelledToday.length+recentCancelled.length}</div><div class="hk-sub">DNTU/cancelled items to review</div></div>`);
 
     if(!today.length)homeSet('home-today-appts','<div class="home-empty">No appointments recorded for this date.</div>');
@@ -10101,11 +10162,14 @@ function patientFollowupStatus(a){return normaliseFollowupStatus(a?.patients?.fo
 const PATIENT_TAB_FILTERS={
   'patients-all':{status:'all',title:'All Patients',subtitle:'Full patient register across all groups.'},
   'patients-active':{status:'active',title:'Active Patients',subtitle:'Patients from the active registry, including paused and inpatient subgroups.'},
-  'patients-inpatients':{status:'inpatient',title:'Inpatients',subtitle:'Actual inpatients and patients awaiting elective surgery.'},
+  'patients-inpatients':{status:'inpatient',title:'Inpatients',subtitle:'Post-operative and admitted inpatients only.'},
   'patients-reversed':{status:'reversed',title:'Reversed Patients',subtitle:'Patients with reversal status or reversal date.'},
   'patients-deceased':{status:'deceased',title:'Deceased Patients',subtitle:'Patients kept in the deceased register.'},
   'patients-relocated-overseas':{status:'relocated_overseas',title:'Relocated Overseas',subtitle:'Patients marked as relocated overseas.'},
-  'patients-relocated-gozo':{status:'relocated_gozo',title:'Relocated to Gozo',subtitle:'Patients marked as relocated or discharged to Gozo.'}
+  'patients-relocated-gozo':{status:'relocated_gozo',title:'Relocated to Gozo',subtitle:'Patients marked as relocated or discharged to Gozo.'},
+  'patients-pathway':{status:'pathway',title:'Patient Pathway',subtitle:'Patients awaiting surgery or elective stoma formation.'},
+  'patients-sitting-sessions':{status:'sitting_sessions',title:'Stoma Sitting Sessions',subtitle:'Pre-operative stoma sitting session patients.'},
+  'patients-fistula-wounds':{status:'fistula_wounds',title:'Fistula and Wounds',subtitle:'Patients on the fistula and wound management pathway.'}
 };
 
 /* v33C — Registry identity helpers restored for Patient Interface render path.
@@ -10199,14 +10263,20 @@ function inpatientCategory(p){return isAwaitingSurgeryPatient(p)?'awaiting_surge
 function inpatientCategoryText(p){return inpatientCategory(p)==='awaiting_surgery'?'Awaiting Surgery':'Actual Inpatient';}
 function inpatientCategoryChip(p){const cat=inpatientCategory(p);return `<span class="inpatient-type-chip ${htmlSafe(cat)}">${htmlSafe(inpatientCategoryText(p))}</span>`;}
 function isInpatientSourcePatient(p){
+  const statusRaw=String(p?.patient_status_raw||'').toLowerCase();
+  if(statusRaw.includes('sitting session'))return false;
+  if(isAwaitingSurgeryPatient(p)&&!p?.surgery_date)return false;
   const raw=String(p?.assigned_nurse_raw||p?.patient_status_raw||'').toLowerCase();
-  return isAwaitingSurgeryPatient(p)||normaliseFollowupStatus(p?.followup_status)==='inpatient' || patientStatusFromRaw(p?.patient_status_raw)==='inpatient' || raw.includes('inpatient') || raw.includes('in patient');
+  return normaliseFollowupStatus(p?.followup_status)==='inpatient' || patientStatusFromRaw(p?.patient_status_raw)==='inpatient' || raw.includes('inpatient') || raw.includes('in patient');
 }
 function patientMatchesRegisterStatus(p,status){
   const st=String(status||'active');
   if(st==='all')return true;
   if(st==='active')return isActiveSourcePatient(p);
   if(st==='inpatient')return isInpatientSourcePatient(p);
+  if(st==='pathway')return isAwaitingSurgeryPatient(p)&&!p?.surgery_date&&!String(p?.patient_status_raw||'').toLowerCase().includes('sitting session');
+  if(st==='sitting_sessions')return String(p?.patient_status_raw||'').toLowerCase().includes('sitting session')||(!p?.surgery_date&&String(p?.inpatient_type||'').toLowerCase().includes('awaiting_surgery')&&String(p?.patient_status_raw||'').toLowerCase().includes('stoma sitting'));
+  if(st==='fistula_wounds')return String(p?.admission_route||'').toLowerCase().includes('fistula')||String(p?.admission_route||'').toLowerCase().includes('wound');
   return patientRegisterStatus(p)===st;
 }
 function patientRegisterStatusText(status){
@@ -13993,8 +14063,16 @@ function renderStomaSittingSession(){
       <div class="card-title">Checklist</div>
       <div class="stoma-sitting-controls">
         <div class="fg"><label>Sitting Session Date *</label><input type="date" id="sss-date" value="${patientDateInputValue(p.planned_surgery_date)||TODAY}" onchange="handleStomaSittingDateChange()"/></div>
-        <div class="fg"><label>Surgery Date * <span style="color:#dc2626;">(required)</span></label><input type="date" id="sss-surgery-date" min="${TODAY}" placeholder="Confirmed surgery date"/></div>
-        <div class="fg"><label>Auto signature</label><input type="text" id="sss-signature" readonly placeholder="Logged-in nurse"/></div>
+        <div class="fg"><label>Nurse / Signature</label><input type="text" id="sss-signature" readonly placeholder="Logged-in nurse"/></div>
+        <div class="fg"><label>Patient Attended</label><select id="sss-attended"><option value="">— Select —</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+      </div>
+      <div class="pi-confirm-note" style="background:#fef3cd;color:#856404;border:1px solid #ffc107;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:0.9em;">No surgery date has been recorded yet. This session is pre-operative documentation only.</div>
+      <div class="stoma-sitting-extra-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="fg"><label>Education Given</label><textarea id="sss-education" rows="2" placeholder="Topics covered and education provided..."></textarea></div>
+        <div class="fg"><label>Marking / Site Selection Notes</label><textarea id="sss-marking" rows="2" placeholder="Stoma site marking and positioning notes..."></textarea></div>
+        <div class="fg"><label>Appliances Discussed</label><textarea id="sss-appliances" rows="2" placeholder="Appliances shown and discussed..."></textarea></div>
+        <div class="fg"><label>Patient Concerns</label><textarea id="sss-concerns" rows="2" placeholder="Patient questions and concerns raised..."></textarea></div>
+        <div class="fg" style="grid-column:1/-1;"><label>Plan / Follow-up</label><textarea id="sss-plan" rows="2" placeholder="Agreed plan and follow-up actions..."></textarea></div>
       </div>
       <div style="overflow-x:auto;"><table class="stoma-sitting-table">
         <thead><tr><th>Checklist item</th><th>Met / Not Met</th><th>Comments</th></tr></thead>
@@ -14105,9 +14183,7 @@ async function openStomaSittingSession(patientId){
 function confirmStomaSittingSession(){
   const note=document.getElementById('sss-note');
   const date=document.getElementById('sss-date')?.value||'';
-  const surgeryDate=document.getElementById('sss-surgery-date')?.value||'';
   if(!date){if(note){note.style.color='var(--red)';note.textContent='Please enter the Sitting Session Date.';}return;}
-  if(!surgeryDate){if(note){note.style.color='var(--red)';note.textContent='Please enter the Surgery Date.';}return;}
   const incomplete=STOMA_SITTING_CHECKLIST.filter((_,i)=>!document.querySelector(`input[name="sss-status-${i}"]:checked`)).length;
   if(incomplete){if(note){note.style.color='var(--red)';note.textContent=`Please mark Met or Not Met for all ${incomplete} remaining checklist item${incomplete!==1?'s':''}.`;}return;}
   stomaSittingConfirmed=true;
@@ -14119,6 +14195,12 @@ function collectStomaSittingSessionData(){
   return {
     date:document.getElementById('sss-date')?.value||'',
     signature:document.getElementById('sss-signature')?.value||'',
+    attended:document.getElementById('sss-attended')?.value||'',
+    education:document.getElementById('sss-education')?.value?.trim()||'',
+    marking:document.getElementById('sss-marking')?.value?.trim()||'',
+    appliances:document.getElementById('sss-appliances')?.value?.trim()||'',
+    concerns:document.getElementById('sss-concerns')?.value?.trim()||'',
+    plan:document.getElementById('sss-plan')?.value?.trim()||'',
     items:STOMA_SITTING_CHECKLIST.map((item,i)=>({
       item,
       status:document.querySelector(`input[name="sss-status-${i}"]:checked`)?.value||'',
@@ -14136,27 +14218,25 @@ async function saveStomaSittingSession(options={}){
   if(!data.signature){await ensureStomaSittingSignature();data.signature=document.getElementById('sss-signature')?.value||'Logged-in nurse';}
   const incomplete=data.items.filter(x=>!x.status).length;
   if(incomplete){if(note){note.style.color='var(--red)';note.textContent='Please mark Met or Not Met for every checklist item.';}return;}
-  // Also collect Surgery Date if added
-  const surgeryDate=document.getElementById('sss-surgery-date')?.value||'';
-  if(!surgeryDate){if(note){note.style.color='var(--red)';note.textContent='Please enter the Surgery Date.';}return;}
-  const summary=[
+  const summaryParts=[
     '',
     '--- Stoma Sitting Session ---',
     `Date: ${data.date}`,
-    `Auto signature: ${data.signature}`,
-    `Planned sitting session date: ${data.date||p.planned_surgery_date||'Not recorded'}`,
-    `Surgery date recorded: ${surgeryDate}`,
-    ...data.items.map(x=>`${x.item}: ${x.status}${x.comments?` — Comments: ${x.comments}`:''}`)
-  ].join('\n');
+    `Nurse: ${data.signature}`,
+    `Patient Attended: ${data.attended||'Not recorded'}`,
+  ];
+  if(data.education)summaryParts.push(`Education Given: ${data.education}`);
+  if(data.marking)summaryParts.push(`Marking / Site Notes: ${data.marking}`);
+  if(data.appliances)summaryParts.push(`Appliances Discussed: ${data.appliances}`);
+  if(data.concerns)summaryParts.push(`Patient Concerns: ${data.concerns}`);
+  if(data.plan)summaryParts.push(`Plan / Follow-up: ${data.plan}`);
+  summaryParts.push(...data.items.map(x=>`${x.item}: ${x.status}${x.comments?` — Comments: ${x.comments}`:''}`));
+  const summary=summaryParts.join('\n');
   const previous=String(p.findings||'').trim();
-  // 1. Update patient with findings + surgery date
   const patientPayload={
     findings:(previous?previous+'\n\n':'')+summary,
     last_outcome_date:data.date,
-    surgery_date:surgeryDate,
-    planned_surgery_date:surgeryDate,
-    inpatient_type:'awaiting_surgery',
-    patient_status_raw:'Awaiting Surgery'
+    patient_status_raw:'Stoma Sitting Session Complete'
   };
   const{error:pErr}=await SB.from('patients').update(patientPayload).eq('id',p.id);
   if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not save session: '+(pErr.message||'Unknown');}return;}
@@ -14170,7 +14250,7 @@ async function saveStomaSittingSession(options={}){
       const stoCode='STO-'+_stoIdCard+'-'+String(sitCount).padStart(3,'0');
       await SB.from('episode_steps').update({
         status:'complete',
-        data:{checklist:data.items,signature:data.signature,session_date:data.date,surgery_date:surgeryDate,encounter_code:stoCode}
+        data:{checklist:data.items,signature:data.signature,session_date:data.date,attended:data.attended,education:data.education,marking:data.marking,appliances:data.appliances,concerns:data.concerns,plan:data.plan,encounter_code:stoCode}
       }).eq('episode_id',ep.id).eq('step_no',3);
       await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',ep.id).eq('step_no',4);
     }
@@ -14467,8 +14547,8 @@ try{
   if(typeof openStomaSittingSession==='function') window.openStomaSittingSession=openStomaSittingSession;
   if(typeof saveStomaSittingSession==='function') window.saveStomaSittingSession=saveStomaSittingSession;
   window.returnFromStomaSittingSession=function(){
-    try{switchTab('patients-inpatients',document.querySelector('[data-tab="patients-inpatients"]'));}
-    catch(e){try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e2){}}
+    try{switchTab('home',document.querySelector('[data-tab="home"]'));}
+    catch(e){if(typeof loadHomeDashboard==='function')loadHomeDashboard();}
   };
 }catch(e){console.warn('Global export setup skipped',e);}
 
@@ -19637,12 +19717,16 @@ table thead th.v63-name-title,
   function isClosedPatient(p){try{if(typeof isClosed==='function'&&isClosed(p))return true;}catch(e){}try{const st=typeof patientRegisterStatus==='function'?patientRegisterStatus(p):'';if(/deceased|reversed|relocated/.test(String(st)))return true;}catch(e){}const raw=statusRaw(p);return /deceased|reversed|relocated|overseas|gozo|rip/.test(raw)||!!p?.rip_date||!!p?.reversal_date;}
   function isInpatientPatient(p){
     if(isClosedPatient(p))return false;
+    const statusRawStr=String(p?.patient_status_raw||'').toLowerCase();
+    if(statusRawStr.includes('sitting session'))return false;
+    const hasSurgeryDate=!!p?.surgery_date;
+    try{if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)&&!hasSurgeryDate)return false;}catch(e){}
     try{if(typeof isInpatientSourcePatient==='function'&&isInpatientSourcePatient(p))return true;}catch(e){}
     try{if(typeof patientMatchesRegisterStatus==='function'&&patientMatchesRegisterStatus(p,'inpatient'))return true;}catch(e){}
     try{if(typeof patientRegisterStatus==='function'&&patientRegisterStatus(p)==='inpatient')return true;}catch(e){}
     try{if(typeof normaliseFollowupStatus==='function'&&normaliseFollowupStatus(p?.followup_status)==='inpatient')return true;}catch(e){}
     const raw=statusRaw(p);
-    return raw.includes('inpatient')||raw.includes('in_patient')||raw.includes('awaiting_surgery')||raw.includes('awaiting_surgery')||String(p?.inpatient_type||'').trim()!==''||!!p?.planned_surgery_date;
+    return raw.includes('inpatient')||raw.includes('in_patient');
   }
   function reviewBlocksFromFindings(findings){
     const raw=String(findings||'');
