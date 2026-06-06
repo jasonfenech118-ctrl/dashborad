@@ -5389,7 +5389,6 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
   </div>
   <div class="tabs grouped-tabs">
     <button type="button" class="tab tab-single active" data-tab="home" onclick="switchTab('home',this)"><span class="tab-pic" aria-hidden="true">⌂</span><span class="tab-title">Home</span></button>
-    <button type="button" class="tab tab-single" data-tab="admission-route-menu" data-tabs="admission-route-menu,new-patient,admission-elective,admission-emergency,admission-fistula,admission-outside-mdh,admission-review,admission-emergency-daily-review" onclick="switchTab('admission-route-menu',this)"><span class="tab-pic" aria-hidden="true">＋</span><span class="tab-title">Add Patient</span></button>
     <button type="button" class="tab tab-single" data-tab="patient-center" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds,patients-post-op-discharge" onclick="switchTab('patient-center',this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Centre</span></button>
     <div class="tab-group">
       <button type="button" class="tab" data-tabs="roster,cod,daily-diary" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">▥</span><span class="tab-title">Staffing</span> <span class="tab-caret">▾</span></button>
@@ -5891,7 +5890,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div class="centre-section-heading">Active Pathways</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('admission-route-menu',document.querySelector('[data-tab=\'admission-route-menu\']'))">
-              <div class="nav-tile-icon" style="background:#0d7377;">⟶</div>
+              <div class="nav-tile-icon" style="background:#0d7377;font-size:26px;font-weight:300;">+</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div><div class="nav-tile-sub">Register a new patient via the admission pathway</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
