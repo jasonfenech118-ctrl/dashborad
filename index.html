@@ -14336,6 +14336,8 @@ function renderFistulaPatientPage(p,steps){
 
   const colors=['#dc2626','#f97316','#16a34a','#2563eb','#1a2e4a'];
   const colorSwatches=colors.map((c,i)=>`<button type="button" class="fpr-color-swatch" data-color="${c}" onclick="fprSetColor('${c}')" style="width:24px;height:24px;border-radius:50%;background:${c};border:3px solid ${i===0?'#1a2e4a':'#fff'};cursor:pointer;flex-shrink:0;" title="${c}"></button>`).join('');
+  const _fprApplianceOpts=(window.FU_SEEN_APPLIANCE_OPTIONS||[]).map(o=>`<option value="${htmlSafe(o)}">${htmlSafe(o)}</option>`).join('');
+  const _fprAccessoryOpts=(window.FU_SEEN_ACCESSORY_OPTIONS||[]).map(o=>`<option value="${htmlSafe(o)}">${htmlSafe(o)}</option>`).join('');
 
   body.innerHTML=`
     <div class="patient-interface-demographics stoma-sitting-demographics ${sexKind}" style="${demoStyle}">
@@ -14466,11 +14468,11 @@ function renderFistulaPatientPage(p,steps){
         </div>
         <div class="cor-2col">
           <div class="fg"><label>Dressing Applied</label><input type="text" id="fpr-dressing" placeholder="e.g. Aquacel Ag, foam dressing"/></div>
-          <div class="fg"><label>Appliance / Pouch</label><input type="text" id="fpr-appliance" placeholder="e.g. wound manager, high-output pouch"/></div>
+          <div class="fg"><label>Appliance / Pouch</label><select id="fpr-appliance"><option value="">— Select appliance —</option>${_fprApplianceOpts}</select></div>
         </div>
         <div class="cor-2col">
           <div class="fg"><label>NPWT (Vacuum)</label><select id="fpr-npwt"><option value="">— N/A —</option><option>NPWT applied</option><option>NPWT adjusted</option><option>NPWT discontinued</option></select></div>
-          <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories" placeholder="e.g. paste, seals, adhesive remover"/></div>
+          <div class="fg"><label>Accessories</label><select id="fpr-accessories"><option value="">— Select accessory —</option>${_fprAccessoryOpts}</select></div>
         </div>
       </div>
 
