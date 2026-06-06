@@ -230,6 +230,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .elective-save-btn:hover{filter:brightness(.95);transform:translateX(1px);}
 .inpatient-type-chip{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid #d6e4ff;background:#eef5ff;color:#1d4ed8;}
 .inpatient-type-chip.awaiting_surgery{background:#fff7ed;color:#c2410c;border-color:#fed7aa;}
+.inpatient-type-chip.post_operative{background:#f0fdf4;color:#15803d;border-color:#bbf7d0;font-weight:900;}
 .inpatient-type-chip.inpatient{background:#e8f5f4;color:var(--teal);border-color:#bfe4df;}
 @media(max-width:700px){.centre-hub{padding:14px;margin-bottom:14px;border-radius:16px;}.centre-nav-grid{grid-template-columns:1fr 1fr;gap:9px;}.nav-tile{min-height:54px;padding:10px 12px;gap:9px;}.nav-tile-label{font-size:11px;}.nav-tile-sub{display:none;}.nav-tile-icon{width:30px;height:30px;font-size:14px;}.centre-hub h1{font-size:19px;}.centre-hub-icon{width:42px;height:42px;}.admission-route-grid{grid-template-columns:1fr;gap:12px;}.admission-route-grid .nav-tile{min-height:88px;padding:14px 16px;}.admission-route-grid .nav-tile-label{font-size:13px;line-height:1.35;}.admission-route-grid .nav-tile-sub{display:block;font-size:11px;line-height:1.45;}.route-page-card{padding:18px;}.route-page-card h3{font-size:18px;}.route-page-card p{font-size:13px;line-height:1.65;}}
 
@@ -10269,8 +10270,24 @@ function isAwaitingSurgeryPatient(p){
   const type=String(p?.inpatient_type||'').toLowerCase();
   return type==='awaiting_surgery'||type==='awaiting surgery'||raw.includes('awaiting_surgery')||raw.includes('awaiting surgery')||!!p?.planned_surgery_date;
 }
-function inpatientCategory(p){return isAwaitingSurgeryPatient(p)?'awaiting_surgery':'inpatient';}
-function inpatientCategoryText(p){return inpatientCategory(p)==='awaiting_surgery'?'Awaiting Surgery':'Actual Inpatient';}
+function inpatientCategory(p){
+  if(p?.surgery_date)return 'post_operative';
+  return isAwaitingSurgeryPatient(p)?'awaiting_surgery':'inpatient';
+}
+function inpatientCategoryText(p){
+  const cat=inpatientCategory(p);
+  if(cat==='post_operative'){
+    const sd=p.surgery_date;
+    try{
+      const todayStr=(typeof TODAY==='string'&&TODAY)?TODAY:new Date().toISOString().slice(0,10);
+      const diff=Math.round((new Date(todayStr+'T12:00:00')-new Date(sd+'T12:00:00'))/86400000);
+      if(diff>=1)return 'Post-Op Day '+diff;
+      if(diff===0)return 'Post-Op Day 0 (Surgery today)';
+    }catch(e){}
+    return 'Post-Operative';
+  }
+  return cat==='awaiting_surgery'?'Awaiting Surgery':'Actual Inpatient';
+}
 function inpatientCategoryChip(p){const cat=inpatientCategory(p);return `<span class="inpatient-type-chip ${htmlSafe(cat)}">${htmlSafe(inpatientCategoryText(p))}</span>`;}
 function isInpatientSourcePatient(p){
   const statusRaw=String(p?.patient_status_raw||'').toLowerCase();
