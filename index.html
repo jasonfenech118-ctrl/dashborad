@@ -10493,6 +10493,8 @@ function setPatientsListOwnerFilter(owner){
 }
 async function loadPatientsList(tabName){
   currentPatientsTab=tabName||currentPatientsTab||'patients-active';
+  const toolbar=document.querySelector('#page-patients-list .patient-register-toolbar');
+  if(toolbar)toolbar.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
   const select=document.getElementById('patients-list-filter');
   const filterLabel=document.getElementById('patients-list-filter-label');
   if(select){
