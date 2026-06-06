@@ -5665,6 +5665,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       
       <div class="route-page-card">
         <div class="route-stoma-care" style="margin-top:0;padding-top:0;border-top:none;">
+          <div class="new-patient-section-title">Operative Record</div>
           <div class="new-patient-grid">
             <div class="fg"><label>Surgery Date *</label><input type="date" class="route-surgery-date" onchange="emergUpdateAllStomaIdPreviews()" required/></div>
             <div class="fg full"><label>Operation Performed</label><textarea class="route-operation-performed" placeholder="Operation performed"></textarea></div>
@@ -5674,7 +5675,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           </div>
           <div class="new-patient-section-title" style="margin-top:18px;">Stoma Details</div>
           <div id="emrg-stoma-container"></div>
-          <div style="margin:6px 0 4px;"><button type="button" onclick="emergAddStoma()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button></div>
+          <div style="margin:6px 0 4px;"><button type="button" onclick="emergAddStoma()" style="background:#0d7377;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;">+ Add Stoma</button></div>
           <input type="hidden" id="emrg-data-json" value=""/>
         </div>
         <div class="route-actions"><button class="btn-save" onclick="prepareAdmissionReview('Emergency surgery','page-admission-emergency',{next:'daily-review'})">Check Details</button><button class="btn-cancel" onclick="switchTab('new-patient',document.querySelector('[data-tab=&quot;new-patient&quot;]'))">Back to Patient Details</button></div>
@@ -5710,7 +5711,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           </div>
 
           <div class="new-patient-section-title" style="margin-top:18px;">Wound / fistula assessment</div>
-          <div class="elective-section-card" style="border:1px solid #b7d8f0;border-radius:12px;padding:14px;margin-bottom:6px;">
+          <div class="elective-section-card" style="border:1px solid #0d7377;border-radius:12px;padding:14px;margin-bottom:6px;">
             <div class="cor-2col">
               <div class="fg"><label>Wound / fistula site *</label><input type="text" id="fw-site" placeholder="e.g. midline laparotomy wound, RIF drain site"/></div>
               <div class="fg"><label>Type *</label><select id="fw-type"><option value="">-- Select --</option><option>Enterocutaneous fistula</option><option>Enteroatmospheric fistula</option><option>Dehisced / open wound</option><option>Drain site</option><option>Pressure ulcer</option><option>Other</option></select></div>
@@ -20860,8 +20861,8 @@ table thead th.v63-name-title,
   window.emergStomaBlock=function(idx){
     const n=idx+1;
     const removeBtn=idx>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="emergRemoveStoma('+idx+')">Remove</button>':'';
-    return '<div class="elective-section-card emrg-stoma-block" id="emrg-stoma-block-'+idx+'" style="border:1px solid #dc2626;border-radius:12px;padding:14px;margin-bottom:14px;">'
-      +'<div class="elective-section-label" style="color:#dc2626;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
+    return '<div class="elective-section-card emrg-stoma-block" id="emrg-stoma-block-'+idx+'" style="border:1px solid #0d7377;border-radius:12px;padding:14px;margin-bottom:14px;">'
+      +'<div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
       +'<div style="margin:-2px 0 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span><span id="emrg-sid-'+idx+'" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span></div>'
       +'<div class="cor-2col">'
         +'<div class="fg"><label>Stoma Type *</label><select id="emrg-stype-'+idx+'"><option value="">-- Select --</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>'
