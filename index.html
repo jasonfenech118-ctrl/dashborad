@@ -5392,16 +5392,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <button type="button" class="tab-dd-item" data-tab="patients-relocated-gozo" onclick="switchTab('patients-relocated-gozo',this)" ><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⌾</span><span class="tab-dd-label">Relocated to Gozo Patients</span></span><small>Register</small></button>
       </div>
     </div>
-    <div class="tab-group">
-      <button type="button" class="tab" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds,patients-post-op-discharge" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Center</span> <span class="tab-caret">▾</span></button>
-      <div class="tab-dd-menu">
-        <button type="button" class="tab-dd-item" data-tab="patient-center" onclick="switchTab('patient-center',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊕</span><span class="tab-dd-label">Patient Center</span></span><small>Overview</small></button>
-        <button type="button" class="tab-dd-item" data-tab="patients-pathway" onclick="switchTab('patients-pathway',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⟶</span><span class="tab-dd-label">Patient Pathway</span></span><small>Pre-op</small></button>
-        <button type="button" class="tab-dd-item" data-tab="patients-sitting-sessions" onclick="switchTab('patients-sitting-sessions',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">◎</span><span class="tab-dd-label">Stoma Sitting Sessions</span></span><small>Pre-op</small></button>
-        <button type="button" class="tab-dd-item" data-tab="patients-fistula-wounds" onclick="switchTab('patients-fistula-wounds',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊘</span><span class="tab-dd-label">Fistula &amp; Wounds</span></span><small>Pathway</small></button>
-        <button type="button" class="tab-dd-item" data-tab="patients-post-op-discharge" onclick="switchTab('patients-post-op-discharge',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⇥</span><span class="tab-dd-label">Post-Op Discharge</span></span><small>Post-op</small></button>
-      </div>
-    </div>
+    <button type="button" class="tab tab-single" data-tab="patient-center" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds,patients-post-op-discharge" onclick="switchTab('patient-center',this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Center</span></button>
     <div class="tab-group">
       <button type="button" class="tab" data-tabs="roster,cod,daily-diary" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">▥</span><span class="tab-title">Staffing</span> <span class="tab-caret">▾</span></button>
       <div class="tab-dd-menu">
