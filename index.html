@@ -18428,6 +18428,181 @@ table thead th.v63-name-title,
 })();
 </script>
 
+<!-- Daily Reminders -->
+<style>
+.reminders-panel{background:#fff;border:2px solid #f59e0b;border-radius:14px;margin-bottom:16px;overflow:hidden;}
+.reminders-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:linear-gradient(90deg,#fffbeb,#fef3c7);border-bottom:1px solid #fde68a;}
+.reminders-head-left{display:flex;align-items:center;gap:8px;}
+.reminders-icon{width:30px;height:30px;border-radius:9px;background:#f59e0b;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1em;font-weight:900;flex-shrink:0;}
+.reminders-title{font-size:13px;font-weight:900;color:#92400e;}
+.reminders-count{font-size:10px;font-weight:900;color:#78350f;background:#fff;border:1px solid #fcd34d;border-radius:999px;padding:2px 8px;}
+.reminders-add-row{display:flex;gap:6px;align-items:flex-end;padding:10px 14px;border-bottom:1px solid #fef3c7;flex-wrap:wrap;}
+.reminders-add-row .fg{flex:1;min-width:160px;margin:0;}
+.reminders-add-row .fg label{font-size:11px;font-weight:800;color:#78350f;margin-bottom:3px;display:block;}
+.reminders-add-row input[type="text"]{border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;font-size:12px;width:100%;background:#fffbeb;}
+.reminders-add-row input[type="text"]:focus{outline:none;border-color:#f59e0b;box-shadow:0 0 0 2px #fde68a;}
+.reminders-add-row input[type="date"]{border:1px solid #fcd34d;border-radius:8px;padding:6px 8px;font-size:12px;background:#fffbeb;}
+.reminders-add-btn{padding:7px 16px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.reminders-add-btn:hover{background:#d97706;}
+.reminders-list{padding:10px 14px;display:grid;gap:6px;}
+.reminders-list:empty::before{content:"No reminders yet.";color:#a16207;font-size:11px;font-weight:700;}
+.reminder-row{display:flex;align-items:flex-start;gap:10px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:9px 11px;transition:opacity .2s;}
+.reminder-row.done-row{background:#f9fafb;border-color:#e2e8f0;opacity:.7;}
+.reminder-check{width:18px;height:18px;accent-color:#f59e0b;flex-shrink:0;margin-top:1px;cursor:pointer;}
+.reminder-text{flex:1;font-size:12px;font-weight:800;color:#1c1917;line-height:1.4;}
+.reminder-row.done-row .reminder-text{text-decoration:line-through;color:#94a3b8;}
+.reminder-due{font-size:10.5px;font-weight:700;color:#d97706;margin-top:2px;}
+.reminder-due.overdue{color:#dc2626;font-weight:900;}
+.reminder-del{background:none;border:none;cursor:pointer;color:#d97706;font-size:1em;padding:2px 4px;flex-shrink:0;opacity:.6;}
+.reminder-del:hover{opacity:1;color:#dc2626;}
+.reminders-empty{padding:10px 14px;font-size:11px;color:#a16207;font-weight:700;}
+.home-reminders-strip{margin:0 0 10px;padding:8px 12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.home-reminders-strip-icon{font-size:1em;}
+.home-reminder-chip{font-size:11px;font-weight:800;color:#92400e;background:#fff;border:1px solid #fcd34d;border-radius:999px;padding:2px 9px;white-space:nowrap;}
+</style>
+<script>
+(function(){
+  const REM_KEY='mdhDailyReminders.v1';
+  function esc(v){return String(v??'').replace(/[&<>"']/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
+  function today(){try{if(typeof TODAY==='string'&&TODAY)return TODAY;}catch(e){}return new Date().toISOString().slice(0,10);}
+  function getJson(k,fb){try{const r=localStorage.getItem(k);return r?JSON.parse(r):fb;}catch(e){return fb;}}
+  function setJson(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function loadAll(){const a=getJson(REM_KEY,[]);return Array.isArray(a)?a:[];}
+  function saveAll(a){setJson(REM_KEY,Array.isArray(a)?a:[]);}
+
+  function addReminder(){
+    const textEl=document.getElementById('rem-input-text');
+    const dateEl=document.getElementById('rem-input-date');
+    const text=String(textEl?.value||'').trim();
+    if(!text)return;
+    const arr=loadAll();
+    arr.unshift({id:'rem-'+Date.now(),text,due:dateEl?.value||'',done:false,created_at:new Date().toISOString()});
+    saveAll(arr);
+    if(textEl)textEl.value='';
+    if(dateEl)dateEl.value='';
+    render();
+    injectHomeStrip();
+  }
+
+  function toggleDone(id){
+    const arr=loadAll();
+    const r=arr.find(x=>x.id===id);
+    if(r)r.done=!r.done;
+    saveAll(arr);
+    render();
+    injectHomeStrip();
+  }
+
+  function deleteReminder(id){
+    saveAll(loadAll().filter(x=>x.id!==id));
+    render();
+    injectHomeStrip();
+  }
+
+  function dueLabel(due){
+    if(!due)return '';
+    const t=today();
+    if(due<t)return `<div class="reminder-due overdue">⚠ Overdue: ${esc(due)}</div>`;
+    if(due===t)return `<div class="reminder-due">📅 Due today</div>`;
+    return `<div class="reminder-due">📅 ${esc(due)}</div>`;
+  }
+
+  function render(){
+    const panel=document.getElementById('daily-reminders-panel');
+    if(!panel)return;
+    const all=loadAll();
+    const undone=all.filter(r=>!r.done);
+    const done=all.filter(r=>r.done);
+    const sorted=[...undone,...done];
+    const countEl=panel.querySelector('.reminders-count');
+    if(countEl)countEl.textContent=undone.length+' active';
+    const list=panel.querySelector('.reminders-list');
+    if(!list)return;
+    if(!sorted.length){list.innerHTML='<div class="reminders-empty">No reminders yet. Add one above.</div>';return;}
+    list.innerHTML=sorted.map(r=>`
+      <div class="reminder-row${r.done?' done-row':''}">
+        <input type="checkbox" class="reminder-check" ${r.done?'checked':''} onchange="v71ToggleReminder('${esc(r.id)}')">
+        <div style="flex:1;min-width:0;">
+          <div class="reminder-text">${esc(r.text)}</div>
+          ${dueLabel(r.due)}
+        </div>
+        <button type="button" class="reminder-del" onclick="v71DeleteReminder('${esc(r.id)}')" title="Delete">✕</button>
+      </div>`).join('');
+  }
+
+  function injectPanel(){
+    const shell=document.querySelector('#page-daily-diary .daily-diary-shell');
+    if(!shell)return;
+    if(document.getElementById('daily-reminders-panel'))return;
+    const panel=document.createElement('div');
+    panel.id='daily-reminders-panel';
+    panel.className='reminders-panel';
+    panel.innerHTML=`
+      <div class="reminders-head">
+        <div class="reminders-head-left">
+          <span class="reminders-icon">🔔</span>
+          <span class="reminders-title">Daily Reminders</span>
+        </div>
+        <span class="reminders-count">0 active</span>
+      </div>
+      <div class="reminders-add-row">
+        <div class="fg"><label>Reminder</label><input type="text" id="rem-input-text" placeholder="e.g. Call ward 4B re: patient dressing" onkeydown="if(event.key==='Enter')v71AddReminder()"/></div>
+        <div class="fg" style="flex:0 0 auto;"><label>Due date (optional)</label><input type="date" id="rem-input-date"/></div>
+        <button type="button" class="reminders-add-btn" onclick="v71AddReminder()">+ Add</button>
+      </div>
+      <div class="reminders-list"></div>`;
+    const toolbar=shell.querySelector('.daily-diary-toolbar');
+    if(toolbar)toolbar.insertAdjacentElement('afterend',panel);
+    else shell.prepend(panel);
+    render();
+  }
+
+  function injectHomeStrip(){
+    const body=document.getElementById('home-daily-diary-body');
+    if(!body)return;
+    const undone=loadAll().filter(r=>!r.done);
+    let strip=document.getElementById('home-reminders-strip');
+    if(!undone.length){if(strip)strip.remove();return;}
+    if(!strip){strip=document.createElement('div');strip.id='home-reminders-strip';strip.className='home-reminders-strip';body.prepend(strip);}
+    const chips=undone.slice(0,4).map(r=>`<span class="home-reminder-chip">${esc(r.text.length>40?r.text.slice(0,38)+'…':r.text)}</span>`).join('');
+    const more=undone.length>4?`<span class="home-reminder-chip">+${undone.length-4} more</span>`:'';
+    strip.innerHTML=`<span class="home-reminders-strip-icon">🔔</span><strong style="font-size:11px;color:#92400e;font-weight:900;">Reminders:</strong>${chips}${more}`;
+  }
+
+  function wire(){
+    injectPanel();
+    injectHomeStrip();
+    const oldRender=window.v70LoadDailyDiaryPage;
+    if(typeof oldRender==='function'&&!oldRender.__remWrap){
+      const wrapped=function(){const r=oldRender.apply(this,arguments);setTimeout(()=>{injectPanel();render();},50);return r;};
+      wrapped.__remWrap=true;
+      window.v70LoadDailyDiaryPage=wrapped;
+    }
+    const oldHome=window.v70RenderHomeDiary;
+    if(typeof oldHome==='function'&&!oldHome.__remWrap){
+      const wrapped=function(){const r=oldHome.apply(this,arguments);setTimeout(injectHomeStrip,50);return r;};
+      wrapped.__remWrap=true;
+      window.v70RenderHomeDiary=wrapped;
+    }
+    const oldSwitch=window.switchTab;
+    if(typeof oldSwitch==='function'&&!oldSwitch.__remWrap){
+      const wrapped=function(name){const r=oldSwitch.apply(this,arguments);if(String(name)==='daily-diary')setTimeout(()=>{injectPanel();render();},80);return r;};
+      wrapped.__remWrap=true;
+      window.switchTab=wrapped;
+      try{switchTab=wrapped;}catch(e){}
+    }
+  }
+
+  window.v71AddReminder=addReminder;
+  window.v71ToggleReminder=toggleDone;
+  window.v71DeleteReminder=deleteReminder;
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);
+  else wire();
+  setTimeout(wire,500);
+  setTimeout(wire,1500);
+})();
+</script>
 
 <!-- v75-script-structure-fixed: Patients Diary and Surgery Watchlist verified in static HTML. -->
 <script>window.MDH_BUILD_VERSION='v77-patient-interface-no-recursion';console.log('MDH dashboard build v77 patient/interface no recursion base loaded');</script>
