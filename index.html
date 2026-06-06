@@ -10490,7 +10490,7 @@ async function loadPatientsList(tabName){
   const filterLabel=document.getElementById('patients-list-filter-label');
   if(select){
     select.value=currentPatientsTab;
-    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased';
+    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'||currentPatientsTab==='patients-relocated-gozo';
     select.style.display=hideGroup?'none':'';
     if(filterLabel)filterLabel.style.display=hideGroup?'none':'';
   }
@@ -10537,7 +10537,7 @@ function renderPatientsList(){
   const select=document.getElementById('patients-list-filter');
   const filterLabel=document.getElementById('patients-list-filter-label');
   if(select){
-    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased';
+    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'||currentPatientsTab==='patients-relocated-gozo';
     select.style.display=hideGroup?'none':'';
     if(filterLabel)filterLabel.style.display=hideGroup?'none':'';
   }
