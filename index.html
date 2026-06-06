@@ -5393,12 +5393,13 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       </div>
     </div>
     <div class="tab-group">
-      <button type="button" class="tab" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Center</span> <span class="tab-caret">▾</span></button>
+      <button type="button" class="tab" data-tabs="patient-center,patients-pathway,patients-sitting-sessions,patients-fistula-wounds,patients-post-op-discharge" onclick="toggleTabGroup(event,this)"><span class="tab-pic" aria-hidden="true">⊕</span><span class="tab-title">Patient Center</span> <span class="tab-caret">▾</span></button>
       <div class="tab-dd-menu">
         <button type="button" class="tab-dd-item" data-tab="patient-center" onclick="switchTab('patient-center',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊕</span><span class="tab-dd-label">Patient Center</span></span><small>Overview</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-pathway" onclick="switchTab('patients-pathway',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⟶</span><span class="tab-dd-label">Patient Pathway</span></span><small>Pre-op</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-sitting-sessions" onclick="switchTab('patients-sitting-sessions',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">◎</span><span class="tab-dd-label">Stoma Sitting Sessions</span></span><small>Pre-op</small></button>
         <button type="button" class="tab-dd-item" data-tab="patients-fistula-wounds" onclick="switchTab('patients-fistula-wounds',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⊘</span><span class="tab-dd-label">Fistula &amp; Wounds</span></span><small>Pathway</small></button>
+        <button type="button" class="tab-dd-item" data-tab="patients-post-op-discharge" onclick="switchTab('patients-post-op-discharge',this)"><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">⇥</span><span class="tab-dd-label">Post-Op Discharge</span></span><small>Post-op</small></button>
       </div>
     </div>
     <div class="tab-group">
@@ -5804,6 +5805,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <option value="patients-deceased">Deceased Patients</option>
           <option value="patients-relocated-overseas">Relocated Overseas</option>
           <option value="patients-relocated-gozo">Relocated to Gozo</option>
+          <option value="patients-post-op-discharge">Post-Op Discharge</option>
         </select>
         <label>Search:</label>
         <input type="text" id="patients-list-search" placeholder="Search name, ID card, phone, locality..." oninput="renderPatientsList()"/>
@@ -5914,6 +5916,11 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div style="font-size:2rem;margin-bottom:8px;">▣</div>
           <div style="font-weight:700;font-size:1.05rem;color:#1a2e4a;margin-bottom:5px;">Inpatients</div>
           <div style="font-size:0.85rem;color:#64748b;">Post-operative and currently admitted patients. Excludes awaiting surgery and sitting session patients.</div>
+        </div>
+        <div class="patient-center-tile" onclick="switchTab('patients-post-op-discharge',document.querySelector('[data-tab=\'patients-post-op-discharge\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(14,165,233,.13)';this.style.borderColor='#0ea5e9'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+          <div style="font-size:2rem;margin-bottom:8px;">⇥</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#0369a1;margin-bottom:5px;">Post-Op Discharge</div>
+          <div style="font-size:0.85rem;color:#64748b;">Post-operative inpatients with a surgery date — undergoing or ready for discharge planning.</div>
         </div>
         <div class="patient-center-tile" onclick="switchTab('patients-active',document.querySelector('[data-tab=\'patients-active\']'))" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:22px 20px;cursor:pointer;transition:box-shadow .18s,border-color .18s;" onmouseenter="this.style.boxShadow='0 4px 18px rgba(39,174,96,.13)';this.style.borderColor='#27ae60'" onmouseleave="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
           <div style="font-size:2rem;margin-bottom:8px;">✓</div>
@@ -10190,7 +10197,8 @@ const PATIENT_TAB_FILTERS={
   'patients-relocated-gozo':{status:'relocated_gozo',title:'Relocated to Gozo',subtitle:'Patients marked as relocated or discharged to Gozo.'},
   'patients-pathway':{status:'pathway',title:'Patient Pathway',subtitle:'Patients awaiting surgery or elective stoma formation.'},
   'patients-sitting-sessions':{status:'sitting_sessions',title:'Stoma Sitting Sessions',subtitle:'Pre-operative stoma sitting session patients.'},
-  'patients-fistula-wounds':{status:'fistula_wounds',title:'Fistula and Wounds',subtitle:'Patients on the fistula and wound management pathway.'}
+  'patients-fistula-wounds':{status:'fistula_wounds',title:'Fistula and Wounds',subtitle:'Patients on the fistula and wound management pathway.'},
+  'patients-post-op-discharge':{status:'post_op_discharge',title:'Post-Op Discharge',subtitle:'Post-operative inpatients with a surgery date — ready for or undergoing discharge planning.'}
 };
 
 /* v33C — Registry identity helpers restored for Patient Interface render path.
@@ -10314,6 +10322,7 @@ function patientMatchesRegisterStatus(p,status){
   if(st==='pathway')return isAwaitingSurgeryPatient(p)&&!p?.surgery_date&&!String(p?.patient_status_raw||'').toLowerCase().includes('sitting session');
   if(st==='sitting_sessions')return String(p?.patient_status_raw||'').toLowerCase().includes('sitting session')||(!p?.surgery_date&&String(p?.inpatient_type||'').toLowerCase().includes('awaiting_surgery')&&String(p?.patient_status_raw||'').toLowerCase().includes('stoma sitting'));
   if(st==='fistula_wounds')return String(p?.admission_route||'').toLowerCase().includes('fistula')||String(p?.admission_route||'').toLowerCase().includes('wound');
+  if(st==='post_op_discharge')return !!p?.surgery_date&&isInpatientSourcePatient(p);
   return patientRegisterStatus(p)===st;
 }
 function patientRegisterStatusText(status){
