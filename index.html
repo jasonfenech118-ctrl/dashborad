@@ -5385,7 +5385,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div class="tb-logo">MDH <span>Stoma Care</span> Clinic</div>
       <div class="tb-date" id="tb-date"></div><div class="v71-build-pill">v78</div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;"><button class="btn-account" onclick="switchTab('account',null)" id="btn-account-top">⚙ Account</button><button class="btn-so" onclick="doLogout()">Sign Out</button></div>
+    <div style="display:flex;align-items:center;gap:8px;"><button class="btn-so" id="btn-refresh-top" onclick="loadPatientsList()" style="display:none;">↺ Refresh</button><button class="btn-account" onclick="switchTab('account',null)" id="btn-account-top">⚙ Account</button><button class="btn-so" onclick="doLogout()">Sign Out</button></div>
   </div>
   <div class="tabs grouped-tabs">
     <button type="button" class="tab tab-single active" data-tab="home" onclick="switchTab('home',this)"><span class="tab-pic" aria-hidden="true">⌂</span><span class="tab-title">Home</span></button>
@@ -5786,7 +5786,6 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0;">
           <button class="btn-add btn-return" onclick="returnToPatientsOverview()">← Return</button>
-          <button class="btn-add" onclick="loadPatientsList()">Refresh</button>
         </div>
       </div>
       <div class="followup-toolbar patient-register-toolbar">
@@ -8066,6 +8065,8 @@ function switchTab(name,el){
   if(name==='daily-diary' && typeof v70LoadDailyDiaryPage==='function')v70LoadDailyDiaryPage();
   if(String(name).startsWith('patients-'))loadPatientsList(name);
   if(name==='fistula-patient'&&typeof loadFistulaPatientPage==='function')loadFistulaPatientPage();
+  const rbtn=document.getElementById('btn-refresh-top');
+  if(rbtn)rbtn.style.display=String(name).startsWith('patients-')?'':'none';
 }
 function refreshActivePage(){
   const active=document.querySelector('.page.active');
