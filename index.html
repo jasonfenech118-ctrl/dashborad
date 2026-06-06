@@ -14113,7 +14113,7 @@ function renderStomaSittingSession(){
       <div class="stoma-sitting-extra-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
         <div class="fg"><label>Education Given</label><textarea id="sss-education" rows="2" placeholder="Topics covered and education provided..."></textarea></div>
         <div class="fg"><label>Marking / Site Selection Notes</label><textarea id="sss-marking" rows="2" placeholder="Stoma site marking and positioning notes..."></textarea></div>
-        <div class="fg"><label>Appliances Discussed</label><textarea id="sss-appliances" rows="2" placeholder="Appliances shown and discussed..."></textarea></div>
+        <div class="fg"><label>Appliances Discussed</label><select id="sss-appliances"><option value="">— Select appliance —</option>${(window.FU_SEEN_APPLIANCE_OPTIONS||[]).map(o=>`<option value="${htmlSafe(o)}">${htmlSafe(o)}</option>`).join('')}</select></div>
         <div class="fg"><label>Patient Concerns</label><textarea id="sss-concerns" rows="2" placeholder="Patient questions and concerns raised..."></textarea></div>
         <div class="fg" style="grid-column:1/-1;"><label>Plan / Follow-up</label><textarea id="sss-plan" rows="2" placeholder="Agreed plan and follow-up actions..."></textarea></div>
       </div>
@@ -21455,6 +21455,8 @@ table thead th.v63-name-title,
   window.omdhStomaBlock=function(idx){
     const n=idx+1;
     const removeBtn=idx>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="omdhRemoveStoma('+idx+')">Remove</button>':'';
+    const _appOpts='<option value="">-- Select --</option>'+(window.FU_SEEN_APPLIANCE_OPTIONS||[]).map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
+    const _accOpts='<option value="">-- Select --</option>'+(window.FU_SEEN_ACCESSORY_OPTIONS||[]).map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
     return '<div class="elective-section-card omdh-stoma-block" id="omdh-stoma-block-'+idx+'" style="border:1px solid #0d7377;border-radius:12px;padding:14px;margin-bottom:14px;">'
       +'<div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
       +'<div style="margin:-2px 0 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span><span id="omdh-sid-'+idx+'" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span></div>'
@@ -21469,9 +21471,9 @@ table thead th.v63-name-title,
       +'</div>'
       +'<div class="cor-2col">'
         +'<div class="fg"><label>Stoma Output</label><select id="omdh-soutput-'+idx+'"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>'
-        +'<div class="fg"><label>Appliance Used</label><input type="text" id="omdh-sappliance-'+idx+'" placeholder="Type and size"/></div>'
+        +'<div class="fg"><label>Appliance Used</label><select id="omdh-sappliance-'+idx+'">'+_appOpts+'</select></div>'
       +'</div>'
-      +'<div class="fg"><label>Accessories</label><input type="text" id="omdh-saccessories-'+idx+'" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>'
+      +'<div class="fg"><label>Accessories</label><select id="omdh-saccessories-'+idx+'">'+_accOpts+'</select></div>'
       +'<div class="fg"><label>Assessment Notes</label><textarea id="omdh-snotes-'+idx+'" placeholder="Clinical observations, patient concerns, teaching started" style="height:72px;"></textarea></div>'
     +'</div>';
   };
@@ -21624,6 +21626,8 @@ table thead th.v63-name-title,
   window.emergStomaBlock=function(idx){
     const n=idx+1;
     const removeBtn=idx>0?'<button type="button" style="float:right;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;" onclick="emergRemoveStoma('+idx+')">Remove</button>':'';
+    const _appOpts='<option value="">-- Select --</option>'+(window.FU_SEEN_APPLIANCE_OPTIONS||[]).map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
+    const _accOpts='<option value="">-- Select --</option>'+(window.FU_SEEN_ACCESSORY_OPTIONS||[]).map(function(o){return '<option value="'+o+'">'+o+'</option>';}).join('');
     return '<div class="elective-section-card emrg-stoma-block" id="emrg-stoma-block-'+idx+'" style="border:1px solid #0d7377;border-radius:12px;padding:14px;margin-bottom:14px;">'
       +'<div class="elective-section-label" style="color:#0d7377;display:flex;align-items:center;justify-content:space-between;">Stoma '+n+' '+removeBtn+'</div>'
       +'<div style="margin:-2px 0 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:#6b7280;font-weight:500;">Stoma ID:</span><span id="emrg-sid-'+idx+'" style="font-family:monospace;font-size:12px;font-weight:700;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 9px;letter-spacing:0.5px;">STO – – –</span></div>'
@@ -21649,9 +21653,9 @@ table thead th.v63-name-title,
       +'</div>'
       +'<div class="cor-2col">'
         +'<div class="fg"><label>Stoma Output</label><select id="emrg-soutput-'+idx+'"><option value="">-- Select --</option><option>Haemoserous</option><option>Green/bilious</option><option>Liquid stool</option><option>Blood</option><option>Semi-formed/formed</option></select></div>'
-        +'<div class="fg"><label>Appliance Used</label><input type="text" id="emrg-sappliance-'+idx+'" placeholder="Type and size"/></div>'
+        +'<div class="fg"><label>Appliance Used</label><select id="emrg-sappliance-'+idx+'">'+_appOpts+'</select></div>'
       +'</div>'
-      +'<div class="fg"><label>Accessories</label><input type="text" id="emrg-saccessories-'+idx+'" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>'
+      +'<div class="fg"><label>Accessories</label><select id="emrg-saccessories-'+idx+'">'+_accOpts+'</select></div>'
       +'<div class="fg"><label>Stoma Review Notes</label><textarea id="emrg-snotes-'+idx+'" placeholder="Clinical observations, patient concerns, teaching started" style="height:72px;"></textarea></div>'
     +'</div>';
   };
