@@ -199,12 +199,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-tile-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.15;}
 .nav-tile-arrow{color:var(--muted);font-size:16px;font-weight:900;}
 #page-patient-center .nav-tile{min-height:84px;padding:16px 22px;border-radius:16px;gap:16px;}
-#page-patient-center .nav-tile-icon{width:48px;height:48px;border-radius:12px;font-size:22px;background:#1e293b!important;color:#fff;}
+#page-patient-center .nav-tile-icon{width:48px;height:48px;border-radius:12px;font-size:22px;color:#fff;}
 #page-patient-center .nav-tile-label{font-size:15px;font-weight:900;color:#0f172a;}
 #page-patient-center .nav-tile-sub{font-size:11.5px;margin-top:3px;}
 #page-patient-center .centre-section-heading{font-size:11px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#1e293b;margin-bottom:10px;border-left:3px solid var(--teal);padding-left:8px;}
-.tab[data-tab="home"]{background:#fde910!important;color:#1a2e4a!important;font-weight:900!important;border-bottom-color:#f0d000!important;}
-.tab[data-tab="home"] .tab-pic{background:#1a2e4a!important;color:#fde910!important;border-color:#1a2e4a!important;}
+.tab[data-tab="home"],.tab[data-tab="home"].active{background:#fde910!important;color:#1a2e4a!important;font-weight:900!important;border-bottom-color:#f0d000!important;}
+.tab[data-tab="home"] .tab-pic,.tab[data-tab="home"].active .tab-pic{background:#1a2e4a!important;color:#fde910!important;border-color:#1a2e4a!important;}
 .tab[data-tab="home"]:hover{background:#f5e000!important;}
 .btn-account{padding:6px 14px;border:1.5px solid rgba(255,255,255,.38);border-radius:999px;color:white;background:rgba(255,255,255,.10);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;}
 .btn-account:hover{background:rgba(255,255,255,.2);}
@@ -5385,7 +5385,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div class="tb-logo">MDH <span>Stoma Care</span> Clinic</div>
       <div class="tb-date" id="tb-date"></div><div class="v71-build-pill">v78</div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;"><button class="btn-account" onclick="switchTab('account',document.querySelector('[data-tab=\'account\']'))" id="btn-account-top">⊙ Account</button><button class="btn-so" onclick="doLogout()">Sign Out</button></div>
+    <div style="display:flex;align-items:center;gap:8px;"><button class="btn-account" onclick="switchTab('account',null)" id="btn-account-top">⚙ Account</button><button class="btn-so" onclick="doLogout()">Sign Out</button></div>
   </div>
   <div class="tabs grouped-tabs">
     <button type="button" class="tab tab-single active" data-tab="home" onclick="switchTab('home',this)"><span class="tab-pic" aria-hidden="true">⌂</span><span class="tab-title">Home</span></button>
@@ -5423,7 +5423,6 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <button type="button" class="tab-dd-item" data-tab="report-patients" onclick="switchTab('report-patients',this)" ><span class="tab-dd-left"><span class="tab-dd-icon" aria-hidden="true">☷</span><span class="tab-dd-label">Patients Report</span></span><small>Booked period</small></button>
       </div>
     </div>
-    <button type="button" class="tab tab-single" data-tab="account" onclick="switchTab('account',this)"><span class="tab-pic" aria-hidden="true">⚙</span><span class="tab-title">Account</span></button>
   </div>
 
   <div class="main">
@@ -5892,22 +5891,22 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div class="centre-section-heading">Active Pathways</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-pathway',null)">
-              <div class="nav-tile-icon">⟶</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Patient Pathway</div><div class="nav-tile-sub">Awaiting surgery or elective stoma formation</div></div>
+              <div class="nav-tile-icon" style="background:#0d7377;">⟶</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div><div class="nav-tile-sub">Awaiting surgery or elective stoma formation</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-sitting-sessions',null)">
-              <div class="nav-tile-icon">◎</div>
+              <div class="nav-tile-icon" style="background:#e6a817;">◎</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Stoma Sitting Sessions</div><div class="nav-tile-sub">Pre-operative education and site selection</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-fistula-wounds',null)">
-              <div class="nav-tile-icon">⊕</div>
+              <div class="nav-tile-icon" style="background:#ea580c;">⊕</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Fistula &amp; Wounds</div><div class="nav-tile-sub">Fistula and wound management pathway</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-active',null)">
-              <div class="nav-tile-icon">✓</div>
+              <div class="nav-tile-icon" style="background:#27ae60;">✓</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Active Patients</div><div class="nav-tile-sub">Active outpatients with ongoing follow-up care</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
@@ -5919,12 +5918,12 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div class="centre-section-heading">Inpatient &amp; Post-Operative</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-inpatients',null)">
-              <div class="nav-tile-icon">▣</div>
+              <div class="nav-tile-icon" style="background:#2980b9;">▣</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Inpatients</div><div class="nav-tile-sub">Post-operative and admitted patients</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-post-op-discharge',null)">
-              <div class="nav-tile-icon">⇪</div>
+              <div class="nav-tile-icon" style="background:#0ea5e9;">⇪</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Post-Op Discharge</div><div class="nav-tile-sub">Post-op patients ready for discharge planning</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
@@ -5936,17 +5935,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div class="centre-section-heading">Closed &amp; Transferred</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-reversed',null)">
-              <div class="nav-tile-icon">↺</div>
+              <div class="nav-tile-icon" style="background:#475569;">↺</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Reversed / Discharged</div><div class="nav-tile-sub">Stoma reversed or discharged from service</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-gozo',null)">
-              <div class="nav-tile-icon">⛵</div>
+              <div class="nav-tile-icon" style="background:#0891b2;">⛵</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Relocated to Gozo</div><div class="nav-tile-sub">Transferred care to Gozo</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-overseas',null)">
-              <div class="nav-tile-icon">✈</div>
+              <div class="nav-tile-icon" style="background:#7e22ce;">✈</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Relocated Overseas</div><div class="nav-tile-sub">Transferred care abroad</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
@@ -5958,12 +5957,12 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           <div class="centre-section-heading">Registry</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-deceased',null)">
-              <div class="nav-tile-icon">✝</div>
+              <div class="nav-tile-icon" style="background:#64748b;">✝</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Deceased Patients</div><div class="nav-tile-sub">Read-only archive</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-all',null)">
-              <div class="nav-tile-icon">☷</div>
+              <div class="nav-tile-icon" style="background:#1a2e4a;">☷</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Master Patient List</div><div class="nav-tile-sub">Full register — search by name, ID or phone</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
