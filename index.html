@@ -10497,8 +10497,6 @@ async function loadPatientsList(tabName){
   currentPatientsTab=tabName||currentPatientsTab||'patients-active';
   const toolbar=document.querySelector('#page-patients-list .patient-register-toolbar');
   if(toolbar)toolbar.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
-  const subtitle=document.getElementById('patients-list-subtitle');
-  if(subtitle)subtitle.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
   const select=document.getElementById('patients-list-filter');
   const filterLabel=document.getElementById('patients-list-filter-label');
   if(select){
@@ -10512,6 +10510,7 @@ async function loadPatientsList(tabName){
   if(searchInput)searchInput.placeholder=cfg.status==='all'?'Search all patients by name, ID card, phone, status, owner, locality, dates, stoma type, surgery details...':(cfg.status==='deceased'?'Search name, ID number, RIP date, stoma type, locality...':(cfg.status==='reversed'?'Search ID number, name, reversal date, stoma type...':((cfg.status==='relocated_overseas'||cfg.status==='relocated_gozo')?'Search ID number, name, last seen, discharge date, surgery type, consultant, stoma type...':'Search name, ID card, phone, locality...')));
   const title=document.getElementById('patients-list-title');
   const subtitle=document.getElementById('patients-list-subtitle');
+  if(subtitle)subtitle.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
   const cardTitle=document.getElementById('patients-list-card-title');
   if(title){
     if(currentPatientsTab==='patients-deceased')title.innerHTML='<span class="deceased-page-title"><span class="rip-cross">†</span> Deceased Patients</span>';
