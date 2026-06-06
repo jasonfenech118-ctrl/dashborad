@@ -5937,6 +5937,15 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       </div>
     </div>
 
+    <!-- FISTULA / WOUND PATIENT -->
+    <div class="page" id="page-fistula-patient">
+      <div class="phdr">
+        <div><h2 id="fistula-patient-heading">Fistula / Wound Patient</h2><p id="fistula-patient-subheading">Fistula and wound management pathway</p></div>
+        <button class="btn-add btn-return" onclick="returnFromFistulaPatient()">← Return</button>
+      </div>
+      <div id="fistula-patient-body"><div class="card"><div class="empty">Loading...</div></div></div>
+    </div>
+
     <!-- STOMA SITTING SESSION -->
     <div class="page" id="page-stoma-sitting-session">
       <div class="phdr">
@@ -8024,6 +8033,7 @@ function switchTab(name,el){
   if(name==='cod'){populateCODDropdowns();loadCOD();}
   if(name==='daily-diary' && typeof v70LoadDailyDiaryPage==='function')v70LoadDailyDiaryPage();
   if(String(name).startsWith('patients-'))loadPatientsList(name);
+  if(name==='fistula-patient'&&typeof loadFistulaPatientPage==='function')loadFistulaPatientPage();
 }
 function refreshActivePage(){
   const active=document.querySelector('.page.active');
@@ -10497,6 +10507,7 @@ function renderPatientsList(){
   const isInpatients=currentPatientsTab==='patients-inpatients'||cfg.status==='inpatient';
   const isRelocatedGozo=currentPatientsTab==='patients-relocated-gozo'||cfg.status==='relocated_gozo';
   const isRelocatedOverseas=currentPatientsTab==='patients-relocated-overseas'||currentPatientsTab==='patients-relocated-gozo'||cfg.status==='relocated_overseas'||cfg.status==='relocated_gozo';
+  const isFistulaWounds=currentPatientsTab==='patients-fistula-wounds'||cfg.status==='fistula_wounds';
   const statsBase=activeOwnerFilter
     ? all.filter(p=>patientEligibleForOwnerQuickFilter(p)&&normaliseFollowupOwner(p.followup_owner||'Common')===activeOwnerFilter)
     : all;
@@ -10588,15 +10599,17 @@ function renderPatientsList(){
         ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Owner</th><th>Consultant</th><th>Reversal Date</th><th>Last Seen</th><th>Stoma Type Summary</th><th>Locality</th><th>Status</th></tr>'
         : (isInpatients
           ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Inpatient Type</th><th>Planned Surgery Date</th><th>Surgery Date</th><th>Admission Route</th><th>Owner</th><th>Last Outcome</th></tr>'
+          : (isFistulaWounds
+          ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Presentation Date</th><th>Last Reviewed</th><th>Locality</th></tr>'
           : (isRelocatedOverseas
           ? (isRelocatedGozo
             ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Status</th><th>Last Seen</th><th>Date of Discharge</th><th>Surgery Date</th><th>Consultant</th><th>Surgery Type</th><th>Stoma Type Summary</th></tr>'
             : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Status</th><th>Last Seen</th><th>Date of Discharge</th><th>Stoma Type Summary</th></tr>')
-          : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Last Outcome</th><th>Next Follow-up</th><th>Locality</th></tr>')));
+          : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Last Outcome</th><th>Next Follow-up</th><th>Locality</th></tr>'))));
   }
   if(!tbody)return;
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="${isAll?30:(isDeceased?12:(isReversed?12:(isInpatients?11:(isRelocatedOverseas?(isRelocatedGozo?12:9):12))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="${isAll?30:(isDeceased?12:(isReversed?12:(isInpatients?11:(isFistulaWounds?9:(isRelocatedOverseas?(isRelocatedGozo?12:9):12)))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
     return;
   }
   tbody.innerHTML=rows.map(p=>{
@@ -10683,6 +10696,19 @@ function renderPatientsList(){
         <td>${htmlSafe(p.admission_route||'—')}</td>
         <td>${htmlSafe(p.followup_owner||'Common')}</td>
         <td>${htmlSafe(latest)}</td>
+      </tr>`;
+    }
+    if(isFistulaWounds){
+      return `<tr>
+        <td><strong>${htmlSafe(p.id_card||'—')}</strong></td>
+        <td><strong>${htmlSafe(p.surname||'—')}</strong></td>
+        <td><strong>${htmlSafe(p.first_name||'—')}</strong></td>
+        <td><div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openFistulaPatientPage('${p.id}')" style="white-space:nowrap;background:#7c3aed;color:white;">Open</button></div></td>
+        <td>${patientSexChip(p.sex)}</td>
+        <td>${htmlSafe(p.phone_number||'—')}</td>
+        <td>${patientDateText(p.surgery_date||p.last_outcome_date)}</td>
+        <td>${patientDateText(p.last_outcome_date)}</td>
+        <td>${htmlSafe(p.locality||'—')}</td>
       </tr>`;
     }
     if(isRelocatedOverseas){
@@ -14168,6 +14194,190 @@ async function bookStomaSittingSlot(slot){
   if(document.getElementById('page-appointments')?.classList.contains('active'))loadAppts();
   if(document.getElementById('page-reports')?.classList.contains('active'))loadReports();
 }
+/* ===== FISTULA / WOUND PATIENT PAGE ===== */
+let fistulaPatientCurrentId=null;
+let fistulaPatientData=null;
+let fistulaPatientReturnTab='patients-fistula-wounds';
+
+window.openFistulaPatientPage=async function(patientId){
+  if(!patientId){alert('No patient selected.');return;}
+  fistulaPatientReturnTab=typeof currentPatientsTab!=='undefined'?currentPatientsTab:'patients-fistula-wounds';
+  fistulaPatientCurrentId=patientId;
+  switchTab('fistula-patient',null);
+  const body=document.getElementById('fistula-patient-body');
+  const heading=document.getElementById('fistula-patient-heading');
+  const subheading=document.getElementById('fistula-patient-subheading');
+  if(body)body.innerHTML='<div class="card"><div class="empty">Loading patient record...</div></div>';
+  const fields='id,first_name,surname,id_card,phone_number,sex,dob,locality,findings,last_outcome_date,admission_route,surgery_date,patient_status_raw,followup_owner';
+  const {data:p,error}=await SB.from('patients').select(fields).eq('id',patientId).maybeSingle();
+  if(error||!p){
+    if(body)body.innerHTML=`<div class="card"><div class="empty">Could not load patient: ${htmlSafe(error?.message||'Patient not found')}</div></div>`;
+    return;
+  }
+  fistulaPatientData=p;
+  const fullName=[p.first_name,p.surname].filter(Boolean).join(' ')||'Patient';
+  if(heading)heading.textContent=fullName;
+  if(subheading)subheading.textContent='Fistula / Wound management · '+htmlSafe(p.id_card||'No ID');
+  let steps=[];
+  try{
+    const {data:eps}=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open');
+    const epIds=(eps||[]).map(e=>e.id);
+    if(epIds.length){
+      const {data:sd}=await SB.from('episode_steps').select('*').in('episode_id',epIds).eq('step_key','fistula_wound_assessment').order('created_at',{ascending:false});
+      steps=sd||[];
+    }
+  }catch(e){console.warn('fistula steps load failed',e);}
+  renderFistulaPatientPage(p,steps);
+};
+
+function loadFistulaPatientPage(){
+  if(fistulaPatientCurrentId&&fistulaPatientData)renderFistulaPatientPage(fistulaPatientData,[]);
+}
+
+function renderFistulaPatientPage(p,steps){
+  const body=document.getElementById('fistula-patient-body');
+  if(!body)return;
+  const fullName=[p.first_name,p.surname].filter(Boolean).join(' ')||'Patient';
+  const sexKind=String(p.sex||'').toLowerCase().startsWith('f')?'female':'male';
+  const demoStyle=sexKind==='female'?'border-top:4px solid var(--red)':'border-top:4px solid var(--navy)';
+
+  const historyHTML=steps.length?steps.map(s=>{
+    const d=s.data||{};
+    return `<div class="fw-review-block" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:10px;">
+      <div style="font-weight:700;color:#1a2e4a;margin-bottom:6px;">${htmlSafe(d.recorded_date||String(s.created_at||'').slice(0,10)||'—')}</div>
+      <div class="pi-demo-grid">
+        ${d.site?`<div><div class="pi-demo-label">Site</div><div class="pi-demo-val">${htmlSafe(d.site)}</div></div>`:''}
+        ${d.type?`<div><div class="pi-demo-label">Type</div><div class="pi-demo-val">${htmlSafe(d.type)}</div></div>`:''}
+        ${d.output_volume?`<div><div class="pi-demo-label">Output volume</div><div class="pi-demo-val">${htmlSafe(d.output_volume)}</div></div>`:''}
+        ${d.output_type?`<div><div class="pi-demo-label">Output type</div><div class="pi-demo-val">${htmlSafe(d.output_type)}</div></div>`:''}
+        ${d.skin?`<div><div class="pi-demo-label">Peri-wound skin</div><div class="pi-demo-val">${htmlSafe(d.skin)}</div></div>`:''}
+        ${d.appliance?`<div><div class="pi-demo-label">Appliance</div><div class="pi-demo-val">${htmlSafe(d.appliance)}</div></div>`:''}
+        ${d.accessories?`<div><div class="pi-demo-label">Accessories</div><div class="pi-demo-val">${htmlSafe(d.accessories)}</div></div>`:''}
+        ${d.notes?`<div style="grid-column:1/-1;"><div class="pi-demo-label">Management notes</div><div class="pi-demo-val">${htmlSafe(d.notes)}</div></div>`:''}
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty" style="color:#64748b;font-size:0.9em;">No previous reviews recorded.</div>`;
+
+  body.innerHTML=`
+    <div class="patient-interface-demographics stoma-sitting-demographics ${sexKind}" style="${demoStyle}">
+      <div class="patient-avatar ${sexKind}" aria-label="${htmlSafe(sexKind)} patient silhouette"></div>
+      <div>
+        <div class="pi-demo-head">
+          <div><div class="pi-demo-title">Patient Details</div><div class="pi-demo-sub">${htmlSafe(fullName)} · ${htmlSafe(p.id_card||'No ID')}</div></div>
+        </div>
+        <div class="pi-demo-grid">
+          ${patientInterfaceDemographicItem('ID Number',htmlSafe(p.id_card||'—'))}
+          ${patientInterfaceDemographicItem('Surname',htmlSafe(p.surname||'—'))}
+          ${patientInterfaceDemographicItem('Name',htmlSafe(p.first_name||'—'))}
+          ${patientInterfaceDemographicItem('Phone',htmlSafe(p.phone_number||'—'))}
+          ${patientInterfaceDemographicItem('Locality',htmlSafe(p.locality||'—'))}
+          ${patientInterfaceDemographicItem('Presentation Date',patientDateText(p.surgery_date||p.last_outcome_date))}
+          ${patientInterfaceDemographicItem('Last Reviewed',patientDateText(p.last_outcome_date))}
+          ${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'Fistula / wound management'))}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Add Wound / Fistula Review</div>
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:10px;">
+        <div class="cor-2col">
+          <div class="fg"><label>Review Date *</label><input type="date" id="fpr-date" value="${typeof TODAY!=='undefined'?TODAY:''}"/></div>
+          <div class="fg"><label>Nurse / Clinician</label><input type="text" id="fpr-nurse" placeholder="Attending nurse or clinician"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Wound / Fistula Site</label><input type="text" id="fpr-site" placeholder="e.g. midline wound, RIF drain site"/></div>
+          <div class="fg"><label>Type</label><select id="fpr-type"><option value="">— Select —</option><option>Enterocutaneous fistula</option><option>Enteroatmospheric fistula</option><option>Dehisced / open wound</option><option>Drain site</option><option>Pressure ulcer</option><option>Other</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Output Volume</label><select id="fpr-output-volume"><option value="">— Select —</option><option>Nil</option><option>Low (&lt;200ml/24h)</option><option>Moderate (200–500ml/24h)</option><option>High (&gt;500ml/24h)</option></select></div>
+          <div class="fg"><label>Output Type</label><select id="fpr-output-type"><option value="">— Select —</option><option>Serous</option><option>Haemoserous</option><option>Enteric / faeculent</option><option>Bilious</option><option>Purulent</option><option>Other</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Peri-wound Skin</label><select id="fpr-skin"><option value="">— Select —</option><option>Intact</option><option>Erythema</option><option>Excoriated</option><option>Macerated</option><option>Ulcerated</option></select></div>
+          <div class="fg"><label>Pouch / Appliance Used</label><input type="text" id="fpr-appliance" placeholder="e.g. wound manager, high-output pouch"/></div>
+        </div>
+        <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories" placeholder="e.g. adhesive remover, barrier wipes, paste, seals"/></div>
+        <div class="fg"><label>Patient Concerns</label><textarea id="fpr-concerns" rows="2" placeholder="Patient questions or concerns raised..."></textarea></div>
+        <div class="fg"><label>Management Notes / Plan</label><textarea id="fpr-notes" rows="3" placeholder="Pouching plan, skin protection, escalation, follow-up actions..."></textarea></div>
+      </div>
+      <div id="fpr-note" class="pi-confirm-note" style="margin-bottom:8px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-cancel" onclick="returnFromFistulaPatient()">Back</button>
+        <button class="btn-save" style="background:#7c3aed;" onclick="saveFistulaReview('${htmlSafe(p.id)}')">Save Review</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Review History</div>
+      ${historyHTML}
+    </div>`;
+
+  try{
+    (async()=>{
+      const user=await getCurrentUserForAudit();
+      const nurseEl=document.getElementById('fpr-nurse');
+      if(nurseEl&&!nurseEl.value)nurseEl.value=user.name||user.email||'';
+    })();
+  }catch(e){}
+}
+
+window.saveFistulaReview=async function(patientId){
+  const note=document.getElementById('fpr-note');
+  const setNote=(msg,ok)=>{if(note){note.style.color=ok?'var(--green)':'var(--red)';note.textContent=msg;}};
+  const v=id=>document.getElementById(id)?.value?.trim()||'';
+  const date=v('fpr-date');
+  if(!date){setNote('Please enter the Review Date.',false);return;}
+  const nurse=v('fpr-nurse');
+  const site=v('fpr-site');
+  const type=v('fpr-type');
+  const outputVolume=v('fpr-output-volume');
+  const outputType=v('fpr-output-type');
+  const skin=v('fpr-skin');
+  const appliance=v('fpr-appliance');
+  const accessories=v('fpr-accessories');
+  const concerns=v('fpr-concerns');
+  const notes=v('fpr-notes');
+  const summaryParts=[
+    '','--- Fistula / Wound Review ---',
+    `Date: ${date}`,
+    nurse?`Nurse: ${nurse}`:'',
+    site?`Site: ${site}`:'',
+    type?`Type: ${type}`:'',
+    outputVolume?`Output volume: ${outputVolume}`:'',
+    outputType?`Output type: ${outputType}`:'',
+    skin?`Peri-wound skin: ${skin}`:'',
+    appliance?`Appliance: ${appliance}`:'',
+    accessories?`Accessories: ${accessories}`:'',
+    concerns?`Patient concerns: ${concerns}`:'',
+    notes?`Management notes: ${notes}`:''
+  ].filter(x=>x!=='').join('\n');
+  const p=fistulaPatientData;
+  if(!p){setNote('Patient data missing. Please reopen the patient.',false);return;}
+  const previous=String(p.findings||'').trim();
+  const patientPayload={findings:(previous?previous+'\n\n':'')+summaryParts,last_outcome_date:date};
+  try{
+    const {error:pErr}=await SB.from('patients').update(patientPayload).eq('id',patientId);
+    if(pErr){setNote('Could not save review: '+(pErr.message||'Unknown error'),false);return;}
+    const reviewData={recorded_date:date,nurse,site,type,output_volume:outputVolume,output_type:outputType,skin,appliance,accessories,concerns,notes};
+    try{
+      const {data:ep}=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').maybeSingle();
+      if(ep?.id){
+        await SB.from('episode_steps').insert({episode_id:ep.id,step_no:99,step_key:'fistula_wound_assessment',status:'complete',data:reviewData});
+      }
+    }catch(e){console.warn('episode step insert failed',e);}
+    fistulaPatientData={...p,...patientPayload};
+    setNote('Review saved successfully.',true);
+    setTimeout(()=>window.openFistulaPatientPage(patientId),900);
+  }catch(e){setNote('Unexpected error saving review.',false);}
+};
+
+window.returnFromFistulaPatient=function(){
+  try{switchTab(fistulaPatientReturnTab||'patients-fistula-wounds',document.querySelector(`[data-tab="${fistulaPatientReturnTab||'patients-fistula-wounds'}"]`));}
+  catch(e){try{switchTab('patients-fistula-wounds',null);}catch(e2){}}
+};
+/* ===== END FISTULA PATIENT PAGE ===== */
+
 async function openStomaSittingSession(patientId){
   if(!patientId){alert('No patient selected.');return;}
   const body=document.getElementById('stoma-sitting-body');
