@@ -5890,19 +5890,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <div>
           <div class="centre-section-heading">Active Pathways</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-            <button type="button" class="nav-tile" onclick="switchTab('patients-pathway',null)">
+            <button type="button" class="nav-tile" onclick="switchTab('admission-route-menu',document.querySelector('[data-tab=\'admission-route-menu\']'))">
               <div class="nav-tile-icon" style="background:#0d7377;">⟶</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div><div class="nav-tile-sub">Awaiting surgery or elective stoma formation</div></div>
-              <div class="nav-tile-arrow">›</div>
-            </button>
-            <button type="button" class="nav-tile" onclick="switchTab('patients-sitting-sessions',null)">
-              <div class="nav-tile-icon" style="background:#e6a817;">◎</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Stoma Sitting Sessions</div><div class="nav-tile-sub">Pre-operative education and site selection</div></div>
-              <div class="nav-tile-arrow">›</div>
-            </button>
-            <button type="button" class="nav-tile" onclick="switchTab('patients-fistula-wounds',null)">
-              <div class="nav-tile-icon" style="background:#ea580c;">⊕</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Fistula &amp; Wounds</div><div class="nav-tile-sub">Fistula and wound management pathway</div></div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div><div class="nav-tile-sub">Register a new patient via the admission pathway</div></div>
               <div class="nav-tile-arrow">›</div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-active',null)">
