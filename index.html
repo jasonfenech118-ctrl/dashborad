@@ -14234,6 +14234,72 @@ function loadFistulaPatientPage(){
   if(fistulaPatientCurrentId&&fistulaPatientData)renderFistulaPatientPage(fistulaPatientData,[]);
 }
 
+/* --- Canvas drawing helpers --- */
+let _fprDrawing=false,_fprTool='pen',_fprColor='#dc2626',_fprSize=3,_fprLX=0,_fprLY=0;
+function _fprGetPos(canvas,e){
+  const r=canvas.getBoundingClientRect();
+  const src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};
+}
+function _fprInitCanvas(){
+  const canvas=document.getElementById('fpr-body-canvas');
+  if(!canvas||canvas._fprInited)return;
+  canvas._fprInited=true;
+  const ctx=canvas.getContext('2d');
+  _fprDrawBodyBase(ctx,canvas.width,canvas.height);
+  const start=e=>{_fprDrawing=true;const pos=_fprGetPos(canvas,e);_fprLX=pos.x;_fprLY=pos.y;e.preventDefault();};
+  const move=e=>{if(!_fprDrawing)return;e.preventDefault();const pos=_fprGetPos(canvas,e);const c2=canvas.getContext('2d');c2.save();c2.globalCompositeOperation=_fprTool==='eraser'?'destination-out':'source-over';c2.strokeStyle=_fprColor;c2.lineWidth=_fprSize;c2.lineCap='round';c2.lineJoin='round';c2.beginPath();c2.moveTo(_fprLX,_fprLY);c2.lineTo(pos.x,pos.y);c2.stroke();c2.restore();_fprLX=pos.x;_fprLY=pos.y;};
+  const end=()=>{_fprDrawing=false;};
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',end);canvas.addEventListener('mouseleave',end);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',move,{passive:false});canvas.addEventListener('touchend',end);
+}
+function _fprDrawBodyBase(ctx,W,H){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8f9fa';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(W/2,8);ctx.lineTo(W/2,H-8);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  _fprBodyFig(ctx,W*0.25,H,'FRONT');
+  _fprBodyFig(ctx,W*0.75,H,'BACK');
+}
+function _fprBodyFig(ctx,cx,H,label){
+  const s=H/220;
+  ctx.save();ctx.translate(cx,0);
+  ctx.fillStyle='#dde1e7';ctx.strokeStyle='#64748b';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(0,20*s,13*s,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillRect(-5*s,33*s,10*s,8*s);ctx.strokeRect(-5*s,33*s,10*s,8*s);
+  if(ctx.roundRect){ctx.beginPath();ctx.roundRect(-22*s,41*s,44*s,60*s,4*s);ctx.fill();ctx.stroke();}
+  else{ctx.fillRect(-22*s,41*s,44*s,60*s);ctx.strokeRect(-22*s,41*s,44*s,60*s);}
+  ctx.save();ctx.lineWidth=11*s;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-22*s,46*s);ctx.lineTo(-34*s,92*s);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(22*s,46*s);ctx.lineTo(34*s,92*s);ctx.stroke();
+  ctx.lineWidth=13*s;
+  ctx.beginPath();ctx.moveTo(-11*s,101*s);ctx.lineTo(-15*s,162*s);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(11*s,101*s);ctx.lineTo(15*s,162*s);ctx.stroke();
+  ctx.restore();
+  ctx.beginPath();ctx.ellipse(-18*s,167*s,10*s,4*s,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.ellipse(18*s,167*s,10*s,4*s,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#94a3b8';ctx.font=`bold ${10*s}px sans-serif`;ctx.textAlign='center';ctx.fillText(label,0,188*s);
+  ctx.restore();
+}
+window.fprSetTool=function(t){_fprTool=t;document.querySelectorAll('.fpr-tool-btn').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));};
+window.fprSetColor=function(c){_fprColor=c;_fprTool='pen';document.querySelectorAll('.fpr-color-swatch').forEach(b=>b.style.outline=b.dataset.color===c?'2px solid #1a2e4a':'none');};
+window.fprSetSize=function(s){_fprSize=Number(s);};
+window.fprClearDiagram=function(){const canvas=document.getElementById('fpr-body-canvas');if(!canvas)return;canvas._fprInited=false;const ctx=canvas.getContext('2d');_fprDrawBodyBase(ctx,canvas.width,canvas.height);setTimeout(_fprInitCanvas,50);};
+window.fprToggleSections=function(){
+  const types=Array.from(document.querySelectorAll('input[name="fpr-assess-type"]:checked')).map(c=>c.value);
+  const secA=document.getElementById('fpr-sec-a');
+  const secB=document.getElementById('fpr-sec-b');
+  const secC=document.getElementById('fpr-sec-c');
+  if(secA)secA.style.display=types.includes('wound')||types.includes('both')?'block':'none';
+  if(secB)secB.style.display=types.includes('stoma')?'block':'none';
+  if(secC)secC.style.display=types.includes('fistula')||types.includes('both')||types.length===0?'block':'none';
+};
+window.addFistulaProductRow=function(){
+  const tb=document.getElementById('fpr-products-tbody');if(!tb)return;
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td><input type="text" style="width:100%" placeholder="Product name"/></td><td><input type="text" style="width:60px" placeholder="Qty"/></td><td><input type="text" style="width:100%" placeholder="Brand/code"/></td><td><button type="button" onclick="this.closest(\'tr\').remove()" style="color:#dc2626;background:none;border:none;cursor:pointer;font-size:1.1em;">✕</button></td>';
+  tb.appendChild(tr);
+};
+
 function renderFistulaPatientPage(p,steps){
   const body=document.getElementById('fistula-patient-body');
   if(!body)return;
@@ -14243,64 +14309,226 @@ function renderFistulaPatientPage(p,steps){
 
   const historyHTML=steps.length?steps.map(s=>{
     const d=s.data||{};
-    return `<div class="fw-review-block" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:10px;">
-      <div style="font-weight:700;color:#1a2e4a;margin-bottom:6px;">${htmlSafe(d.recorded_date||String(s.created_at||'').slice(0,10)||'—')}</div>
-      <div class="pi-demo-grid">
-        ${d.site?`<div><div class="pi-demo-label">Site</div><div class="pi-demo-val">${htmlSafe(d.site)}</div></div>`:''}
-        ${d.type?`<div><div class="pi-demo-label">Type</div><div class="pi-demo-val">${htmlSafe(d.type)}</div></div>`:''}
-        ${d.output_volume?`<div><div class="pi-demo-label">Output volume</div><div class="pi-demo-val">${htmlSafe(d.output_volume)}</div></div>`:''}
-        ${d.output_type?`<div><div class="pi-demo-label">Output type</div><div class="pi-demo-val">${htmlSafe(d.output_type)}</div></div>`:''}
-        ${d.skin?`<div><div class="pi-demo-label">Peri-wound skin</div><div class="pi-demo-val">${htmlSafe(d.skin)}</div></div>`:''}
-        ${d.appliance?`<div><div class="pi-demo-label">Appliance</div><div class="pi-demo-val">${htmlSafe(d.appliance)}</div></div>`:''}
-        ${d.accessories?`<div><div class="pi-demo-label">Accessories</div><div class="pi-demo-val">${htmlSafe(d.accessories)}</div></div>`:''}
-        ${d.notes?`<div style="grid-column:1/-1;"><div class="pi-demo-label">Management notes</div><div class="pi-demo-val">${htmlSafe(d.notes)}</div></div>`:''}
-      </div>
-    </div>`;
-  }).join(''):`<div class="empty" style="color:#64748b;font-size:0.9em;">No previous reviews recorded.</div>`;
+    const aTypes=d.assessment_types||'';
+    const sections=[];
+    if(d.wound_etiology||d.wound_bed)sections.push('Wound: '+[d.wound_etiology,d.wound_bed,d.wound_size].filter(Boolean).join(', '));
+    if(d.stoma_type)sections.push('Stoma: '+[d.stoma_type,d.stoma_appearance].filter(Boolean).join(', '));
+    if(d.fistula_type||d.output_level)sections.push('Fistula: '+[d.fistula_type,d.output_level,d.fistula_volume?d.fistula_volume+'ml/24h':''].filter(Boolean).join(', '));
+    return '<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:10px;"><div style="font-weight:700;color:#1a2e4a;margin-bottom:4px;">'+htmlSafe(d.recorded_date||String(s.created_at||'').slice(0,10)||'—')+'</div><div style="font-size:0.82em;color:#7c3aed;margin-bottom:4px;">'+htmlSafe(aTypes+(d.nurse?' · '+d.nurse:''))+'</div>'+sections.map(sec=>'<div style="font-size:0.83em;color:#475569;">'+htmlSafe(sec)+'</div>').join('')+(d.notes?'<div style="font-size:0.83em;color:#64748b;margin-top:4px;">'+htmlSafe(d.notes)+'</div>':'')+'</div>';
+  }).join(''):'<div class="empty" style="color:#64748b;font-size:0.9em;">No previous reviews recorded.</div>';
+
+  const colors=['#dc2626','#f97316','#16a34a','#2563eb','#1a2e4a'];
+  const colorSwatches=colors.map((c,i)=>`<button type="button" class="fpr-color-swatch" data-color="${c}" onclick="fprSetColor('${c}')" style="width:24px;height:24px;border-radius:50%;background:${c};border:3px solid ${i===0?'#1a2e4a':'#fff'};cursor:pointer;flex-shrink:0;" title="${c}"></button>`).join('');
 
   body.innerHTML=`
     <div class="patient-interface-demographics stoma-sitting-demographics ${sexKind}" style="${demoStyle}">
       <div class="patient-avatar ${sexKind}" aria-label="${htmlSafe(sexKind)} patient silhouette"></div>
       <div>
-        <div class="pi-demo-head">
-          <div><div class="pi-demo-title">Patient Details</div><div class="pi-demo-sub">${htmlSafe(fullName)} · ${htmlSafe(p.id_card||'No ID')}</div></div>
-        </div>
+        <div class="pi-demo-head"><div><div class="pi-demo-title">Patient Details</div><div class="pi-demo-sub">${htmlSafe(fullName)} · ${htmlSafe(p.id_card||'No ID')}</div></div></div>
         <div class="pi-demo-grid">
           ${patientInterfaceDemographicItem('ID Number',htmlSafe(p.id_card||'—'))}
           ${patientInterfaceDemographicItem('Surname',htmlSafe(p.surname||'—'))}
           ${patientInterfaceDemographicItem('Name',htmlSafe(p.first_name||'—'))}
           ${patientInterfaceDemographicItem('Phone',htmlSafe(p.phone_number||'—'))}
           ${patientInterfaceDemographicItem('Locality',htmlSafe(p.locality||'—'))}
-          ${patientInterfaceDemographicItem('Presentation Date',patientDateText(p.surgery_date||p.last_outcome_date))}
-          ${patientInterfaceDemographicItem('Last Reviewed',patientDateText(p.last_outcome_date))}
           ${patientInterfaceDemographicItem('Admission Route',htmlSafe(p.admission_route||'Fistula / wound management'))}
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-top:16px;">
-      <div class="card-title">Add Wound / Fistula Review</div>
-      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div class="card-title" style="color:#7c3aed;">Wound, Stoma &amp; Fistula Care Documentation</div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Basic Information</div>
         <div class="cor-2col">
-          <div class="fg"><label>Review Date *</label><input type="date" id="fpr-date" value="${typeof TODAY!=='undefined'?TODAY:''}"/></div>
-          <div class="fg"><label>Nurse / Clinician</label><input type="text" id="fpr-nurse" placeholder="Attending nurse or clinician"/></div>
+          <div class="fg"><label>Date *</label><input type="date" id="fpr-date" value="${typeof TODAY!=='undefined'?TODAY:''}"/></div>
+          <div class="fg"><label>Nurse / Clinician</label><input type="text" id="fpr-nurse" placeholder="Name"/></div>
         </div>
         <div class="cor-2col">
-          <div class="fg"><label>Wound / Fistula Site</label><input type="text" id="fpr-site" placeholder="e.g. midline wound, RIF drain site"/></div>
-          <div class="fg"><label>Type</label><select id="fpr-type"><option value="">— Select —</option><option>Enterocutaneous fistula</option><option>Enteroatmospheric fistula</option><option>Dehisced / open wound</option><option>Drain site</option><option>Pressure ulcer</option><option>Other</option></select></div>
+          <div class="fg"><label>Patient Location / Ward</label><input type="text" id="fpr-location" placeholder="e.g. Ward 3B, OPD"/></div>
+          <div class="fg"><label>Known Allergies</label><input type="text" id="fpr-allergies" placeholder="e.g. NKDA, latex"/></div>
         </div>
-        <div class="cor-2col">
-          <div class="fg"><label>Output Volume</label><select id="fpr-output-volume"><option value="">— Select —</option><option>Nil</option><option>Low (&lt;200ml/24h)</option><option>Moderate (200–500ml/24h)</option><option>High (&gt;500ml/24h)</option></select></div>
-          <div class="fg"><label>Output Type</label><select id="fpr-output-type"><option value="">— Select —</option><option>Serous</option><option>Haemoserous</option><option>Enteric / faeculent</option><option>Bilious</option><option>Purulent</option><option>Other</option></select></div>
-        </div>
-        <div class="cor-2col">
-          <div class="fg"><label>Peri-wound Skin</label><select id="fpr-skin"><option value="">— Select —</option><option>Intact</option><option>Erythema</option><option>Excoriated</option><option>Macerated</option><option>Ulcerated</option></select></div>
-          <div class="fg"><label>Pouch / Appliance Used</label><input type="text" id="fpr-appliance" placeholder="e.g. wound manager, high-output pouch"/></div>
-        </div>
-        <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories" placeholder="e.g. adhesive remover, barrier wipes, paste, seals"/></div>
-        <div class="fg"><label>Patient Concerns</label><textarea id="fpr-concerns" rows="2" placeholder="Patient questions or concerns raised..."></textarea></div>
-        <div class="fg"><label>Management Notes / Plan</label><textarea id="fpr-notes" rows="3" placeholder="Pouching plan, skin protection, escalation, follow-up actions..."></textarea></div>
       </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Assessment Type <span style="font-weight:400;font-size:0.85em;color:#64748b;">(check all that apply)</span></div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" name="fpr-assess-type" value="wound" onchange="fprToggleSections()"> Wound</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" name="fpr-assess-type" value="stoma" onchange="fprToggleSections()"> Stoma</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" name="fpr-assess-type" value="fistula" onchange="fprToggleSections()" checked> Fistula</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" name="fpr-assess-type" value="both" onchange="fprToggleSections()"> Combined (Wound + Fistula)</label>
+        </div>
+      </div>
+
+      <div id="fpr-sec-a" class="elective-section-card" style="border:1px solid #ea580c;border-radius:10px;padding:14px;margin-bottom:14px;display:none;">
+        <div style="font-weight:700;color:#ea580c;margin-bottom:10px;">Section A — Wound Assessment</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Wound Etiology / Type</label><select id="fpr-wound-etiology"><option value="">— Select —</option><option>Surgical</option><option>Traumatic</option><option>Pressure ulcer</option><option>Diabetic ulcer</option><option>Venous ulcer</option><option>Arterial ulcer</option><option>Dehiscence</option><option>Other</option></select></div>
+          <div class="fg"><label>Wound Bed</label><select id="fpr-wound-bed"><option value="">— Select —</option><option>Granulating (red/pink)</option><option>Epithelializing</option><option>Sloughy (yellow)</option><option>Necrotic (black)</option><option>Mixed</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>% Slough Coverage</label><select id="fpr-slough-pct"><option value="">— Select —</option><option>0%</option><option>1–25%</option><option>26–50%</option><option>51–75%</option><option>76–100%</option></select></div>
+          <div class="fg"><label>Measurements (L×W×D cm)</label><input type="text" id="fpr-wound-size" placeholder="e.g. 4×3×1 cm"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Exudate Amount</label><select id="fpr-exudate-amount"><option value="">— Select —</option><option>None</option><option>Scant</option><option>Minimal</option><option>Moderate</option><option>Heavy</option></select></div>
+          <div class="fg"><label>Exudate Type</label><select id="fpr-exudate-type"><option value="">— Select —</option><option>Serous</option><option>Serosanguineous</option><option>Sanguineous</option><option>Purulent</option><option>Other</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Wound Edges</label><select id="fpr-wound-edges"><option value="">— Select —</option><option>Attached / well-defined</option><option>Rolled / epiboly</option><option>Undermining</option><option>Indurated</option><option>Macerated</option></select></div>
+          <div class="fg"><label>Peri-wound Skin</label><select id="fpr-peri-wound-skin"><option value="">— Select —</option><option>Intact</option><option>Erythema</option><option>Macerated</option><option>Excoriated</option><option>Callused</option><option>Indurated</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Pain (0–10)</label><input type="number" id="fpr-wound-pain" min="0" max="10" placeholder="0–10"/></div>
+          <div class="fg"><label>Odour</label><select id="fpr-odour"><option value="">— Select —</option><option>None</option><option>Mild</option><option>Moderate</option><option>Strong</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Tunneling / Undermining</label><input type="text" id="fpr-tunneling" placeholder="e.g. 2cm at 6 o'clock"/></div>
+          <div class="fg"><label>Signs of Infection</label><select id="fpr-infection"><option value="">— Select —</option><option>No signs</option><option>Increased exudate</option><option>Erythema / warmth</option><option>Purulent exudate</option><option>Systemic signs</option></select></div>
+        </div>
+      </div>
+
+      <div id="fpr-sec-b" class="elective-section-card" style="border:1px solid #0891b2;border-radius:10px;padding:14px;margin-bottom:14px;display:none;">
+        <div style="font-weight:700;color:#0891b2;margin-bottom:10px;">Section B — Stoma Assessment</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Stoma Type</label><select id="fpr-stoma-type"><option value="">— Select —</option><option>Colostomy</option><option>Ileostomy</option><option>Urostomy</option><option>Other</option></select></div>
+          <div class="fg"><label>Stoma Location</label><input type="text" id="fpr-stoma-location" placeholder="e.g. LIF, RIF"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Stoma Appearance</label><select id="fpr-stoma-appearance"><option value="">— Select —</option><option>Pink / moist (normal)</option><option>Pale</option><option>Dusky</option><option>Necrotic</option><option>Oedematous</option><option>Retracted</option><option>Prolapsed</option></select></div>
+          <div class="fg"><label>Stoma Size (mm)</label><input type="text" id="fpr-stoma-size" placeholder="e.g. 35×30 mm"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Peristomal Skin</label><select id="fpr-peristomal-skin"><option value="">— Select —</option><option>Intact</option><option>Erythema</option><option>Excoriation</option><option>Maceration</option><option>Ulceration</option><option>Pseudoverrucous lesion</option></select></div>
+          <div class="fg"><label>Output Amount</label><select id="fpr-stoma-output"><option value="">— Select —</option><option>None</option><option>Low</option><option>Normal</option><option>High</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Effluent Colour</label><input type="text" id="fpr-effluent-color" placeholder="e.g. brown, green"/></div>
+          <div class="fg"><label>Effluent Consistency</label><select id="fpr-effluent-consistency"><option value="">— Select —</option><option>Formed</option><option>Semi-formed</option><option>Loose</option><option>Liquid</option><option>Watery</option></select></div>
+        </div>
+      </div>
+
+      <div id="fpr-sec-c" class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Section C — Fistula Assessment</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Fistula Type</label><select id="fpr-fistula-type"><option value="">— Select —</option><option>Enterocutaneous</option><option>Enteroatmospheric</option><option>Enterovesical</option><option>Enterovaginal</option><option>Colocutaneous</option><option>Other</option></select></div>
+          <div class="fg"><label>Output Level</label><select id="fpr-output-level"><option value="">— Select —</option><option>Low (&lt;200ml/24h)</option><option>Moderate (200–500ml/24h)</option><option>High (&gt;500ml/24h)</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Volume (ml/24h)</label><input type="number" id="fpr-fistula-volume" placeholder="ml"/></div>
+          <div class="fg"><label>Output Type</label><select id="fpr-fistula-output-type"><option value="">— Select —</option><option>Serous</option><option>Haemoserous</option><option>Enteric / faeculent</option><option>Bilious</option><option>Purulent</option><option>Other</option></select></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Output Colour</label><input type="text" id="fpr-fistula-color" placeholder="e.g. green, brown"/></div>
+          <div class="fg"><label>Consistency</label><select id="fpr-fistula-consistency"><option value="">— Select —</option><option>Liquid</option><option>Semi-liquid</option><option>Thick</option><option>Solid</option></select></div>
+        </div>
+        <div class="fg"><label>Perifistular Skin Condition</label><select id="fpr-perifistular-skin"><option value="">— Select —</option><option>Intact</option><option>Erythema</option><option>Macerated</option><option>Excoriated</option><option>Ulcerated</option></select></div>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:6px;">Location / Body Diagram</div>
+        <p style="font-size:0.82em;color:#64748b;margin:0 0 8px;">Draw on the diagram to mark wound, stoma or fistula location.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+          <button type="button" class="fpr-tool-btn active" data-tool="pen" onclick="fprSetTool('pen')" style="padding:4px 10px;border-radius:6px;border:2px solid #7c3aed;background:#7c3aed;color:#fff;font-size:0.82em;cursor:pointer;">✏ Pen</button>
+          <button type="button" class="fpr-tool-btn" data-tool="eraser" onclick="fprSetTool('eraser')" style="padding:4px 10px;border-radius:6px;border:2px solid #94a3b8;background:#fff;color:#475569;font-size:0.82em;cursor:pointer;">⌫ Eraser</button>
+          <span style="color:#cbd5e1;">|</span>
+          ${colorSwatches}
+          <span style="color:#cbd5e1;">|</span>
+          <label style="font-size:0.82em;color:#475569;display:flex;align-items:center;gap:4px;">Size <input type="range" min="1" max="14" value="3" oninput="fprSetSize(this.value)" style="width:60px;vertical-align:middle;"/></label>
+          <button type="button" onclick="fprClearDiagram()" style="padding:4px 10px;border-radius:6px;border:1px solid #94a3b8;background:#fff;color:#dc2626;font-size:0.82em;cursor:pointer;">✕ Clear</button>
+        </div>
+        <canvas id="fpr-body-canvas" width="500" height="220" style="border:1px solid #e2e8f0;border-radius:8px;cursor:crosshair;touch-action:none;max-width:100%;display:block;background:#f8f9fa;"></canvas>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Care Plan / Interventions</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Area Cleansed With</label><input type="text" id="fpr-cleansed" placeholder="e.g. normal saline, wound cleanser"/></div>
+          <div class="fg"><label>Barrier / Skin Protection</label><input type="text" id="fpr-barrier" placeholder="e.g. Cavilon, zinc paste"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Dressing Applied</label><input type="text" id="fpr-dressing" placeholder="e.g. Aquacel Ag, foam dressing"/></div>
+          <div class="fg"><label>Appliance / Pouch</label><input type="text" id="fpr-appliance" placeholder="e.g. wound manager, high-output pouch"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>NPWT (Vacuum)</label><select id="fpr-npwt"><option value="">— N/A —</option><option>NPWT applied</option><option>NPWT adjusted</option><option>NPWT discontinued</option></select></div>
+          <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories" placeholder="e.g. paste, seals, adhesive remover"/></div>
+        </div>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Treatment / Products Used</div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
+          <thead><tr style="background:#f1f5f9;"><th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;">Product</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;">Qty</th><th style="text-align:left;padding:6px 8px;border-bottom:1px solid #e2e8f0;">Brand / Code</th><th style="padding:6px 4px;border-bottom:1px solid #e2e8f0;"></th></tr></thead>
+          <tbody id="fpr-products-tbody"><tr>
+            <td style="padding:4px 2px;"><input type="text" style="width:100%" placeholder="Product name"/></td>
+            <td style="padding:4px 2px;"><input type="text" style="width:60px" placeholder="Qty"/></td>
+            <td style="padding:4px 2px;"><input type="text" style="width:100%" placeholder="Brand/code"/></td>
+            <td style="padding:4px 2px;"><button type="button" onclick="this.closest('tr').remove()" style="color:#dc2626;background:none;border:none;cursor:pointer;font-size:1.1em;">✕</button></td>
+          </tr></tbody>
+        </table>
+        <button type="button" onclick="addFistulaProductRow()" style="margin-top:8px;padding:5px 14px;border:1px dashed #7c3aed;border-radius:6px;background:#faf5ff;color:#7c3aed;font-size:0.82em;cursor:pointer;">+ Add Row</button>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Patient Response / Outcome</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Procedure Tolerated</label><select id="fpr-tolerated"><option value="">— Select —</option><option>Well</option><option>Moderately</option><option>Poorly</option></select></div>
+          <div class="fg"><label>Pain After Procedure (0–10)</label><input type="number" id="fpr-pain-after" min="0" max="10" placeholder="0–10"/></div>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Understanding of Care</label><select id="fpr-understanding"><option value="">— Select —</option><option>Good</option><option>Fair</option><option>Poor</option><option>N/A</option></select></div>
+          <div class="fg"><label>Patient Participation</label><select id="fpr-participation"><option value="">— Select —</option><option>Independent</option><option>Assisted</option><option>Dependent</option><option>N/A</option></select></div>
+        </div>
+        <div class="fg"><label>Progress Toward Goals</label><select id="fpr-progress"><option value="">— Select —</option><option>Improving</option><option>Stable / unchanged</option><option>Deteriorating</option></select></div>
+        <div class="fg"><label>Outcome Comments</label><textarea id="fpr-outcome-comments" rows="2" placeholder="Additional observations or comments..."></textarea></div>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Plan / Follow-up</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Next Dressing / Review Date</label><input type="date" id="fpr-next-date"/></div>
+          <div class="fg"><label>Patient Concerns</label><textarea id="fpr-concerns" rows="2" placeholder="Concerns raised by patient..."></textarea></div>
+        </div>
+        <div class="fg" style="margin-top:8px;"><label style="display:block;margin-bottom:6px;">Referrals</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="fpr-ref-dietitian"> Dietitian</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="fpr-ref-surgeon"> Surgical review</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="fpr-ref-physio"> Physiotherapy</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="fpr-ref-social"> Social work</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="fpr-ref-other"> Other</label>
+          </div>
+        </div>
+        <div class="fg"><label>Goals / Plan</label><textarea id="fpr-goals" rows="2" placeholder="Short-term and long-term wound/fistula management goals..."></textarea></div>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Education Provided</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="wound_care"> Wound care</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="stoma_care"> Stoma care</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="pouch_change"> Pouch change</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="skin_protection"> Skin protection</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="diet"> Diet / nutrition</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="activity"> Activity / restrictions</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="fpr-edu" value="when_to_call"> When to call / escalate</label>
+        </div>
+        <div class="cor-2col">
+          <div class="fg"><label>Teaching Method</label><select id="fpr-teach-method"><option value="">— Select —</option><option>Verbal instruction</option><option>Written materials</option><option>Demonstration</option><option>Return demonstration</option><option>Video</option></select></div>
+          <div class="fg"><label>Patient Understanding</label><select id="fpr-teach-understanding"><option value="">— Select —</option><option>Verbalized understanding</option><option>Demonstrated understanding</option><option>Requires reinforcement</option><option>Unable to understand</option></select></div>
+        </div>
+      </div>
+
+      <div class="elective-section-card" style="border:1px solid #7c3aed;border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:10px;">Documentation</div>
+        <div class="cor-2col">
+          <div class="fg"><label>Nurse / Clinician (Signature)</label><input type="text" id="fpr-doc-nurse" placeholder="Full name"/></div>
+          <div class="fg"><label>Designation</label><input type="text" id="fpr-doc-designation" placeholder="e.g. RN, WCC, ET Nurse"/></div>
+        </div>
+        <div class="fg"><label>Additional Notes / Management Plan</label><textarea id="fpr-notes" rows="3" placeholder="Overall management plan, escalation, next steps..."></textarea></div>
+      </div>
+
       <div id="fpr-note" class="pi-confirm-note" style="margin-bottom:8px;"></div>
       <div style="display:flex;gap:10px;">
         <button class="btn-cancel" onclick="returnFromFistulaPatient()">Back</button>
@@ -14318,40 +14546,88 @@ function renderFistulaPatientPage(p,steps){
       const user=await getCurrentUserForAudit();
       const nurseEl=document.getElementById('fpr-nurse');
       if(nurseEl&&!nurseEl.value)nurseEl.value=user.name||user.email||'';
+      const docNurseEl=document.getElementById('fpr-doc-nurse');
+      if(docNurseEl&&!docNurseEl.value)docNurseEl.value=user.name||user.email||'';
     })();
   }catch(e){}
+  setTimeout(_fprInitCanvas,150);
 }
 
 window.saveFistulaReview=async function(patientId){
   const note=document.getElementById('fpr-note');
   const setNote=(msg,ok)=>{if(note){note.style.color=ok?'var(--green)':'var(--red)';note.textContent=msg;}};
   const v=id=>document.getElementById(id)?.value?.trim()||'';
+  const chk=id=>document.getElementById(id)?.checked||false;
   const date=v('fpr-date');
   if(!date){setNote('Please enter the Review Date.',false);return;}
-  const nurse=v('fpr-nurse');
-  const site=v('fpr-site');
-  const type=v('fpr-type');
-  const outputVolume=v('fpr-output-volume');
-  const outputType=v('fpr-output-type');
-  const skin=v('fpr-skin');
-  const appliance=v('fpr-appliance');
-  const accessories=v('fpr-accessories');
-  const concerns=v('fpr-concerns');
-  const notes=v('fpr-notes');
-  const summaryParts=[
-    '','--- Fistula / Wound Review ---',
-    `Date: ${date}`,
-    nurse?`Nurse: ${nurse}`:'',
-    site?`Site: ${site}`:'',
-    type?`Type: ${type}`:'',
-    outputVolume?`Output volume: ${outputVolume}`:'',
-    outputType?`Output type: ${outputType}`:'',
-    skin?`Peri-wound skin: ${skin}`:'',
-    appliance?`Appliance: ${appliance}`:'',
-    accessories?`Accessories: ${accessories}`:'',
-    concerns?`Patient concerns: ${concerns}`:'',
-    notes?`Management notes: ${notes}`:''
-  ].filter(x=>x!=='').join('\n');
+  const assessTypes=Array.from(document.querySelectorAll('input[name="fpr-assess-type"]:checked')).map(c=>c.value).join(', ');
+  const eduTopics=Array.from(document.querySelectorAll('.fpr-edu:checked')).map(c=>c.value).join(', ');
+  const products=Array.from(document.querySelectorAll('#fpr-products-tbody tr')).map(tr=>{
+    const inputs=tr.querySelectorAll('input');
+    return[inputs[0]?.value||'',inputs[1]?.value||'',inputs[2]?.value||''].filter(Boolean).join(' – ');
+  }).filter(Boolean);
+  const referrals=[chk('fpr-ref-dietitian')&&'Dietitian',chk('fpr-ref-surgeon')&&'Surgical review',chk('fpr-ref-physio')&&'Physiotherapy',chk('fpr-ref-social')&&'Social work',chk('fpr-ref-other')&&'Other'].filter(Boolean).join(', ');
+  const canvas=document.getElementById('fpr-body-canvas');
+  const diagramData=canvas?canvas.toDataURL('image/png'):'';
+  const reviewData={
+    recorded_date:date,
+    nurse:v('fpr-nurse'),
+    location:v('fpr-location'),
+    allergies:v('fpr-allergies'),
+    assessment_types:assessTypes,
+    wound_etiology:v('fpr-wound-etiology'),
+    wound_bed:v('fpr-wound-bed'),
+    slough_pct:v('fpr-slough-pct'),
+    wound_size:v('fpr-wound-size'),
+    exudate_amount:v('fpr-exudate-amount'),
+    exudate_type:v('fpr-exudate-type'),
+    wound_edges:v('fpr-wound-edges'),
+    peri_wound_skin:v('fpr-peri-wound-skin'),
+    wound_pain:v('fpr-wound-pain'),
+    odour:v('fpr-odour'),
+    tunneling:v('fpr-tunneling'),
+    infection:v('fpr-infection'),
+    stoma_type:v('fpr-stoma-type'),
+    stoma_location:v('fpr-stoma-location'),
+    stoma_appearance:v('fpr-stoma-appearance'),
+    stoma_size:v('fpr-stoma-size'),
+    peristomal_skin:v('fpr-peristomal-skin'),
+    stoma_output:v('fpr-stoma-output'),
+    effluent_color:v('fpr-effluent-color'),
+    effluent_consistency:v('fpr-effluent-consistency'),
+    fistula_type:v('fpr-fistula-type'),
+    output_level:v('fpr-output-level'),
+    fistula_volume:v('fpr-fistula-volume'),
+    fistula_output_type:v('fpr-fistula-output-type'),
+    fistula_color:v('fpr-fistula-color'),
+    fistula_consistency:v('fpr-fistula-consistency'),
+    perifistular_skin:v('fpr-perifistular-skin'),
+    cleansed:v('fpr-cleansed'),
+    barrier:v('fpr-barrier'),
+    dressing:v('fpr-dressing'),
+    appliance:v('fpr-appliance'),
+    npwt:v('fpr-npwt'),
+    accessories:v('fpr-accessories'),
+    products:products.join(' | '),
+    tolerated:v('fpr-tolerated'),
+    pain_after:v('fpr-pain-after'),
+    understanding:v('fpr-understanding'),
+    participation:v('fpr-participation'),
+    progress:v('fpr-progress'),
+    outcome_comments:v('fpr-outcome-comments'),
+    next_date:v('fpr-next-date'),
+    concerns:v('fpr-concerns'),
+    referrals,
+    goals:v('fpr-goals'),
+    edu_topics:eduTopics,
+    teach_method:v('fpr-teach-method'),
+    teach_understanding:v('fpr-teach-understanding'),
+    doc_nurse:v('fpr-doc-nurse'),
+    doc_designation:v('fpr-doc-designation'),
+    notes:v('fpr-notes'),
+    diagram:diagramData
+  };
+  const summaryParts=['--- Wound/Stoma/Fistula Review ---',`Date: ${date}`,reviewData.nurse?`Nurse: ${reviewData.nurse}`:'',assessTypes?`Assessment: ${assessTypes}`:'',reviewData.fistula_type?`Fistula type: ${reviewData.fistula_type}`:'',reviewData.output_level?`Output level: ${reviewData.output_level}`:'',reviewData.wound_etiology?`Wound: ${reviewData.wound_etiology}`:'',reviewData.stoma_type?`Stoma: ${reviewData.stoma_type}`:'',reviewData.notes?`Notes: ${reviewData.notes}`:''].filter(x=>x).join('\n');
   const p=fistulaPatientData;
   if(!p){setNote('Patient data missing. Please reopen the patient.',false);return;}
   const previous=String(p.findings||'').trim();
@@ -14359,7 +14635,6 @@ window.saveFistulaReview=async function(patientId){
   try{
     const {error:pErr}=await SB.from('patients').update(patientPayload).eq('id',patientId);
     if(pErr){setNote('Could not save review: '+(pErr.message||'Unknown error'),false);return;}
-    const reviewData={recorded_date:date,nurse,site,type,output_volume:outputVolume,output_type:outputType,skin,appliance,accessories,concerns,notes};
     try{
       const {data:ep}=await SB.from('episodes').select('id').eq('patient_id',patientId).eq('status','open').maybeSingle();
       if(ep?.id){
