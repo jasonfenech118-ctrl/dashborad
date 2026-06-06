@@ -5569,7 +5569,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div id="patient-route-title" class="pathway-title pathway-title-neutral">
         <span class="pathway-title-icon">?</span>
         <span class="pathway-title-text"><span class="pathway-title-label">Select pathway</span></span>
-        <button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="returnToAdmissionRouteMenu()">← Return</button>
+        <button type="button" class="pathway-title-return" onclick="returnToAdmissionRouteMenu()">← Return</button>
       </div>
       <div id="admission-patient-stepper"></div>
       
@@ -5660,7 +5660,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 
     <div class="page" id="page-admission-emergency">
       <div class="phdr"><div><h2>Stoma and Care</h2></div><button class="btn-add btn-return" onclick="continueAddPatientFromRoute('Emergency surgery')">← Back</button></div>
-      <div class="pathway-title pathway-title-emergency"><span class="pathway-title-icon">!</span><span class="pathway-title-text"><span class="pathway-title-label">Emergency surgery</span><span class="pathway-title-sub">Urgent or unplanned pathway — complete surgery and stoma care details.</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Emergency surgery')">← Return</button></div>
+      <div class="pathway-title pathway-title-emergency"><span class="pathway-title-icon">!</span><span class="pathway-title-text"><span class="pathway-title-label">Emergency surgery</span><span class="pathway-title-sub">Urgent or unplanned pathway — complete surgery and stoma care details.</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Emergency surgery')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Emergency surgery" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -5699,7 +5699,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-fistula">
-      <div class="pathway-title pathway-title-fistula"><span class="pathway-title-icon">W</span><span class="pathway-title-text"><span class="pathway-title-label">Fistula/wound management</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Fistula/wound management – bagging advice')">← Return</button></div>
+      <div class="pathway-title pathway-title-fistula"><span class="pathway-title-icon">W</span><span class="pathway-title-text"><span class="pathway-title-label">Fistula/wound management</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Fistula/wound management – bagging advice')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Fistula / wound management" data-step="clinical"></div>
       
       <div class="route-page-card">
@@ -5734,7 +5734,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-outside-mdh">
-      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span><span class="pathway-title-sub">Ostomy formed at another hospital — record the existing stoma and take over follow-up care.</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
+      <div class="pathway-title pathway-title-outside"><span class="pathway-title-icon">O</span><span class="pathway-title-text"><span class="pathway-title-label">Outside MDH</span><span class="pathway-title-sub">Ostomy formed at another hospital — record the existing stoma and take over follow-up care.</span></span><button type="button" class="pathway-title-return" onclick="continueAddPatientFromRoute('Outside MDH – ostomy formed elsewhere')">← Return</button></div>
       <div class="pathway-static-stepper" data-route="Outside MDH" data-step="clinical"></div>
 
       <div class="route-page-card">
@@ -7315,7 +7315,7 @@ function refreshNewPatientRouteUI(){
   const title=document.getElementById('patient-route-title');
   if(title){
     title.className='pathway-title '+meta.cls;
-    title.innerHTML=`<span class="pathway-title-icon">${meta.icon}</span><span class="pathway-title-text"><span class="pathway-title-label">${meta.label}</span><span class="pathway-title-sub">${meta.sub}</span></span><button type="button" class="pathway-title-return" style="background:#f0ad4e;color:#333;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;order:-1;" onclick="returnToAdmissionRouteMenu()">← Return</button>`;
+    title.innerHTML=`<span class="pathway-title-icon">${meta.icon}</span><span class="pathway-title-text"><span class="pathway-title-label">${meta.label}</span><span class="pathway-title-sub">${meta.sub}</span></span><button type="button" class="pathway-title-return" onclick="returnToAdmissionRouteMenu()">← Return</button>`;
   }
   const electiveWrap=document.getElementById('np-elective-sitting-date-wrap');
   if(electiveWrap)electiveWrap.style.display=route==='Elective surgery'?'block':'none';
