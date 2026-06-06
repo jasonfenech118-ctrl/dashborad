@@ -5773,7 +5773,13 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <!-- PATIENTS REGISTER -->
     <div class="page" id="page-patients-list">
       <div class="phdr">
-        <div><h2 id="patients-list-title">Patients</h2><p id="patients-list-subtitle">View patient groups from the registry.</p></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div><h2 id="patients-list-title">Patients</h2><p id="patients-list-subtitle">View patient groups from the registry.</p></div>
+          <div id="patients-list-title-count" style="display:none;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);border-radius:12px;padding:6px 16px;text-align:center;min-width:54px;">
+            <div style="font-size:22px;font-weight:900;color:#fff;line-height:1;" id="patients-list-title-count-val">0</div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.5px;text-transform:uppercase;" id="patients-list-title-count-lbl">Total</div>
+          </div>
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn-add btn-return" onclick="returnToPatientsOverview()">← Return</button>
           <button class="btn-add" onclick="loadPatientsList()">Refresh</button>
@@ -10558,16 +10564,26 @@ function renderPatientsList(){
   const selectedGroupCount=activeOwnerFilter
     ? activeSelectedCount
     : (cfg.status==='all'?statsBase.length:statsBase.filter(p=>patientMatchesRegisterStatus(p,cfg.status)).length);
+  const titleCount=document.getElementById('patients-list-title-count');
+  const titleCountVal=document.getElementById('patients-list-title-count-val');
+  const titleCountLbl=document.getElementById('patients-list-title-count-lbl');
   if(stats){
     if(activeOwnerFilter){
+      if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
         <div class="sbox"><div class="sl">Active</div><div class="sv">${activeSelectedCount}</div><div class="ss">${htmlSafe(activeOwnerFilter+' active patients')}</div></div>`;
-    }else if(['patients-reversed','patients-deceased','patients-relocated-overseas','patients-relocated-gozo'].includes(currentPatientsTab)){
+    }else if(currentPatientsTab==='patients-relocated-gozo'){
+      stats.innerHTML='';
+      if(titleCount&&titleCountVal&&titleCountLbl){titleCountVal.textContent=selectedGroupCount;titleCountLbl.textContent='Total';titleCount.style.display='';}
+    }else if(['patients-reversed','patients-deceased','patients-relocated-overseas'].includes(currentPatientsTab)){
+      if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
         <div class="sbox"><div class="sl">Total</div><div class="sv">${selectedGroupCount}</div><div class="ss">${htmlSafe(cfg.title)}</div></div>`;
     }else if(currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'){
+      if(titleCount)titleCount.style.display='none';
       stats.innerHTML='';
     }else{
+      if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
         <div class="sbox"><div class="sl">Selected Group</div><div class="sv" style="font-size:22px;">${selectedGroupCount}</div><div class="ss">${htmlSafe(cfg.title)}</div></div>
         <div class="sbox"><div class="sl">Active</div><div class="sv">${countStatus('active')}</div><div class="ss">current patients</div></div>
