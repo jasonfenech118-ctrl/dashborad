@@ -5687,8 +5687,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <div class="page" id="page-admission-emergency-daily-review">
       <div class="phdr"><div><h2>Post-Operative Review</h2></div><button class="btn-add btn-return" onclick="returnFromPostOperativeDailyReview()">← Return</button></div>
       <div class="route-page-card">
-        <h3>Post-Operative Review</h3>
-        
+
         <div class="stoma-review-toolbar">
           <div class="fg"><label>Review Date *</label><input type="date" id="edr-review-date" onchange="renderEmergencyStomaDailyReview()"/><div class="choice-hint">Day 1 starts the day after surgery.</div></div>
           <div class="fg"><label>Automated Signature</label><input type="text" id="edr-signature" readonly placeholder="Logged-in nurse"/></div>
@@ -5696,7 +5695,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <input type="hidden" id="np-stoma-daily-review-json" value=""/>
         <div id="emergency-daily-review-list" class="stoma-review-grid"></div>
-        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
+        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button></div><div id="postop-review-note" class="postop-action-note"></div>
       </div>
     </div>
 
@@ -7758,6 +7757,7 @@ function renderEmergencyStomaDailyReview(){
     else if(i<activeIndex){status='missed';statusText='Missed';reason='Missed before the first recorded post-operative stoma review.';}
     else if(i===activeIndex){status='active';statusText='Complete today';reason='';}
     else {status='pending';statusText='Pending';reason='Future review day.';}
+    if(status==='pending'){continue;}
     const form=status==='active'?`
       <div class="stoma-review-fields">
         <div class="fg"><label>Stoma colour *</label><select id="edr-colour" onchange="syncEmergencyStomaDailyReviewData()">${optionHTML(colourOptions,saved.stoma_colour)}</select></div>
@@ -7766,7 +7766,6 @@ function renderEmergencyStomaDailyReview(){
         <div class="fg"><label>Time of review *</label><input type="time" id="edr-time" value="${htmlSafe(saved.time_of_review||activeTime)}" onchange="syncEmergencyStomaDailyReviewData()"/></div>
         <div class="fg full"><label>Appliance Used</label><input type="text" id="edr-appliance" value="${htmlSafe(saved.appliance||'')}" placeholder="Type and size" oninput="syncEmergencyStomaDailyReviewData()"/></div>
         <div class="fg full"><label>Accessories</label><input type="text" id="edr-accessories" value="${htmlSafe(saved.accessories||'')}" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert" oninput="syncEmergencyStomaDailyReviewData()"/></div>
-        <div class="fg full stoma-colour-extra-wrap"><label>Additional stoma colour observations</label><div class="choice-group stoma-colour-extra-row">${checkboxHTML('edr-colour-extra',colourExtraOptions,savedColourExtra)}</div></div>
         <div class="fg full"><label>Comments</label><textarea id="edr-comments" placeholder="Brief comments" oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.comments||'')}</textarea></div>
         <div class="fg full postop-report-extra"><label>Additional encounter report</label><textarea id="edr-encounter-notes" placeholder="Write any additional clinical observations, care given, patient concerns, appliance issues, plan, escalation, or anything relevant to this encounter." oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.encounter_notes||'')}</textarea></div>
         <div class="fg full"><label>Automated signature</label><input type="text" value="${htmlSafe(document.getElementById('edr-signature')?.value||saved.signature||'Logged-in nurse')}" readonly/></div>
@@ -20237,7 +20236,7 @@ table thead th.v63-name-title,
     if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post-Operative Review';
     const actions=document.getElementById('postop-review-actions');
     if(actions){
-      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button>';
     }
     const note=document.getElementById('postop-review-note');
     if(note){
@@ -20842,7 +20841,7 @@ table thead th.v63-name-title,
   }
   function updateActions(){
     const a=q('#postop-review-actions');
-    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button>';
     const n=q('#postop-review-note'); if(n)n.innerHTML=editSource?'Editing <b>'+safe(editSource.code)+'</b>. Changes are shown in red and save as a new encounter version.':'Complete Daily Review. Saving returns to Home.';
   }
   function markRed(){
