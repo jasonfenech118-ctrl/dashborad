@@ -10561,6 +10561,7 @@ function renderPatientsList(){
   const isDeceased=currentPatientsTab==='patients-deceased'||cfg.status==='deceased';
   const isReversed=currentPatientsTab==='patients-reversed'||cfg.status==='reversed';
   const isInpatients=currentPatientsTab==='patients-inpatients'||cfg.status==='inpatient';
+  const isPostOpDischarge=currentPatientsTab==='patients-post-op-discharge'||cfg.status==='post_op_discharge';
   const isRelocatedGozo=currentPatientsTab==='patients-relocated-gozo'||cfg.status==='relocated_gozo';
   const isRelocatedOverseas=currentPatientsTab==='patients-relocated-overseas'||currentPatientsTab==='patients-relocated-gozo'||cfg.status==='relocated_overseas'||cfg.status==='relocated_gozo';
   const isFistulaWounds=currentPatientsTab==='patients-fistula-wounds'||cfg.status==='fistula_wounds';
@@ -10670,17 +10671,19 @@ function renderPatientsList(){
         ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Owner</th><th>Consultant</th><th>Reversal Date</th><th>Last Seen</th><th>Stoma Type Summary</th><th>Locality</th><th>Status</th></tr>'
         : (isInpatients
           ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Inpatient Type</th><th>Planned Surgery Date</th><th>Surgery Date</th><th>Admission Route</th><th>Owner</th><th>Last Outcome</th></tr>'
+          : (isPostOpDischarge
+          ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Surgery Date</th><th>Inpatient Type</th><th>Owner</th><th>Consultant</th><th>Operation Performed</th><th>Stoma Type Summary</th></tr>'
           : (isFistulaWounds
           ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Presentation Date</th><th>Last Reviewed</th><th>Locality</th></tr>'
           : (isRelocatedOverseas
           ? (isRelocatedGozo
             ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Status</th><th>Last Seen</th><th>Date of Discharge</th><th>Surgery Date</th><th>Consultant</th><th>Surgery Type</th><th>Stoma Type Summary</th></tr>'
             : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Status</th><th>Last Seen</th><th>Date of Discharge</th><th>Stoma Type Summary</th></tr>')
-          : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Last Outcome</th><th>Next Follow-up</th><th>Locality</th></tr>'))));
+          : '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Last Outcome</th><th>Next Follow-up</th><th>Locality</th></tr>')))));
   }
   if(!tbody)return;
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="${isAll?30:(isDeceased?12:(isReversed?12:(isInpatients?11:(isFistulaWounds?9:(isRelocatedOverseas?(isRelocatedGozo?12:9):12)))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="${isAll?30:(isDeceased?12:(isReversed?12:(isInpatients?11:(isPostOpDischarge?11:(isFistulaWounds?9:(isRelocatedOverseas?(isRelocatedGozo?12:9):12))))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
     return;
   }
   tbody.innerHTML=rows.map(p=>{
@@ -10767,6 +10770,21 @@ function renderPatientsList(){
         <td>${htmlSafe(p.admission_route||'—')}</td>
         <td>${htmlSafe(p.followup_owner||'Common')}</td>
         <td>${htmlSafe(latest)}</td>
+      </tr>`;
+    }
+    if(isPostOpDischarge){
+      return `<tr>
+        <td><strong>${htmlSafe(p.id_card||'—')}</strong></td>
+        <td><strong>${htmlSafe(p.surname||'—')}</strong></td>
+        <td><strong>${htmlSafe(p.first_name||'—')}</strong></td>
+        <td>${patientRegisterEditAction(p)}</td>
+        <td>${patientSexChip(p.sex)}</td>
+        <td><strong>${patientDateText(p.surgery_date)}</strong></td>
+        <td>${inpatientCategoryChip(p)}</td>
+        <td>${htmlSafe(p.followup_owner||'Common')}</td>
+        <td>${htmlSafe(p.consultant||'—')}</td>
+        <td>${patientOperationText(p)}</td>
+        <td>${patientStomaTypeText(p.stoma_type_summary)}</td>
       </tr>`;
     }
     if(isFistulaWounds){
