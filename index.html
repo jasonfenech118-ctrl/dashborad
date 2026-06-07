@@ -8020,7 +8020,7 @@ function confirmAdmissionReviewSave(){
 }
 function switchTab(name,el){
   if(!name)name='roster';
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='';});
   const requestedName=String(name);
   const reportGroupPage=REPORT_PATIENT_GROUP_TABS.includes(requestedName)?'report-patient-group':requestedName;
   const pageName=requestedName.startsWith('patients-')?'patients-list':reportGroupPage;
