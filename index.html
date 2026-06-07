@@ -10436,7 +10436,7 @@ function patientRegisterActions(p,includeRebook=true){
   return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
 }
 function patientRegisterEditAction(p){
-  return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}${patientDeleteButton(p.id)}</div>`;
+  return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
 }
 function patientDeleteButton(id){
   return `<button class="ncb-btn" style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;border:1px solid #fca5a5;padding:3px 9px;white-space:nowrap;" onclick="event.stopPropagation();deletePatientRecord('${id}')">Delete</button>`;
@@ -10667,7 +10667,7 @@ function renderPatientsList(){
   }
   if(thead){
     thead.innerHTML=isAll
-      ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>DOB</th><th>Current Age</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Follow-up Year</th><th>Last Outcome / Seen</th><th>Next Follow-up</th><th>Locality</th><th>Inpatient Type</th><th>Planned Surgery Date</th><th>Surgery Date</th><th>Age at Stoma Formation</th><th>Days with Stoma</th><th>Stoma Type Summary</th><th>Admission Route</th><th>Operation Performed</th><th>Consultant</th><th>Surgery Type</th><th>Reversal Date</th><th>Age at Reversal</th><th>Date of RIP</th><th>Age at Death</th><th>Date of Discharge</th></tr>'
+      ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>DOB</th><th>Current Age</th><th>Phone</th><th>Status</th><th>Owner</th><th>Due Month</th><th>Follow-up Year</th><th>Last Outcome / Seen</th><th>Next Follow-up</th><th>Locality</th><th>Inpatient Type</th><th>Planned Surgery Date</th><th>Surgery Date</th><th>Age at Stoma Formation</th><th>Days with Stoma</th><th>Stoma Type Summary</th><th>Admission Route</th><th>Operation Performed</th><th>Consultant</th><th>Surgery Type</th><th>Reversal Date</th><th>Age at Reversal</th><th>Date of RIP</th><th>Age at Death</th><th>Date of Discharge</th><th>Delete</th></tr>'
       : isDeceased
       ? '<tr><th>ID Number</th><th>Surname</th><th>Name</th><th>Actions</th><th>Sex</th><th>DOB</th><th>Date of RIP</th><th>Age at Death</th><th>Surgery Date</th><th>Stoma Days</th><th>Stoma Type Summary</th><th>Locality</th></tr>'
       : (isReversed
@@ -10686,7 +10686,7 @@ function renderPatientsList(){
   }
   if(!tbody)return;
   if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="${isAll?30:(isDeceased?12:(isReversed?12:(isInpatients?11:(isPostOpDischarge?11:(isFistulaWounds?9:(isRelocatedOverseas?(isRelocatedGozo?12:9):12))))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="${isAll?31:(isDeceased?12:(isReversed?12:(isInpatients?11:(isPostOpDischarge?11:(isFistulaWounds?9:(isRelocatedOverseas?(isRelocatedGozo?12:9):12))))))}" class="empty">No ${htmlSafe(activeOwnerFilter?activeOwnerFilter+' patients':cfg.title.toLowerCase())} found${search?' for this search':''}.</td></tr>`;
     return;
   }
   tbody.innerHTML=rows.map(p=>{
@@ -10724,6 +10724,7 @@ function renderPatientsList(){
         <td>${patientDateText(p.rip_date)}</td>
         <td>${htmlSafe(patientAgeAtDeath(p))}</td>
         <td>${patientDateText(p.discharged_date)}</td>
+        <td onclick="event.stopPropagation();">${patientDeleteButton(p.id)}</td>
       </tr>`;
     }
     if(isDeceased){
@@ -16485,8 +16486,8 @@ try{
 
   const __v59PreviousPatientRegisterEditAction=(typeof patientRegisterEditAction==='function')?patientRegisterEditAction:null;
   patientRegisterEditAction=function(p){
-    if(v59IsClosedPatient(p))return '<div class="followup-actions" onclick="event.stopPropagation();"><span class="registry-readonly-note">Read-only</span>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
-    return __v59PreviousPatientRegisterEditAction?__v59PreviousPatientRegisterEditAction(p):`<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}${typeof patientDeleteButton==='function'?patientDeleteButton(p.id):''}</div>`;
+    if(v59IsClosedPatient(p))return '<div class="followup-actions" onclick="event.stopPropagation();"><span class="registry-readonly-note">Read-only</span></div>';
+    return __v59PreviousPatientRegisterEditAction?__v59PreviousPatientRegisterEditAction(p):`<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
   };
   window.patientRegisterEditAction=patientRegisterEditAction;
 
@@ -20978,15 +20979,15 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#1d4ed8;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient Centre</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#1d4ed8;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient Centre</button></div>';
         }
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
       if(typeof inpatientCategory==='function'&&inpatientCategory(p)==='inpatient'){
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button></div>';
       }
     }catch(e){}
-    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
+    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button></div>';
   };
   window.patientRegisterEditAction=patientRegisterEditAction;
   try{renderPatientsList&&renderPatientsList();}catch(e){}
