@@ -198,7 +198,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-tile-label{font-size:13px;font-weight:900;color:var(--navy);line-height:1.15;}
 .nav-tile-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.15;}
 .nav-tile-arrow{color:var(--muted);font-size:16px;font-weight:900;}
-#page-patient-center .nav-tile{flex-direction:column;align-items:center;justify-content:center;min-height:90px;padding:14px 10px 12px;border-radius:14px;gap:9px;text-align:center;}
+#page-patient-center .nav-tile{flex-direction:column;align-items:center;justify-content:center;min-height:60px;height:100%;padding:14px 10px 12px;border-radius:14px;gap:9px;text-align:center;}
 #page-patient-center .nav-tile:before{display:none;}
 #page-patient-center .nav-tile-icon{width:44px;height:44px;border-radius:50%;font-size:20px;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18);}
 #page-patient-center .nav-tile-text{flex:0 0 auto;width:100%;text-align:center;}
@@ -206,6 +206,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 #page-patient-center .nav-tile-sub{display:none;}
 #page-patient-center .nav-tile-arrow{display:none;}
 #page-patient-center .centre-section-heading{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#475569;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--teal);}
+#page-patient-center.active{display:flex!important;flex-direction:column;}
 .tab[data-tab="home"],.tab[data-tab="home"].active{background:#fde910!important;color:#1a2e4a!important;font-weight:900!important;border-bottom-color:#d4a000!important;border-radius:8px!important;padding:0 20px!important;font-size:14px!important;box-shadow:0 2px 8px rgba(253,233,16,.45)!important;letter-spacing:.01em!important;}
 .tab[data-tab="home"] .tab-pic,.tab[data-tab="home"].active .tab-pic{background:#1a2e4a!important;color:#fde910!important;border-color:#1a2e4a!important;width:26px!important;height:26px!important;font-size:14px!important;}
 .tab[data-tab="home"]:hover{background:#f5e000!important;box-shadow:0 4px 12px rgba(253,233,16,.6)!important;transform:translateY(-1px);}
@@ -5893,12 +5894,12 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div class="phdr">
         <div><h2>Patient Centre</h2></div>
       </div>
-      <div style="padding:8px 0;display:flex;flex-direction:column;gap:14px;max-width:840px;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:14px;padding:0 0 8px;">
 
         <!-- Active Pathways -->
-        <div>
+        <div style="flex:1;display:flex;flex-direction:column;">
           <div class="centre-section-heading">Active Pathways</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch;">
             <button type="button" class="nav-tile" onclick="switchTab('admission-route-menu',document.querySelector('[data-tab=\'admission-route-menu\']'))">
               <div class="nav-tile-icon" style="background:#0d7377;">＋</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div></div>
@@ -5915,9 +5916,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
 
         <!-- Post-Operative & Transferred -->
-        <div>
+        <div style="flex:1;display:flex;flex-direction:column;">
           <div class="centre-section-heading">Post-Operative &amp; Transferred</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-post-op-discharge',null)">
               <div class="nav-tile-icon" style="background:#0ea5e9;">⬆</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Post-Op Discharge</div></div>
@@ -5934,9 +5935,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
 
         <!-- Registry -->
-        <div>
+        <div style="flex:1;display:flex;flex-direction:column;">
           <div class="centre-section-heading">Registry</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-overseas',null)">
               <div class="nav-tile-icon" style="background:#7e22ce;">✈</div>
               <div class="nav-tile-text"><div class="nav-tile-label">Relocated Overseas</div></div>
