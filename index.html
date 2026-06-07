@@ -16946,7 +16946,8 @@ try{
     'patients-reversed':{status:'reversed',cls:'registry-reversed',symbol:'↺',title:'Reversed Patients',note:'Patients with reversal status or reversal date.'},
     'patients-deceased':{status:'deceased',cls:'registry-deceased',symbol:'✝',title:'Deceased Patients',note:'R.I.P register · locked history records · follow-up appointments auto-cancelled.'},
     'patients-relocated-overseas':{status:'relocated_overseas',cls:'registry-relocated-overseas',symbol:'⇢',title:'Relocated Overseas Patients',note:'Patients marked as relocated overseas.'},
-    'patients-relocated-gozo':{status:'relocated_gozo',cls:'registry-relocated-gozo',symbol:'⌾',title:'Relocated to Gozo Patients',note:'Patients marked as relocated or discharged to Gozo.'}
+    'patients-relocated-gozo':{status:'relocated_gozo',cls:'registry-relocated-gozo',symbol:'⌾',title:'Relocated to Gozo Patients',note:'Patients marked as relocated or discharged to Gozo.'},
+    'patients-post-op-discharge':{status:'post_op_discharge',cls:'registry-inpatient',symbol:'⊕',title:'Post-Op Discharge',note:'Post-operative inpatients with a surgery date — ready for or undergoing discharge planning.'}
   };
   function safe(v){return (typeof htmlSafe==='function')?htmlSafe(v):String(v??'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function statusFromPatient(p){
