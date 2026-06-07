@@ -21187,7 +21187,7 @@ table thead th.v63-name-title,
         <div id="fpr-note" style="padding:10px;border-radius:6px;margin:12px 0;font-size:13px;display:none;"></div>
         <div class="elective-actions">
           <button class="btn-cancel" onclick="backToInpatients()">Cancel</button>
-          <button class="btn-save" onclick="saveFirstPostOpReview('${esc(patientId)}','${esc(episodeId)}')">Save and Close</button>
+          <button class="btn-save" onclick="saveFirstPostOpReview('${esc(patientId)}','${esc(episodeId)}')">Save and Open Daily Review</button>
         </div>
       </div>`;
       showElectivePage(page);
@@ -21270,7 +21270,13 @@ table thead th.v63-name-title,
         (async()=>{try{await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5);}catch(_){}})()
       ]);
       showNote('Saved successfully.', true);
-      setTimeout(()=>{try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e){}try{if(typeof loadHomeDashboard==='function')loadHomeDashboard();}catch(e){}},700);
+      setTimeout(()=>{
+        const d=new Date().toISOString().slice(0,10);
+        try{if(typeof openPatientDailyReviewFromPatientsReview==='function'){openPatientDailyReviewFromPatientsReview(patientId,d);return;}}catch(_){}
+        try{if(typeof openPostOperativeDailyReviewFromPatient==='function'){openPostOperativeDailyReviewFromPatient(patientId);return;}}catch(_){}
+        try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e){}
+        try{if(typeof loadHomeDashboard==='function')loadHomeDashboard();}catch(e){}
+      },700);
     }catch(e){showNote('Error saving: '+(e?.message||e),false);}
   };
 
