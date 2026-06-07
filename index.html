@@ -17969,6 +17969,27 @@ table thead th.v63-name-title,
 .diary-section-icon.calls{background:#7c3aed;color:#fff;}
 .diary-section-icon.other{background:#334155;color:#fff;}
 @media(max-width:700px){.diary-two-col{grid-template-columns:1fr;}}
+/* ── Post-Op Assessment Review (read-only print preview) ── */
+.por-shell{background:#f8fafc;padding-bottom:24px;}
+.por-header{background:#0f172a;color:#fff;border-radius:10px;padding:20px 22px;margin-bottom:14px;text-align:center;}
+.por-clinic-name{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.65;margin-bottom:4px;}
+.por-doc-title{font-size:20px;font-weight:900;letter-spacing:-.3px;}
+.por-doc-sub{font-size:11px;opacity:.55;margin-top:5px;}
+.por-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;margin-bottom:12px;}
+.por-section-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.9px;color:#0d7377;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}
+.por-fields-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;}
+.por-field{display:flex;flex-direction:column;gap:2px;}
+.por-field-full{grid-column:1/-1;}
+.por-label{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.4px;}
+.por-value{font-size:13px;color:#0f172a;font-weight:600;}
+.por-value-block{white-space:pre-wrap;font-weight:400;font-size:13px;line-height:1.5;color:#1e293b;}
+.por-stoma-card{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+.por-stoma-head{font-size:13px;font-weight:900;color:#0f172a;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.por-stoma-id{background:#0d7377;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.por-empty{color:#94a3b8;font-size:13px;text-align:center;padding:16px;}
+.por-footer{font-size:11px;color:#94a3b8;text-align:center;margin-top:8px;padding-bottom:4px;}
+@media(max-width:600px){.por-fields-grid{grid-template-columns:1fr;}}
+@media print{.no-print{display:none!important;}.por-shell{background:#fff!important;}.por-section{break-inside:avoid;border:1px solid #ccc!important;}.por-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 .diary-count{font-size:10px;font-weight:1000;color:#475569;background:white;border:1px solid #cbd5e1;border-radius:999px;padding:2px 7px;white-space:nowrap;}
 .diary-list{display:grid;gap:7px;padding:10px;}
 .diary-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;background:#fff;border:1.5px solid #dbe3ec;border-radius:12px;padding:10px 11px;}
@@ -20702,7 +20723,7 @@ table thead th.v63-name-title,
       const seenTodayRows=seenTodayPts.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
         const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Seen: '+esc(dText(p.last_outcome_date));
-        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">Open Post-Op Centre</button></div>':'';
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn v87-input-btn" style="background:#047857;color:#fff;" onclick="openPostOpAssessmentReview(\''+esc(p.id)+'\')">Open Review</button></div>':'';
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+' <span class="v88-urg-badge v88-urg-green">Seen</span></div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
       });
 
@@ -21325,6 +21346,102 @@ table thead th.v63-name-title,
       }
       window.openFirstPostOpReviewPage(patientId,ep.id);
     }catch(e){alert('Could not open: '+(e?.message||e));}
+  };
+
+  /* ============================================================
+     POST-OP ASSESSMENT REVIEW (read-only print preview)
+  ============================================================ */
+  window.openPostOpAssessmentReview=async function(patientId){
+    const page=ensurePage('page-postop-assessment-review');
+    page.innerHTML='<div class="elective-page-shell por-shell"><div class="home-loading">Loading assessment…</div></div>';
+    showElectivePage(page);
+    try{
+      const[r1,r2]=await Promise.all([
+        SB.from('patients').select('*').eq('id',patientId).maybeSingle(),
+        SB.from('episodes').select('id').eq('patient_id',patientId).order('created_at',{ascending:false}).limit(1).maybeSingle()
+      ]);
+      const patient=r1.data||{};
+      const fullName=((patient.first_name||'')+' '+(patient.surname||'')).trim()||'Patient';
+      const idCard=patient.id_card||'—';
+      let stepData={};
+      if(r2.data?.id){
+        const{data:step}=await SB.from('episode_steps').select('data').eq('episode_id',r2.data.id).eq('step_no',4).maybeSingle();
+        stepData=step?.data||{};
+      }
+      const operation=stepData.operation||patient.operation_performed||'Not recorded';
+      const surgeon=stepData.surgeon||'—';
+      const consultant=stepData.consultant||patient.consultant||'—';
+      const surgDate=stepData.surgery_date||patient.surgery_date||'—';
+      const findings=stepData.findings||patient.findings||'';
+      const complications=stepData.complications||'';
+      const stomas=stepData.stomas||[];
+      const recordedDate=stepData.recorded_date||patient.last_outcome_date||'';
+
+      function field(label,value){
+        return `<div class="por-field"><span class="por-label">${esc(label)}</span><span class="por-value">${esc(value||'—')}</span></div>`;
+      }
+      function stomaCard(s,i){
+        const rows=[
+          field('Type',s.stoma_type),field('Site',s.stoma_site),
+          field('Formed On',s.stoma_formed_on),field('Colour',s.stoma_colour),
+          field('Peristomal Skin',s.peristomal_skin),field('Output',s.stoma_output),
+          field('Appliance',s.appliance),field('Accessories',s.accessories),
+          s.rod_in_situ?field('Rod in Situ',s.rod_in_situ):'',
+          s.rod_removal_date?field('Rod Removal Date',s.rod_removal_date):''
+        ].filter(Boolean).join('');
+        const notesHtml=s.stoma_notes?`<div class="por-field por-field-full" style="margin-top:6px;">${field('Notes',s.stoma_notes)}</div>`:'';
+        return `<div class="por-stoma-card"><div class="por-stoma-head">Stoma ${i+1}${s.stoma_id?'<span class="por-stoma-id">'+esc(s.stoma_id)+'</span>':''}</div><div class="por-fields-grid">${rows}</div>${notesHtml}</div>`;
+      }
+
+      page.innerHTML=`<div class="elective-page-shell por-shell" id="por-printable">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;" class="no-print">
+          <button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button>
+          <button class="btn-save" onclick="window.print()" style="background:#0d7377;">🖨 Print / Save PDF</button>
+        </div>
+
+        <div class="por-header">
+          <div class="por-clinic-name">MDH Stoma Care Clinic</div>
+          <div class="por-doc-title">Post-Op Clinical Assessment</div>
+          <div class="por-doc-sub">Read-only record${recordedDate?' · Recorded: '+esc(recordedDate):''}</div>
+        </div>
+
+        <div class="por-section">
+          <div class="por-section-title">Patient Details</div>
+          <div class="por-fields-grid">
+            ${field('Full Name',fullName)}
+            ${field('ID Number',idCard)}
+            ${field('Date of Birth',patient.dob||patient.date_of_birth)}
+            ${field('Locality',patient.locality)}
+            ${field('Phone',patient.phone_number)}
+          </div>
+        </div>
+
+        <div class="por-section">
+          <div class="por-section-title">Clinical Operative Record</div>
+          <div class="por-fields-grid">
+            ${field('Date of Operation',surgDate)}
+            ${field('Surgeon',surgeon)}
+            ${field('Consultant',consultant)}
+          </div>
+          <div class="por-fields-grid" style="margin-top:10px;">
+            <div class="por-field por-field-full"><span class="por-label">Operation Performed</span><span class="por-value por-value-block">${esc(operation)}</span></div>
+            ${findings?`<div class="por-field por-field-full"><span class="por-label">Findings</span><span class="por-value por-value-block">${esc(findings)}</span></div>`:''}
+            ${complications?`<div class="por-field por-field-full"><span class="por-label">Complications</span><span class="por-value por-value-block">${esc(complications)}</span></div>`:''}
+          </div>
+        </div>
+
+        <div class="por-section">
+          <div class="por-section-title">Stoma Details${stomas.length?' ('+stomas.length+')':''}</div>
+          ${stomas.length?stomas.map((s,i)=>stomaCard(s,i)).join(''):'<div class="por-empty">No stoma details recorded.</div>'}
+        </div>
+
+        <div class="por-footer no-print">This is a read-only view of the Post-Op Clinical Assessment.</div>
+      </div>`;
+      showElectivePage(page);
+    }catch(e){
+      page.innerHTML='<div class="elective-page-shell por-shell"><div style="padding:12px 0 4px;" class="no-print"><button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button></div><div class="por-header"><div class="por-doc-title">Post-Op Clinical Assessment</div></div><div class="por-section"><div class="por-empty">Could not load review: '+esc(e?.message||e)+'</div></div></div>';
+      showElectivePage(page);
+    }
   };
 
   console.log('Elective pathway post-op pages loaded');
