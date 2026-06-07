@@ -20518,7 +20518,7 @@ table thead th.v63-name-title,
     const body=card.querySelector('.home-card-body');
     try{
       // Fresh direct query — bypasses homeDashboardCache which may lack inpatient_type
-      const ipFields='id,first_name,surname,id_card,phone_number,inpatient_type,patient_status_raw,assigned_nurse_raw,followup_status,planned_surgery_date,surgery_date,findings,admission_route,followup_type,rip_date,reversal_date,created_at';
+      const ipFields='id,first_name,surname,id_card,phone_number,inpatient_type,patient_status_raw,assigned_nurse_raw,followup_status,planned_surgery_date,surgery_date,findings,admission_route,followup_type,rip_date,reversal_date,created_at,last_outcome_date';
       let inpatientRaw=[];
       try{
         const[{data:d1},{data:d2}]=await Promise.all([
@@ -20565,8 +20565,12 @@ table thead th.v63-name-title,
       const awaitingSittingPts=activePts.filter(p=>!safePostOp(p)&&!safeSittingDone(p));
       const allShownPids=new Set([...postOpPatients,...preOpPatients,...awaitingSittingPts].map(p=>String(p.id||'')));
 
-      // ── Section 1: Post-Op Inpatients ──
-      const postOpRows=postOpPatients.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
+      // Split post-op into seen today vs pending
+      const seenTodayPts=postOpPatients.filter(p=>validDate(p.last_outcome_date)===d);
+      const notSeenPts=postOpPatients.filter(p=>validDate(p.last_outcome_date)!==d);
+
+      // ── Section 1: Post-Op Inpatients (not yet seen today) ──
+      const postOpRows=notSeenPts.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
         const meta='ID '+esc(p.id_card||'—')+' · '+chip;
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtons(p,d,openEpPids.has(String(p.id||'')))+'</div>';
@@ -20656,8 +20660,17 @@ table thead th.v63-name-title,
         });
       }catch(e){followRows=[];}
 
+      // ── Section: Inpatient Seen (post-op patients reviewed today) ──
+      const seenTodayRows=seenTodayPts.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
+        let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
+        const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Seen: '+esc(dText(p.last_outcome_date));
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">Open Post-Op Centre</button></div>':'';
+        return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+' <span class="v88-urg-badge v88-urg-green">Seen</span></div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
+      });
+
       body.innerHTML='<div class="v78-ops-grid">'+
         sectionHtml('Post-Op Inpatients','▣',postOpRows,'v88-postop-section v87-inpatient-section')+
+        sectionHtml('Inpatient Seen','✓',seenTodayRows,'v88-postop-section')+
         sectionHtml('Pre-Op · Awaiting Surgery','⚕',preOpRows,'v88-preop-section')+
         sectionHtml('Awaiting Sitting Session','⊙',awaitRows,'v88-sitting-section')+
         sectionHtml("Today's Follow-ups",'✓',followRows,'')+
