@@ -17959,13 +17959,16 @@ table thead th.v63-name-title,
 .diary-pill.calls{background:#eef2ff;border-color:#7c3aed;color:#5b21b6;}
 .diary-pill.other{background:#f8fafc;border-color:#64748b;color:#334155;}
 .diary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+.diary-two-col{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start;}
 .diary-section{border:1.5px solid #cbd5e1;border-radius:14px;background:#fbfcfd;overflow:hidden;}
 .diary-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #cbd5e1;}
 .diary-section-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:1000;color:#081827;line-height:1.2;}
 .diary-section-icon{width:28px;height:28px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:1000;box-shadow:0 2px 7px rgba(8,24,39,.16);}
+.diary-section-icon.inpatient{background:#1d4ed8;color:#fff;}
 .diary-section-icon.ward{background:#0891b2;color:#fff;}
 .diary-section-icon.calls{background:#7c3aed;color:#fff;}
 .diary-section-icon.other{background:#334155;color:#fff;}
+@media(max-width:700px){.diary-two-col{grid-template-columns:1fr;}}
 .diary-count{font-size:10px;font-weight:1000;color:#475569;background:white;border:1px solid #cbd5e1;border-radius:999px;padding:2px 7px;white-space:nowrap;}
 .diary-list{display:grid;gap:7px;padding:10px;}
 .diary-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;background:#fff;border:1.5px solid #dbe3ec;border-radius:12px;padding:10px 11px;}
@@ -19817,7 +19820,7 @@ table thead th.v63-name-title,
     const body=document.getElementById('daily-diary-page-body'); if(!body){if(typeof v67LoadDailyDiaryPage==='function')return v67LoadDailyDiaryPage();return;}
     body.innerHTML='<div class="home-loading">Loading patients diary...</div>';
     const g=await groupedEntries(d);
-    body.innerHTML=`<div class="diary-summary"><span class="diary-pill ward">Patients Review / Seen Follow-up: ${g.ward.length}</span><span class="diary-pill calls">Emails/Calls: ${g.calls.length}</span><span class="diary-pill other">Other: ${g.other.length}</span><span class="diary-pill">Automatic: ${g.autoCount}</span><span class="diary-pill">Total: ${g.total}</span></div><div class="daily-diary-page-grid">${sectionHtml('ward',g.ward,{deleteButton:true})}${sectionHtml('calls',g.calls,{deleteButton:true})}${sectionHtml('other',g.other,{deleteButton:true})}</div>`;
+    body.innerHTML=`<div class="diary-summary"><span class="diary-pill" style="background:#dbeafe;color:#1d4ed8;">Inpatients: ${g.inpatients.length}</span><span class="diary-pill ward">Seen Follow-ups: ${g.ward.length}</span><span class="diary-pill calls">Emails/Calls: ${g.calls.length}</span><span class="diary-pill other">Other: ${g.other.length}</span><span class="diary-pill">Total: ${g.total}</span></div><div class="diary-two-col" style="margin-bottom:12px;">${sectionHtml('inpatient',g.inpatients,{})}${sectionHtml('ward',g.ward,{deleteButton:true})}</div>${g.calls.length||g.other.length?`<div class="diary-grid" style="grid-template-columns:repeat(2,1fr);">${sectionHtml('calls',g.calls,{deleteButton:true})}${sectionHtml('other',g.other,{deleteButton:true})}</div>`:''}`;
   }
   function openDiary(){
     const el=document.querySelector('[data-tab="daily-diary"]');
@@ -19973,8 +19976,8 @@ table thead th.v63-name-title,
   function manualForDate(d){d=validDate(d)||today();return loadManualEntries().filter(e=>validDate(e.date)===d);}
   function entryTitle(e){if(e.category==='ward')return [e.patient_name,e.id_card].filter(Boolean).join(' · ')||'Patient review';if(e.category==='calls')return [e.contact_with,e.method].filter(Boolean).join(' · ')||'Email / call';return e.title||'Other diary entry';}
   function entryMeta(e){const bits=[];if(e.category==='ward'){if(e.ward)bits.push(e.ward);if(e.id_card)bits.push('ID: '+e.id_card);}else if(e.category==='calls'){if(e.method)bits.push(e.method);if(e.contact_with)bits.push('With: '+e.contact_with);}else{if(e.location)bits.push(e.location);if(e.contact_with)bits.push(e.contact_with);}if(e.created_by)bits.push('By: '+e.created_by);if(e.auto_source)bits.push('Auto: '+e.auto_source);return bits.join(' · ')||'Diary entry';}
-  function categoryMeta(key){if(key==='ward')return {key:'ward',label:'Patients Review / Seen Follow-up',short:'Patients Review',icon:'✓'};if(key==='calls')return {key:'calls',label:'Emails / Calls',short:'Emails/Calls',icon:'☎'};return {key:'other',label:'Other',short:'Other',icon:'•'};}
-  function entryRow(e,opts){opts=opts||{};const del=(!e.auto&&opts.deleteButton)?`<button type="button" class="ncb-btn ncb-del" onclick="v67DeleteDiaryEntry&&v67DeleteDiaryEntry('${esc(e.id)}')">Delete</button>`:'';const auto=e.auto?'<span class="v82-auto-badge">AUTO</span>':'';return `<div class="diary-row"><div><div class="diary-row-title">${esc(entryTitle(e))}${auto}</div><div class="diary-row-meta">${esc(entryMeta(e))}</div>${e.note?`<div class="diary-row-note">${esc(e.note)}</div>`:''}${e.auto?'<div class="v82-diary-auto-note">Generated automatically from attended/seen follow-up appointments only.</div>':''}</div><div class="diary-row-actions">${del}</div></div>`;}
+  function categoryMeta(key){if(key==='inpatient')return {key:'inpatient',label:'Inpatients',short:'Inpatients',icon:'▣'};if(key==='ward')return {key:'ward',label:'Seen Follow-ups',short:'Seen',icon:'✓'};if(key==='calls')return {key:'calls',label:'Emails / Calls',short:'Emails/Calls',icon:'☎'};return {key:'other',label:'Other',short:'Other',icon:'•'};}
+  function entryRow(e,opts){opts=opts||{};const del=(!e.auto&&opts.deleteButton)?`<button type="button" class="ncb-btn ncb-del" onclick="v67DeleteDiaryEntry&&v67DeleteDiaryEntry('${esc(e.id)}')">Delete</button>`:'';const auto=e.auto?'<span class="v82-auto-badge">AUTO</span>':'';const autoNote=e.auto?(e.auto_source==='Inpatient'?'<div class="v82-diary-auto-note">Auto-added from inpatient register.</div>':e.auto_source==='Inpatient Seen'?'<div class="v82-diary-auto-note">Auto-added — Post-Op Clinical Assessment completed today.</div>':'<div class="v82-diary-auto-note">Auto-added from attended appointment.</div>'):'';return `<div class="diary-row"><div><div class="diary-row-title">${esc(entryTitle(e))}${auto}</div><div class="diary-row-meta">${esc(entryMeta(e))}</div>${e.note?`<div class="diary-row-note">${esc(e.note)}</div>`:''}${autoNote}</div><div class="diary-row-actions">${del}</div></div>`;}
   function sectionHtml(category,items,opts){opts=opts||{};const meta=categoryMeta(category);const shown=items.slice(0,opts.limit||999);return `<div class="diary-section"><div class="diary-section-head"><div class="diary-section-title"><span class="diary-section-icon ${meta.key}">${meta.icon}</span>${esc(meta.label)}</div><span class="diary-count">${items.length}</span></div>${items.length?`<div class="diary-list">${shown.map(e=>entryRow(e,opts)).join('')}${items.length>shown.length?`<div class="diary-more">Showing ${shown.length} of ${items.length}. Open Patients Diary for the full list.</div>`:''}</div>`:`<div class="home-empty">No entries.</div>`}</div>`;}
   function followupAppointmentRows(appts,onlySeen){
     return (appts||[]).filter(a=>!isCancelledAppt(a)).filter(a=>onlySeen?isSeenAppt(a):true).map(a=>{
@@ -19999,7 +20002,33 @@ table thead th.v63-name-title,
     const unique=[];const keys=new Set();out.forEach(e=>{const k=[e.id_card,e.patient_name,e.date].join('|');if(!keys.has(k)){keys.add(k);unique.push(e);}});
     return unique;
   }
-  async function groupedEntries(d){const manual=manualForDate(d);const auto=await autoDiaryEntries(d);const all=manual.concat(auto);return {ward:all.filter(e=>e.category==='ward'),calls:all.filter(e=>e.category==='calls'),other:all.filter(e=>!['ward','calls'].includes(e.category)),autoCount:auto.length,total:all.length};}
+  async function inpatientDiaryEntries(d){
+    d=validDate(d)||today();
+    try{
+      if(typeof SB==='undefined')return [];
+      const{data}=await SB.from('patients').select('id,first_name,surname,id_card,inpatient_type,surgery_date,planned_surgery_date,patient_status_raw').not('inpatient_type','is',null);
+      return (data||[]).filter(p=>{
+        if(!p.id)return false;
+        const raw=String(p.patient_status_raw||'').toLowerCase();
+        if(/deceased|reversed|relocated/.test(raw)||raw.includes('rip'))return false;
+        try{if(typeof isClosed==='function'&&isClosed(p))return false;}catch(e){}
+        return true;
+      }).sort((a,b)=>nameOf(a).localeCompare(nameOf(b))).map(p=>({
+        id:'inpt-'+p.id,date:d,category:'inpatient',
+        patient_name:nameOf(p),id_card:p.id_card||'',
+        ward:p.inpatient_type||'Inpatient',
+        note:p.surgery_date?'Surgery: '+dateText(p.surgery_date):(p.planned_surgery_date?'Planned: '+dateText(p.planned_surgery_date):''),
+        created_at:d+'T12:00:00',auto:true,auto_source:'Inpatient'
+      }));
+    }catch(e){return [];}
+  }
+  async function groupedEntries(d){
+    const manual=manualForDate(d);
+    const auto=await autoDiaryEntries(d);
+    const inpts=await inpatientDiaryEntries(d);
+    const all=manual.concat(auto);
+    return {inpatients:inpts,ward:all.filter(e=>e.category==='ward'),calls:all.filter(e=>e.category==='calls'),other:all.filter(e=>!['ward','calls'].includes(e.category)),autoCount:auto.length,total:all.length+inpts.length};
+  }
 
   function removeHomeButtons(){document.querySelectorAll('#page-home .home-quick-actions,#page-home .home-action-tile').forEach(el=>{el.style.display='none';});}
   function ensureRenamedDiary(){document.querySelectorAll('.tab-dd-item,.tab-title,.home-action-label,.home-card-title,.page h2,.new-patient-section-title').forEach(el=>{if(el.textContent&&/Daily Diary/i.test(el.textContent))el.textContent=el.textContent.replace(/Daily Diary/gi,'Patients Diary');});}
@@ -20015,8 +20044,8 @@ table thead th.v63-name-title,
     const body=document.getElementById('home-daily-diary-body'); const sub=document.getElementById('home-diary-sub'); if(!body)return;
     const d=selectedDate(); body.innerHTML='<div class="home-loading">Loading patients diary...</div>';
     const g=await groupedEntries(d);
-    if(sub)sub.textContent=`${fmtDate(d)} · ${g.total} diary ${g.total===1?'entry':'entries'} · ${g.autoCount} automatic from attended/seen appointments`;
-    body.innerHTML=`<div class="diary-summary"><span class="diary-pill ward">Patients Review: ${g.ward.length}</span><span class="diary-pill calls">Emails/Calls: ${g.calls.length}</span><span class="diary-pill other">Other: ${g.other.length}</span></div><div class="diary-grid">${sectionHtml('ward',g.ward,{limit:4})}${sectionHtml('calls',g.calls,{limit:4})}${sectionHtml('other',g.other,{limit:4})}</div><div class="diary-note">Only attended/seen appointment patients are added automatically to the Patients Diary. Manual entries can still be added under Staffing → Patients Diary.</div>`;
+    if(sub)sub.textContent=`${fmtDate(d)} · ${g.inpatients.length} inpatients · ${g.ward.length} seen`;
+    body.innerHTML=`<div class="diary-summary"><span class="diary-pill" style="background:#dbeafe;color:#1d4ed8;">Inpatients: ${g.inpatients.length}</span><span class="diary-pill ward">Seen Follow-ups: ${g.ward.length}</span></div><div class="diary-two-col">${sectionHtml('inpatient',g.inpatients,{limit:6})}${sectionHtml('ward',g.ward,{limit:6})}</div>`;
   }
   async function renderDiaryPage(){
     ensureRenamedDiary();
@@ -20024,7 +20053,7 @@ table thead th.v63-name-title,
     const d=validDate(input?.value)||selectedDate(); const body=document.getElementById('daily-diary-page-body'); if(!body)return;
     body.innerHTML='<div class="home-loading">Loading patients diary...</div>';
     const g=await groupedEntries(d);
-    body.innerHTML=`<div class="diary-summary"><span class="diary-pill ward">Patients Review / Seen Follow-up: ${g.ward.length}</span><span class="diary-pill calls">Emails/Calls: ${g.calls.length}</span><span class="diary-pill other">Other: ${g.other.length}</span><span class="diary-pill">Automatic: ${g.autoCount}</span><span class="diary-pill">Total: ${g.total}</span></div><div class="daily-diary-page-grid">${sectionHtml('ward',g.ward,{deleteButton:true})}${sectionHtml('calls',g.calls,{deleteButton:true})}${sectionHtml('other',g.other,{deleteButton:true})}</div>`;
+    body.innerHTML=`<div class="diary-summary"><span class="diary-pill" style="background:#dbeafe;color:#1d4ed8;">Inpatients: ${g.inpatients.length}</span><span class="diary-pill ward">Seen Follow-ups: ${g.ward.length}</span><span class="diary-pill calls">Emails/Calls: ${g.calls.length}</span><span class="diary-pill other">Other: ${g.other.length}</span><span class="diary-pill">Total: ${g.total}</span></div><div class="diary-two-col" style="margin-bottom:12px;">${sectionHtml('inpatient',g.inpatients,{})}${sectionHtml('ward',g.ward,{deleteButton:true})}</div>${g.calls.length||g.other.length?`<div class="diary-grid" style="grid-template-columns:repeat(2,1fr);">${sectionHtml('calls',g.calls,{deleteButton:true})}${sectionHtml('other',g.other,{deleteButton:true})}</div>`:''}`;
   }
   function openDiary(){const el=document.querySelector('[data-tab="daily-diary"]');if(typeof switchTab==='function')switchTab('daily-diary',el);setTimeout(renderDiaryPage,60);}
   async function renderPatientsReview(){
