@@ -10495,13 +10495,15 @@ function setPatientsListOwnerFilter(owner){
 }
 async function loadPatientsList(tabName){
   currentPatientsTab=tabName||currentPatientsTab||'patients-active';
+  const _simpleTabs=['patients-relocated-gozo','patients-reversed','patients-relocated-overseas','patients-post-op-discharge'];
+  const _isSimple=_simpleTabs.includes(currentPatientsTab);
   const toolbar=document.querySelector('#page-patients-list .patient-register-toolbar');
-  if(toolbar)toolbar.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
+  if(toolbar)toolbar.style.display=_isSimple?'none':'';
   const select=document.getElementById('patients-list-filter');
   const filterLabel=document.getElementById('patients-list-filter-label');
   if(select){
     select.value=currentPatientsTab;
-    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'||currentPatientsTab==='patients-relocated-gozo';
+    const hideGroup=currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'||_isSimple;
     select.style.display=hideGroup?'none':'';
     if(filterLabel)filterLabel.style.display=hideGroup?'none':'';
   }
@@ -10510,7 +10512,7 @@ async function loadPatientsList(tabName){
   if(searchInput)searchInput.placeholder=cfg.status==='all'?'Search all patients by name, ID card, phone, status, owner, locality, dates, stoma type, surgery details...':(cfg.status==='deceased'?'Search name, ID number, RIP date, stoma type, locality...':(cfg.status==='reversed'?'Search ID number, name, reversal date, stoma type...':((cfg.status==='relocated_overseas'||cfg.status==='relocated_gozo')?'Search ID number, name, last seen, discharge date, surgery type, consultant, stoma type...':'Search name, ID card, phone, locality...')));
   const title=document.getElementById('patients-list-title');
   const subtitle=document.getElementById('patients-list-subtitle');
-  if(subtitle)subtitle.style.display=currentPatientsTab==='patients-relocated-gozo'?'none':'';
+  if(subtitle)subtitle.style.display=_isSimple?'none':'';
   const cardTitle=document.getElementById('patients-list-card-title');
   if(title){
     if(currentPatientsTab==='patients-deceased')title.innerHTML='<span class="deceased-page-title"><span class="rip-cross">†</span> Deceased Patients</span>';
@@ -10574,14 +10576,22 @@ function renderPatientsList(){
   const titleCountVal=document.getElementById('patients-list-title-count-val');
   const titleCountLbl=document.getElementById('patients-list-title-count-lbl');
   if(stats){
+    const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#475569','patients-relocated-overseas':'#7e22ce','patients-post-op-discharge':'#0ea5e9'};
+    const _simpleTabs2=Object.keys(_badgeColour);
     if(activeOwnerFilter){
       if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
         <div class="sbox"><div class="sl">Active</div><div class="sv">${activeSelectedCount}</div><div class="ss">${htmlSafe(activeOwnerFilter+' active patients')}</div></div>`;
-    }else if(currentPatientsTab==='patients-relocated-gozo'){
+    }else if(_simpleTabs2.includes(currentPatientsTab)){
       stats.innerHTML='';
-      if(titleCount&&titleCountVal&&titleCountLbl){titleCountVal.textContent=selectedGroupCount;titleCountLbl.textContent='Total';titleCount.style.display='';}
-    }else if(['patients-reversed','patients-deceased','patients-relocated-overseas'].includes(currentPatientsTab)){
+      if(titleCount&&titleCountVal&&titleCountLbl){
+        titleCount.style.background=_badgeColour[currentPatientsTab];
+        titleCount.style.borderColor=_badgeColour[currentPatientsTab];
+        titleCountVal.textContent=selectedGroupCount;
+        titleCountLbl.textContent='Total';
+        titleCount.style.display='';
+      }
+    }else if(currentPatientsTab==='patients-deceased'){
       if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
         <div class="sbox"><div class="sl">Total</div><div class="sv">${selectedGroupCount}</div><div class="ss">${htmlSafe(cfg.title)}</div></div>`;
