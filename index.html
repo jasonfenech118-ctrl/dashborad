@@ -198,11 +198,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-tile-label{font-size:13px;font-weight:900;color:var(--navy);line-height:1.15;}
 .nav-tile-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.15;}
 .nav-tile-arrow{color:var(--muted);font-size:16px;font-weight:900;}
-#page-patient-center .nav-tile{min-height:100px;padding:18px 22px;border-radius:16px;gap:16px;}
-#page-patient-center .nav-tile-icon{width:48px;height:48px;border-radius:12px;font-size:22px;color:#fff;}
-#page-patient-center .nav-tile-label{font-size:15px;font-weight:900;color:#0f172a;}
-#page-patient-center .nav-tile-sub{font-size:11.5px;margin-top:3px;}
-#page-patient-center .centre-section-heading{font-size:11px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#1e293b;margin-bottom:10px;border-left:3px solid var(--teal);padding-left:8px;}
+#page-patient-center .nav-tile{flex-direction:column;align-items:center;justify-content:center;min-height:90px;padding:14px 10px 12px;border-radius:14px;gap:9px;text-align:center;}
+#page-patient-center .nav-tile:before{display:none;}
+#page-patient-center .nav-tile-icon{width:44px;height:44px;border-radius:50%;font-size:20px;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18);}
+#page-patient-center .nav-tile-text{flex:0 0 auto;width:100%;text-align:center;}
+#page-patient-center .nav-tile-label{font-size:12px;font-weight:900;color:#0f172a;text-align:center;line-height:1.25;}
+#page-patient-center .nav-tile-sub{display:none;}
+#page-patient-center .nav-tile-arrow{display:none;}
+#page-patient-center .centre-section-heading{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#475569;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--teal);}
 .tab[data-tab="home"],.tab[data-tab="home"].active{background:#fde910!important;color:#1a2e4a!important;font-weight:900!important;border-bottom-color:#d4a000!important;border-radius:8px!important;padding:0 20px!important;font-size:14px!important;box-shadow:0 2px 8px rgba(253,233,16,.45)!important;letter-spacing:.01em!important;}
 .tab[data-tab="home"] .tab-pic,.tab[data-tab="home"].active .tab-pic{background:#1a2e4a!important;color:#fde910!important;border-color:#1a2e4a!important;width:26px!important;height:26px!important;font-size:14px!important;}
 .tab[data-tab="home"]:hover{background:#f5e000!important;box-shadow:0 4px 12px rgba(253,233,16,.6)!important;transform:translateY(-1px);}
@@ -5890,60 +5893,42 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       <div class="phdr">
         <div><h2>Patient Centre</h2></div>
       </div>
-      <div style="padding:10px 0;display:flex;flex-direction:column;gap:24px;max-width:840px;">
+      <div style="padding:8px 0;display:flex;flex-direction:column;gap:14px;max-width:840px;">
 
         <!-- Active Pathways -->
         <div>
           <div class="centre-section-heading">Active Pathways</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('admission-route-menu',document.querySelector('[data-tab=\'admission-route-menu\']'))">
-              <div class="nav-tile-icon" style="background:#0d7377;font-size:26px;font-weight:300;">+</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div><div class="nav-tile-sub">Register a new patient via the admission pathway</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-icon" style="background:#0d7377;">＋</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Add Patient</div></div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-active',null)">
-              <div class="nav-tile-icon" style="background:#27ae60;">✓</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Active Patients</div><div class="nav-tile-sub">Active outpatients with ongoing follow-up care</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-icon" style="background:#16a34a;">✓</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Active Patients</div></div>
             </button>
-          </div>
-        </div>
-
-        <!-- Inpatient & Post-Operative -->
-        <div>
-          <div class="centre-section-heading">Inpatient &amp; Post-Operative</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
             <button type="button" class="nav-tile" onclick="switchTab('patients-inpatients',null)">
-              <div class="nav-tile-icon" style="background:#2980b9;">▣</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Inpatients</div><div class="nav-tile-sub">Post-operative and admitted patients</div></div>
-              <div class="nav-tile-arrow">›</div>
-            </button>
-            <button type="button" class="nav-tile" onclick="switchTab('patients-post-op-discharge',null)">
-              <div class="nav-tile-icon" style="background:#0ea5e9;">⇪</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Post-Op Discharge</div><div class="nav-tile-sub">Post-op patients ready for discharge planning</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-icon" style="background:#2980b9;">⊞</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Inpatients</div></div>
             </button>
           </div>
         </div>
 
-        <!-- Closed & Transferred -->
+        <!-- Post-Operative & Transferred -->
         <div>
-          <div class="centre-section-heading">Closed &amp; Transferred</div>
+          <div class="centre-section-heading">Post-Operative &amp; Transferred</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            <button type="button" class="nav-tile" onclick="switchTab('patients-post-op-discharge',null)">
+              <div class="nav-tile-icon" style="background:#0ea5e9;">⬆</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Post-Op Discharge</div></div>
+            </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-reversed',null)">
-              <div class="nav-tile-icon" style="background:#475569;">↺</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Reversed</div><div class="nav-tile-sub">Stoma reversed or discharged from service</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-icon" style="background:#475569;">↩</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Reversed</div></div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-gozo',null)">
               <div class="nav-tile-icon" style="background:#0891b2;">⛵</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Relocated to Gozo</div><div class="nav-tile-sub">Transferred care to Gozo</div></div>
-              <div class="nav-tile-arrow">›</div>
-            </button>
-            <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-overseas',null)">
-              <div class="nav-tile-icon" style="background:#7e22ce;">✈</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Relocated Overseas</div><div class="nav-tile-sub">Transferred care abroad</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Relocated to Gozo</div></div>
             </button>
           </div>
         </div>
@@ -5951,16 +5936,18 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <!-- Registry -->
         <div>
           <div class="centre-section-heading">Registry</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            <button type="button" class="nav-tile" onclick="switchTab('patients-relocated-overseas',null)">
+              <div class="nav-tile-icon" style="background:#7e22ce;">✈</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Relocated Overseas</div></div>
+            </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-deceased',null)">
               <div class="nav-tile-icon" style="background:#64748b;">✝</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Deceased Patients</div><div class="nav-tile-sub">Read-only archive</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Deceased Patients</div></div>
             </button>
             <button type="button" class="nav-tile" onclick="switchTab('patients-all',null)">
-              <div class="nav-tile-icon" style="background:#1a2e4a;">☷</div>
-              <div class="nav-tile-text"><div class="nav-tile-label">Master Patient List</div><div class="nav-tile-sub">Full register — search by name, ID or phone</div></div>
-              <div class="nav-tile-arrow">›</div>
+              <div class="nav-tile-icon" style="background:#1a2e4a;">≡</div>
+              <div class="nav-tile-text"><div class="nav-tile-label">Master Patient List</div></div>
             </button>
           </div>
         </div>
