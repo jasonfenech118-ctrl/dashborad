@@ -10495,7 +10495,7 @@ function setPatientsListOwnerFilter(owner){
 }
 async function loadPatientsList(tabName){
   currentPatientsTab=tabName||currentPatientsTab||'patients-active';
-  const _simpleTabs=['patients-relocated-gozo','patients-reversed','patients-relocated-overseas','patients-post-op-discharge'];
+  const _simpleTabs=['patients-relocated-gozo','patients-reversed','patients-relocated-overseas','patients-post-op-discharge','patients-deceased'];
   const _isSimple=_simpleTabs.includes(currentPatientsTab);
   const toolbar=document.querySelector('#page-patients-list .patient-register-toolbar');
   if(toolbar)toolbar.style.display=_isSimple?'none':'';
@@ -10576,7 +10576,7 @@ function renderPatientsList(){
   const titleCountVal=document.getElementById('patients-list-title-count-val');
   const titleCountLbl=document.getElementById('patients-list-title-count-lbl');
   if(stats){
-    const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#475569','patients-relocated-overseas':'#7e22ce','patients-post-op-discharge':'#0ea5e9'};
+    const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#475569','patients-relocated-overseas':'#7e22ce','patients-post-op-discharge':'#0ea5e9','patients-deceased':'#1e293b'};
     const _simpleTabs2=Object.keys(_badgeColour);
     stats.style.display=_simpleTabs2.includes(currentPatientsTab)?'none':'';
     if(activeOwnerFilter){
@@ -10592,11 +10592,7 @@ function renderPatientsList(){
         titleCountLbl.textContent='Total';
         titleCount.style.display='';
       }
-    }else if(currentPatientsTab==='patients-deceased'){
-      if(titleCount)titleCount.style.display='none';
-      stats.innerHTML=`
-        <div class="sbox"><div class="sl">Total</div><div class="sv">${selectedGroupCount}</div><div class="ss">${htmlSafe(cfg.title)}</div></div>`;
-    }else if(currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'||currentPatientsTab==='patients-deceased'){
+    }else if(currentPatientsTab==='patients-active'||currentPatientsTab==='patients-inpatients'){
       if(titleCount)titleCount.style.display='none';
       stats.innerHTML='';
     }else{
