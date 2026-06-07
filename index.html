@@ -10576,7 +10576,7 @@ function renderPatientsList(){
   const titleCountVal=document.getElementById('patients-list-title-count-val');
   const titleCountLbl=document.getElementById('patients-list-title-count-lbl');
   if(stats){
-    const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#475569','patients-relocated-overseas':'#7e22ce','patients-post-op-discharge':'#0ea5e9','patients-deceased':'#1e293b'};
+    const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#0891b2','patients-relocated-overseas':'#0891b2','patients-post-op-discharge':'#0891b2','patients-deceased':'#0891b2'};
     const _simpleTabs2=Object.keys(_badgeColour);
     stats.style.display=_simpleTabs2.includes(currentPatientsTab)?'none':'';
     if(activeOwnerFilter){
