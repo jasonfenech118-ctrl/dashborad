@@ -17970,26 +17970,39 @@ table thead th.v63-name-title,
 .diary-section-icon.other{background:#334155;color:#fff;}
 @media(max-width:700px){.diary-two-col{grid-template-columns:1fr;}}
 /* ── Post-Op Assessment Review (read-only print preview) ── */
-.por-shell{background:#f8fafc;padding-bottom:24px;}
-.por-header{background:#0f172a;color:#fff;border-radius:10px;padding:20px 22px;margin-bottom:14px;text-align:center;}
-.por-clinic-name{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.65;margin-bottom:4px;}
-.por-doc-title{font-size:20px;font-weight:900;letter-spacing:-.3px;}
-.por-doc-sub{font-size:11px;opacity:.55;margin-top:5px;}
-.por-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;margin-bottom:12px;}
-.por-section-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.9px;color:#0d7377;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}
-.por-fields-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;}
-.por-field{display:flex;flex-direction:column;gap:2px;}
+.por-shell{background:#f1f5f9;padding-bottom:28px;max-width:780px;margin:0 auto;}
+.por-toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 0 8px;}
+.por-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;border-radius:12px;padding:22px 24px;margin-bottom:16px;}
+.por-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.por-clinic-name{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.6;margin-bottom:3px;}
+.por-doc-title{font-size:19px;font-weight:900;letter-spacing:-.3px;}
+.por-doc-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.por-patient-banner{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.por-patient-name{font-size:16px;font-weight:900;color:#fff;}
+.por-patient-meta{font-size:12px;color:rgba(255,255,255,.65);display:flex;gap:10px;flex-wrap:wrap;}
+.por-patient-meta span{white-space:nowrap;}
+.por-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.por-section-head{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;}
+.por-section-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.por-section-icon.operative{background:#0d7377;color:#fff;}
+.por-section-icon.findings{background:#7c3aed;color:#fff;}
+.por-section-icon.stoma{background:#1d4ed8;color:#fff;}
+.por-section-label{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#374151;}
+.por-section-body{padding:14px 16px;}
+.por-row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;}
+.por-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 14px;}
+.por-field{display:flex;flex-direction:column;gap:3px;}
 .por-field-full{grid-column:1/-1;}
-.por-label{font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.4px;}
-.por-value{font-size:13px;color:#0f172a;font-weight:600;}
-.por-value-block{white-space:pre-wrap;font-weight:400;font-size:13px;line-height:1.5;color:#1e293b;}
-.por-stoma-card{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
-.por-stoma-head{font-size:13px;font-weight:900;color:#0f172a;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.por-stoma-id{background:#0d7377;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
-.por-empty{color:#94a3b8;font-size:13px;text-align:center;padding:16px;}
-.por-footer{font-size:11px;color:#94a3b8;text-align:center;margin-top:8px;padding-bottom:4px;}
-@media(max-width:600px){.por-fields-grid{grid-template-columns:1fr;}}
-@media print{.no-print{display:none!important;}.por-shell{background:#fff!important;}.por-section{break-inside:avoid;border:1px solid #ccc!important;}.por-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.por-label{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8;letter-spacing:.6px;}
+.por-value{font-size:13px;color:#0f172a;font-weight:600;line-height:1.35;}
+.por-value-block{font-weight:400;font-size:13px;line-height:1.55;color:#1e293b;white-space:pre-wrap;}
+.por-divider{height:1px;background:#f1f5f9;margin:12px 0;}
+.por-sub-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#0d7377;margin:12px 0 8px;padding-bottom:4px;border-bottom:1.5px solid #e2e8f0;}
+.por-stoma-id-badge{display:inline-block;background:#0d7377;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:12px;margin-left:8px;letter-spacing:.3px;}
+.por-empty{color:#94a3b8;font-size:13px;text-align:center;padding:20px;}
+.por-footer{font-size:11px;color:#94a3b8;text-align:center;margin-top:10px;}
+@media(max-width:600px){.por-row3{grid-template-columns:repeat(2,1fr);}.por-row2{grid-template-columns:1fr;}}
+@media print{.no-print{display:none!important;}.por-shell{background:#fff!important;max-width:100%;}.por-section{break-inside:avoid;border:1px solid #ccc!important;box-shadow:none!important;}.por-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#1e3a5f!important;}}
 .diary-count{font-size:10px;font-weight:1000;color:#475569;background:white;border:1px solid #cbd5e1;border-radius:999px;padding:2px 7px;white-space:nowrap;}
 .diary-list{display:grid;gap:7px;padding:10px;}
 .diary-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;background:#fff;border:1.5px solid #dbe3ec;border-radius:12px;padding:10px 11px;}
@@ -21377,65 +21390,83 @@ table thead th.v63-name-title,
       const stomas=stepData.stomas||[];
       const recordedDate=stepData.recorded_date||patient.last_outcome_date||'';
 
-      function field(label,value){
-        return `<div class="por-field"><span class="por-label">${esc(label)}</span><span class="por-value">${esc(value||'—')}</span></div>`;
+      function f(label,value){
+        const v=value||'';
+        return v?`<div class="por-field"><span class="por-label">${esc(label)}</span><span class="por-value">${esc(v)}</span></div>`:'';
       }
-      function stomaCard(s,i){
-        const rows=[
-          field('Type',s.stoma_type),field('Site',s.stoma_site),
-          field('Formed On',s.stoma_formed_on),field('Colour',s.stoma_colour),
-          field('Peristomal Skin',s.peristomal_skin),field('Output',s.stoma_output),
-          field('Appliance',s.appliance),field('Accessories',s.accessories),
-          s.rod_in_situ?field('Rod in Situ',s.rod_in_situ):'',
-          s.rod_removal_date?field('Rod Removal Date',s.rod_removal_date):''
-        ].filter(Boolean).join('');
-        const notesHtml=s.stoma_notes?`<div class="por-field por-field-full" style="margin-top:6px;">${field('Notes',s.stoma_notes)}</div>`:'';
-        return `<div class="por-stoma-card"><div class="por-stoma-head">Stoma ${i+1}${s.stoma_id?'<span class="por-stoma-id">'+esc(s.stoma_id)+'</span>':''}</div><div class="por-fields-grid">${rows}</div>${notesHtml}</div>`;
+      function fBlock(label,value){
+        const v=value||'';
+        return v?`<div class="por-field por-field-full"><span class="por-label">${esc(label)}</span><span class="por-value por-value-block">${esc(v)}</span></div>`:'';
+      }
+      function section(iconCls,iconChar,label,bodyHtml){
+        return `<div class="por-section"><div class="por-section-head"><div class="por-section-icon ${esc(iconCls)}">${iconChar}</div><div class="por-section-label">${esc(label)}</div></div><div class="por-section-body">${bodyHtml}</div></div>`;
+      }
+      function stomaSection(s,i){
+        const idBadge=s.stoma_id?`<span class="por-stoma-id-badge">${esc(s.stoma_id)}</span>`:'';
+        const identRows=[f('Type',s.stoma_type),f('Site',s.stoma_site),f('Formed On',s.stoma_formed_on)].filter(Boolean).join('');
+        const clinRows=[f('Colour',s.stoma_colour),f('Peristomal Skin',s.peristomal_skin),f('Output',s.stoma_output)].filter(Boolean).join('');
+        const mgmtRows=[f('Appliance',s.appliance),f('Accessories',s.accessories)].filter(Boolean).join('');
+        const rodRows=[f('Rod in Situ',s.rod_in_situ),f('Rod Removal Date',s.rod_removal_date)].filter(Boolean).join('');
+        const hasIdent=identRows.length>0;
+        const hasClin=clinRows.length>0;
+        const hasMgmt=mgmtRows.length>0;
+        const hasRod=rodRows.length>0;
+        const body=`
+          <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <span style="font-size:14px;font-weight:900;color:#1e3a5f;">Stoma ${i+1}</span>${idBadge}
+          </div>
+          ${hasIdent?`<div class="por-sub-label">Identification</div><div class="por-row3">${identRows}</div>`:''}
+          ${hasClin?`<div class="por-sub-label">Clinical Assessment</div><div class="por-row3">${clinRows}</div>`:''}
+          ${hasMgmt?`<div class="por-sub-label">Management</div><div class="por-row2">${mgmtRows}</div>`:''}
+          ${hasRod?`<div class="por-sub-label">Rod Details</div><div class="por-row2">${rodRows}</div>`:''}
+          ${fBlock('Notes',s.stoma_notes)}`;
+        return section('stoma','▣','Stoma '+(i+1),body);
       }
 
+      const dob=patient.dob||patient.date_of_birth||'';
       page.innerHTML=`<div class="elective-page-shell por-shell" id="por-printable">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;" class="no-print">
-          <button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button>
+        <div class="por-toolbar no-print">
+          <button class="btn-cancel" onclick="backToInpatients()">← Back</button>
           <button class="btn-save" onclick="window.print()" style="background:#0d7377;">🖨 Print / Save PDF</button>
         </div>
 
         <div class="por-header">
-          <div class="por-clinic-name">MDH Stoma Care Clinic</div>
-          <div class="por-doc-title">Post-Op Clinical Assessment</div>
-          <div class="por-doc-sub">Read-only record${recordedDate?' · Recorded: '+esc(recordedDate):''}</div>
-        </div>
-
-        <div class="por-section">
-          <div class="por-section-title">Patient Details</div>
-          <div class="por-fields-grid">
-            ${field('Full Name',fullName)}
-            ${field('ID Number',idCard)}
-            ${field('Date of Birth',patient.dob||patient.date_of_birth)}
-            ${field('Locality',patient.locality)}
-            ${field('Phone',patient.phone_number)}
+          <div class="por-header-top">
+            <div>
+              <div class="por-clinic-name">MDH Stoma Care Clinic</div>
+              <div class="por-doc-title">Post-Op Clinical Assessment</div>
+            </div>
+            <div class="por-doc-badge">READ ONLY</div>
+          </div>
+          <div class="por-patient-banner">
+            <div class="por-patient-name">${esc(fullName)}</div>
+            <div class="por-patient-meta">
+              <span>ID: ${esc(idCard)}</span>
+              ${dob?`<span>DOB: ${esc(dob)}</span>`:''}
+              ${recordedDate?`<span>Recorded: ${esc(recordedDate)}</span>`:''}
+            </div>
           </div>
         </div>
 
-        <div class="por-section">
-          <div class="por-section-title">Clinical Operative Record</div>
-          <div class="por-fields-grid">
-            ${field('Date of Operation',surgDate)}
-            ${field('Surgeon',surgeon)}
-            ${field('Consultant',consultant)}
+        ${section('operative','⚕','Operative Record',`
+          <div class="por-row3">
+            ${f('Date of Operation',surgDate)}
+            ${f('Surgeon',surgeon)}
+            ${f('Consultant',consultant)}
           </div>
-          <div class="por-fields-grid" style="margin-top:10px;">
-            <div class="por-field por-field-full"><span class="por-label">Operation Performed</span><span class="por-value por-value-block">${esc(operation)}</span></div>
-            ${findings?`<div class="por-field por-field-full"><span class="por-label">Findings</span><span class="por-value por-value-block">${esc(findings)}</span></div>`:''}
-            ${complications?`<div class="por-field por-field-full"><span class="por-label">Complications</span><span class="por-value por-value-block">${esc(complications)}</span></div>`:''}
-          </div>
-        </div>
+          <div class="por-divider"></div>
+          ${fBlock('Operation Performed',operation)}
+        `)}
 
-        <div class="por-section">
-          <div class="por-section-title">Stoma Details${stomas.length?' ('+stomas.length+')':''}</div>
-          ${stomas.length?stomas.map((s,i)=>stomaCard(s,i)).join(''):'<div class="por-empty">No stoma details recorded.</div>'}
-        </div>
+        ${(findings||complications)?section('findings','✎','Operative Findings',`
+          ${fBlock('Intraoperative Findings',findings)}
+          ${fBlock('Complications',complications)}
+        `):''}
 
-        <div class="por-footer no-print">This is a read-only view of the Post-Op Clinical Assessment.</div>
+        ${stomas.length?stomas.map((s,i)=>stomaSection(s,i)).join('')
+          :section('stoma','▣','Stoma Details','<div class="por-empty">No stoma details recorded.</div>')}
+
+        <div class="por-footer no-print">Read-only view · To update, open the patient record directly.</div>
       </div>`;
       showElectivePage(page);
     }catch(e){
