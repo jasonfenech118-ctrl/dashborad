@@ -21148,10 +21148,6 @@ table thead th.v63-name-title,
       const sexKind=(typeof patientInterfaceSexKind==='function')?patientInterfaceSexKind(patient):'male';
       const demoStyle=(typeof patientInterfaceDemographicStyle==='function')?patientInterfaceDemographicStyle(sexKind):'';
       const diItem=(typeof patientInterfaceDemographicItem==='function')?patientInterfaceDemographicItem:function(l,v){return `<div class="pi-demo-item"><span class="pi-demo-lbl">${l}</span><span class="pi-demo-val">${v}</span></div>`;};
-      const epNum=(typeof careEpisodeNumber==='function')?careEpisodeNumber(patient,1):('EP-'+(idCard||patientId)+'-0001');
-      const now=new Date();
-      const encDate=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
-      const encNum='ENC-'+(idCard||String(patientId)).replace(/\s+/g,'').toUpperCase()+'-CLD-'+encDate;
       const page=ensurePage('page-first-postop-review');
       page.innerHTML=`<div class="elective-page-shell">
         <div style="display:flex;justify-content:flex-end;padding:12px 0 0;">
@@ -21165,10 +21161,6 @@ table thead th.v63-name-title,
               <div>
                 <div class="pi-demo-title">Post-Op Clinical Details</div>
                 <div class="pi-demo-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ${esc(idCard||'No ID')}</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
-                  <span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.4px;">EP&nbsp;<span style="opacity:.7;">${esc(epNum)}</span></span>
-                  <span style="display:inline-flex;align-items:center;gap:4px;background:#0d7377;color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.4px;">ENC&nbsp;<span style="opacity:.8;">${esc(encNum)}</span></span>
-                </div>
               </div>
             </div>
             <div class="pi-demo-grid">
