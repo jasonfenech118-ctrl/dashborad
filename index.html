@@ -21148,6 +21148,10 @@ table thead th.v63-name-title,
       const sexKind=(typeof patientInterfaceSexKind==='function')?patientInterfaceSexKind(patient):'male';
       const demoStyle=(typeof patientInterfaceDemographicStyle==='function')?patientInterfaceDemographicStyle(sexKind):'';
       const diItem=(typeof patientInterfaceDemographicItem==='function')?patientInterfaceDemographicItem:function(l,v){return `<div class="pi-demo-item"><span class="pi-demo-lbl">${l}</span><span class="pi-demo-val">${v}</span></div>`;};
+      const epNum=(typeof careEpisodeNumber==='function')?careEpisodeNumber(patient,1):('EP-'+(idCard||patientId)+'-0001');
+      const now=new Date();
+      const encDate=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+      const encNum='ENC-'+(idCard||String(patientId)).replace(/\s+/g,'').toUpperCase()+'-CLD-'+encDate;
       const page=ensurePage('page-first-postop-review');
       page.innerHTML=`<div class="elective-page-shell">
         <div style="display:flex;justify-content:flex-end;padding:12px 0 0;">
@@ -21161,6 +21165,10 @@ table thead th.v63-name-title,
               <div>
                 <div class="pi-demo-title">Post-Op Clinical Details</div>
                 <div class="pi-demo-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ${esc(idCard||'No ID')}</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+                  <span style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.4px;">EP&nbsp;<span style="opacity:.7;">${esc(epNum)}</span></span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;background:#0d7377;color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.4px;">ENC&nbsp;<span style="opacity:.8;">${esc(encNum)}</span></span>
+                </div>
               </div>
             </div>
             <div class="pi-demo-grid">
@@ -21273,7 +21281,10 @@ table thead th.v63-name-title,
       }).eq('id',patientId);
       if(pErr)throw new Error(pErr.message);
       try{await SB.from('episodes').update({status:'in_progress'}).eq('id',episodeId);}catch(_){}
-      const stepData={operation,surgeon,consultant,surgery_date:surgDate,findings,complications,stomas,recorded_date:new Date().toISOString().slice(0,10)};
+      const _epNum=(typeof careEpisodeNumber==='function')?careEpisodeNumber({id_card:ptIdCard},1):('EP-'+ptIdCard+'-0001');
+      const _now=new Date();const _ed=String(_now.getDate()).padStart(2,'0')+'/'+String(_now.getMonth()+1).padStart(2,'0')+'/'+_now.getFullYear();
+      const _encNum='ENC-'+ptIdCard.replace(/\s+/g,'')+'-CLD-'+_ed;
+      const stepData={operation,surgeon,consultant,surgery_date:surgDate,findings,complications,stomas,recorded_date:new Date().toISOString().slice(0,10),episode_number:_epNum,encounter_number:_encNum};
       await Promise.all([
         (async()=>{try{await SB.from('episode_steps').update({status:'complete',data:stepData}).eq('episode_id',episodeId).eq('step_no',4);}catch(_){}})(),
         (async()=>{try{await SB.from('episode_steps').update({status:'in_progress'}).eq('episode_id',episodeId).eq('step_no',5);}catch(_){}})()
@@ -21404,6 +21415,8 @@ table thead th.v63-name-title,
       const complications=stepData.complications||'';
       const stomas=stepData.stomas||[];
       const recordedDate=stepData.recorded_date||patient.last_outcome_date||'';
+      const epNum=stepData.episode_number||((typeof careEpisodeNumber==='function')?careEpisodeNumber(patient,1):('EP-'+(patient.id_card||'').replace(/\s+/g,'').toUpperCase()+'-0001'));
+      const encNum=stepData.encounter_number||'';
 
       function f(label,value){
         const v=value||'';
@@ -21455,6 +21468,10 @@ table thead th.v63-name-title,
           </div>
           <div class="por-patient-banner">
             <div class="por-patient-name">${esc(fullName)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 2px;">
+              <span style="background:rgba(255,255,255,.18);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:12px;letter-spacing:.3px;">${esc(epNum)}</span>
+              ${encNum?`<span style="background:rgba(13,115,119,.6);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:12px;letter-spacing:.3px;">${esc(encNum)}</span>`:''}
+            </div>
             <div class="por-patient-meta">
               <span>ID: ${esc(idCard)}</span>
               ${dob?`<span>DOB: ${esc(dob)}</span>`:''}
