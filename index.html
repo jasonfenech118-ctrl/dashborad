@@ -14173,17 +14173,11 @@ function renderStomaSittingSession(){
         <div class="fg"><label>Patient Attended</label><select id="sss-attended"><option value="">— Select —</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
       </div>
       <div class="pi-confirm-note" style="background:#fef3cd;color:#856404;border:1px solid #ffc107;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:0.9em;">No surgery date has been recorded yet. This session is pre-operative documentation only.</div>
-      <div class="stoma-sitting-extra-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="fg"><label>Education Given</label><textarea id="sss-education" rows="2" placeholder="Topics covered and education provided..."></textarea></div>
-        <div class="fg"><label>Marking / Site Selection Notes</label><textarea id="sss-marking" rows="2" placeholder="Stoma site marking and positioning notes..."></textarea></div>
-        <div class="fg"><label>Appliances Discussed</label><select id="sss-appliances"><option value="">— Select appliance —</option>${(window.FU_SEEN_APPLIANCE_OPTIONS||[]).map(o=>`<option value="${htmlSafe(o)}">${htmlSafe(o)}</option>`).join('')}</select></div>
-        <div class="fg"><label>Patient Concerns</label><textarea id="sss-concerns" rows="2" placeholder="Patient questions and concerns raised..."></textarea></div>
-        <div class="fg" style="grid-column:1/-1;"><label>Plan / Follow-up</label><textarea id="sss-plan" rows="2" placeholder="Agreed plan and follow-up actions..."></textarea></div>
-      </div>
       <div style="overflow-x:auto;"><table class="stoma-sitting-table">
         <thead><tr><th>Checklist item</th><th>Met / Not Met</th><th>Comments</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
+      <div class="fg" style="margin-top:14px;"><label style="font-weight:700;font-size:13px;">Additional Comments</label><textarea id="sss-comments" rows="3" placeholder="Any additional clinical observations or notes from this session..." style="width:100%;margin-top:6px;"></textarea></div>
       <div id="sss-note" class="pi-confirm-note"></div>
       <div class="stoma-sitting-actions"><button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button><button class="btn-save" onclick="confirmStomaSittingSession()" style="background:#e6a817;">Confirm</button><button class="btn-save btn-inpatients" id="sss-save-close" onclick="saveStomaSittingSession({goToInpatients:true})" disabled style="opacity:.55;">Save &amp; Close</button></div>
     </div>`;
@@ -14763,11 +14757,7 @@ function collectStomaSittingSessionData(){
     date:document.getElementById('sss-date')?.value||'',
     signature:document.getElementById('sss-signature')?.value||'',
     attended:document.getElementById('sss-attended')?.value||'',
-    education:document.getElementById('sss-education')?.value?.trim()||'',
-    marking:document.getElementById('sss-marking')?.value?.trim()||'',
-    appliances:document.getElementById('sss-appliances')?.value?.trim()||'',
-    concerns:document.getElementById('sss-concerns')?.value?.trim()||'',
-    plan:document.getElementById('sss-plan')?.value?.trim()||'',
+    comments:document.getElementById('sss-comments')?.value?.trim()||'',
     items:STOMA_SITTING_CHECKLIST.map((item,i)=>({
       item,
       status:document.querySelector(`input[name="sss-status-${i}"]:checked`)?.value||'',
