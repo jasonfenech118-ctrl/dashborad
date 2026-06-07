@@ -10578,6 +10578,7 @@ function renderPatientsList(){
   if(stats){
     const _badgeColour={'patients-relocated-gozo':'#0891b2','patients-reversed':'#475569','patients-relocated-overseas':'#7e22ce','patients-post-op-discharge':'#0ea5e9'};
     const _simpleTabs2=Object.keys(_badgeColour);
+    stats.style.display=_simpleTabs2.includes(currentPatientsTab)?'none':'';
     if(activeOwnerFilter){
       if(titleCount)titleCount.style.display='none';
       stats.innerHTML=`
