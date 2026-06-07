@@ -10436,7 +10436,19 @@ function patientRegisterActions(p,includeRebook=true){
   return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
 }
 function patientRegisterEditAction(p){
-  return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
+  return `<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}${patientDeleteButton(p.id)}</div>`;
+}
+function patientDeleteButton(id){
+  return `<button class="ncb-btn" style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;border:1px solid #fca5a5;padding:3px 9px;white-space:nowrap;" onclick="event.stopPropagation();deletePatientRecord('${id}')">Delete</button>`;
+}
+async function deletePatientRecord(id){
+  const p=(patientsListRows||[]).find(x=>x.id===id)||{};
+  const name=((p.first_name||'').trim()+' '+(p.surname||'').trim()).trim()||'this patient';
+  const idCard=p.id_card?(' ('+p.id_card+')'):'';
+  if(!confirm('Permanently delete '+name+idCard+'?\n\nThis action cannot be undone.'))return;
+  const {error}=await SB.from('patients').delete().eq('id',id);
+  if(error){alert('Failed to delete: '+(error.message||error));return;}
+  typeof loadPatientsList==='function'&&loadPatientsList(currentPatientsTab);
 }
 
 async function fetchAllPatientsRows(fields, options={}){
@@ -16473,8 +16485,8 @@ try{
 
   const __v59PreviousPatientRegisterEditAction=(typeof patientRegisterEditAction==='function')?patientRegisterEditAction:null;
   patientRegisterEditAction=function(p){
-    if(v59IsClosedPatient(p))return '<div class="followup-actions" onclick="event.stopPropagation();"><span class="registry-readonly-note">Read-only</span></div>';
-    return __v59PreviousPatientRegisterEditAction?__v59PreviousPatientRegisterEditAction(p):`<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}</div>`;
+    if(v59IsClosedPatient(p))return '<div class="followup-actions" onclick="event.stopPropagation();"><span class="registry-readonly-note">Read-only</span>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
+    return __v59PreviousPatientRegisterEditAction?__v59PreviousPatientRegisterEditAction(p):`<div class="followup-actions" onclick="event.stopPropagation();">${patientInterfaceAction(p.id)}${typeof patientDeleteButton==='function'?patientDeleteButton(p.id):''}</div>`;
   };
   window.patientRegisterEditAction=patientRegisterEditAction;
 
@@ -20966,15 +20978,15 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#1d4ed8;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient Centre</button></div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#1d4ed8;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient Centre</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
         }
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
       }
       if(typeof inpatientCategory==='function'&&inpatientCategory(p)==='inpatient'){
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button></div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
       }
     }catch(e){}
-    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button></div>';
+    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button>'+(typeof patientDeleteButton==='function'?patientDeleteButton(p.id):'')+'</div>';
   };
   window.patientRegisterEditAction=patientRegisterEditAction;
   try{renderPatientsList&&renderPatientsList();}catch(e){}
