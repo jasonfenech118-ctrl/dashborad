@@ -19987,6 +19987,15 @@ table thead th.v63-name-title,
     d=validDate(d)||today();
     const appts=followupAppointmentRows(await getAppointmentsForDate(d),true);
     const out=appts.map(x=>({id:'auto-appt-'+(x.appt.id||x.id||Math.random()),date:d,category:'ward',patient_name:x.name,id_card:x.id,ward:'Follow-up clinic '+(x.time||''),note:'Appointment marked as seen/attended.',created_at:d+'T'+((x.time&&x.time!=='—')?x.time:'12:00')+':00',created_by:'',auto:true,auto_source:'Appointment Seen'}));
+    try{
+      if(typeof SB!=='undefined'){
+        const{data:seenInpts}=await SB.from('patients').select('id,first_name,surname,id_card,inpatient_type').eq('last_outcome_date',d).not('inpatient_type','is',null);
+        (seenInpts||[]).forEach(p=>{
+          const name=[p.first_name,p.surname].filter(Boolean).join(' ')||'Patient';
+          out.push({id:'auto-inpatient-'+p.id,date:d,category:'ward',patient_name:name,id_card:p.id_card||'',ward:'Ward',note:'Post-Op Clinical Assessment completed.',created_at:d+'T12:00:00',created_by:'',auto:true,auto_source:'Inpatient Seen'});
+        });
+      }
+    }catch(e){}
     const unique=[];const keys=new Set();out.forEach(e=>{const k=[e.id_card,e.patient_name,e.date].join('|');if(!keys.has(k)){keys.add(k);unique.push(e);}});
     return unique;
   }
