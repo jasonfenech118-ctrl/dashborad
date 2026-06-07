@@ -20736,7 +20736,7 @@ table thead th.v63-name-title,
       const seenTodayRows=seenTodayPts.sort((a,b)=>nm(a).localeCompare(nm(b))).map(p=>{
         let chip='';try{chip=typeof inpatientCategoryChip==='function'?inpatientCategoryChip(p):esc(p.inpatient_type||'Inpatient');}catch(e){chip=esc(p.inpatient_type||'Inpatient');}
         const meta='ID '+esc(p.id_card||'—')+' · '+chip+' · Seen: '+esc(dText(p.last_outcome_date));
-        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn v87-input-btn" style="background:#047857;color:#fff;" onclick="openPostOpAssessmentReview(\''+esc(p.id)+'\')">Open Review</button></div>':'';
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn v87-input-btn" style="background:#047857;color:#fff;" onclick="openPostOpAssessmentReview(\''+esc(p.id)+'\')">View Encounter</button></div>':'';
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+' <span class="v88-urg-badge v88-urg-green">Seen</span></div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
       });
 
