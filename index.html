@@ -14111,13 +14111,13 @@ function postOperativeEncounterStarted(p){
 }
 function continueEpisodeButton(p){
   if(postOperativeEncounterStarted(p)){
-    return `<button class="ncb-btn add-encounter-button" onclick="openPostOpCentreForPatient('${p.id}')">Open Post-Op Review</button>`;
+    return `<button class="ncb-btn add-encounter-button" style="background:#1d4ed8;color:#fff;" onclick="openClinicalRecordForPatient('${p.id}')">Open Patient Centre</button>`;
   }
   if(stomaSittingCompleted(p)||p?.surgery_date){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
     const title=op?`Surgery date: ${patientDateText(op)}`:'Surgery date not yet recorded';
-    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">Post-Op Clinical Details</button>`;
+    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">Open Patient Centre</button>`;
   }
   const cls=continueEpisodeUrgencyClass(p);
   const title=p?.planned_surgery_date?`Planned sitting: ${patientDateText(p.planned_surgery_date)}`:'Sitting date not recorded';
@@ -20549,6 +20549,10 @@ table thead th.v63-name-title,
   }
   function reviewButtons(p,date,hasOpenEpisode){
     const id=esc(p?.id||'');
+    const hasAssessment=!!(p?.operation_performed||'').trim();
+    if(hasAssessment){
+      return '<div class="home-card-actions"><button class="ncb-btn v87-input-btn" style="background:#1d4ed8;color:#fff;" onclick="openClinicalRecordForPatient(\''+id+'\')">Open Patient Centre</button></div>';
+    }
     return '<div class="home-card-actions"><button class="ncb-btn v87-input-btn" onclick="openClinicalRecordForPatient(\''+id+'\')">Open Post-Op Review</button></div>';
   }
   function sectionHtml(title,icon,items,extraClass){
@@ -20585,7 +20589,7 @@ table thead th.v63-name-title,
     const body=card.querySelector('.home-card-body');
     try{
       // Fresh direct query — bypasses homeDashboardCache which may lack inpatient_type
-      const ipFields='id,first_name,surname,id_card,phone_number,inpatient_type,patient_status_raw,assigned_nurse_raw,followup_status,planned_surgery_date,surgery_date,findings,admission_route,followup_type,rip_date,reversal_date,created_at,last_outcome_date';
+      const ipFields='id,first_name,surname,id_card,phone_number,inpatient_type,patient_status_raw,assigned_nurse_raw,followup_status,planned_surgery_date,surgery_date,findings,admission_route,followup_type,rip_date,reversal_date,created_at,last_outcome_date,operation_performed';
       let inpatientRaw=[];
       try{
         const[{data:d1},{data:d2}]=await Promise.all([
@@ -20962,7 +20966,7 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Post-Op Clinical Details</button></div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#1d4ed8;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient Centre</button></div>';
         }
         return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
