@@ -800,7 +800,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .review-kpi .klabel{font-size:10px;font-weight:900;letter-spacing:.35px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
 .review-kpi .kvalue{font-size:13px;font-weight:800;color:var(--navy);}
 
-/* v30AO — Emergency Surgery Post Operative Daily Review checklist */
+/* v30AO — Emergency Surgery Post-Operative Review checklist */
 .stoma-review-toolbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0 14px;padding:12px;border:1px solid var(--border);border-radius:14px;background:#fbfcfd;}
 .stoma-review-toolbar .fg{margin-bottom:0;}
 .stoma-review-note{grid-column:1/-1;margin:0!important;}
@@ -5685,9 +5685,9 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <div class="page" id="page-admission-emergency-daily-review">
-      <div class="phdr"><div><h2>Post Operative Daily Review</h2></div><button class="btn-add btn-return" onclick="returnFromPostOperativeDailyReview()">← Return</button></div>
+      <div class="phdr"><div><h2>Post-Operative Review</h2></div><button class="btn-add btn-return" onclick="returnFromPostOperativeDailyReview()">← Return</button></div>
       <div class="route-page-card">
-        <h3>Post Operative Daily Review</h3>
+        <h3>Post-Operative Review</h3>
         
         <div class="stoma-review-toolbar">
           <div class="fg"><label>Review Date *</label><input type="date" id="edr-review-date" onchange="renderEmergencyStomaDailyReview()"/><div class="choice-hint">Day 1 starts the day after surgery.</div></div>
@@ -7686,6 +7686,8 @@ function emergencyReviewCurrentFormData(){
     stoma_function:document.getElementById('edr-function')?.value||'',
     peristomal_skin:document.getElementById('edr-skin')?.value||'',
     time_of_review:document.getElementById('edr-time')?.value||'',
+    appliance:document.getElementById('edr-appliance')?.value?.trim()||'',
+    accessories:document.getElementById('edr-accessories')?.value?.trim()||'',
     signature:document.getElementById('edr-signature')?.value||'',
     comments:document.getElementById('edr-comments')?.value?.trim()||'',
     encounter_notes:document.getElementById('edr-encounter-notes')?.value?.trim()||''
@@ -7726,7 +7728,7 @@ function renderEmergencyStomaDailyReview(){
   const diff=emergencyReviewDateDiff(surgeryDate,reviewDate);
   if(!surgeryDate){
     list.innerHTML='<div class="registry-lookup-note error">Please go back and enter the Surgery Date first.</div>';
-    if(note)note.textContent='The Post Operative Daily Review cannot be calculated without a Surgery Date.';
+    if(note)note.textContent='The Post-Operative Review cannot be calculated without a Surgery Date.';
     return;
   }
   const activeIndex=(diff!==null&&diff>=1&&diff<=7)?diff-1:-1;
@@ -7734,7 +7736,7 @@ function renderEmergencyStomaDailyReview(){
   const surgeryLabel=fmtLabel(surgeryDate);
   if(note){
     note.className='registry-lookup-note new stoma-review-note';
-    if(diff<1){note.className='registry-lookup-note error stoma-review-note';note.textContent='The Post Operative Daily Review starts on the 1st post-operative day. Choose the day after Surgery Date or later.';}
+    if(diff<1){note.className='registry-lookup-note error stoma-review-note';note.textContent='The Post-Operative Review starts on the 1st post-operative day. Choose the day after Surgery Date or later.';}
     else if(diff>7){note.className='registry-lookup-note error stoma-review-note';note.textContent='The selected Review Date is after post-operative Day 7. Choose a date within the first seven post-operative days.';}
     else note.innerHTML=`Surgery Date: <strong>${htmlSafe(surgeryLabel)}</strong> (Day 0 / operation day). Review Date: <strong>${htmlSafe(reviewLabel)}</strong>. Active review: <strong>Post-op Day ${activeIndex+1}</strong>.`;
   }
@@ -7762,6 +7764,8 @@ function renderEmergencyStomaDailyReview(){
         <div class="fg"><label>Function *</label><select id="edr-function" onchange="syncEmergencyStomaDailyReviewData()">${optionHTML(functionOptions,saved.stoma_function)}</select></div>
         <div class="fg"><label>Peristomal skin *</label><select id="edr-skin" onchange="syncEmergencyStomaDailyReviewData()">${optionHTML(skinOptions,saved.peristomal_skin)}</select></div>
         <div class="fg"><label>Time of review *</label><input type="time" id="edr-time" value="${htmlSafe(saved.time_of_review||activeTime)}" onchange="syncEmergencyStomaDailyReviewData()"/></div>
+        <div class="fg full"><label>Appliance Used</label><input type="text" id="edr-appliance" value="${htmlSafe(saved.appliance||'')}" placeholder="Type and size" oninput="syncEmergencyStomaDailyReviewData()"/></div>
+        <div class="fg full"><label>Accessories</label><input type="text" id="edr-accessories" value="${htmlSafe(saved.accessories||'')}" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert" oninput="syncEmergencyStomaDailyReviewData()"/></div>
         <div class="fg full stoma-colour-extra-wrap"><label>Additional stoma colour observations</label><div class="choice-group stoma-colour-extra-row">${checkboxHTML('edr-colour-extra',colourExtraOptions,savedColourExtra)}</div></div>
         <div class="fg full"><label>Comments</label><textarea id="edr-comments" placeholder="Brief comments" oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.comments||'')}</textarea></div>
         <div class="fg full postop-report-extra"><label>Additional encounter report</label><textarea id="edr-encounter-notes" placeholder="Write any additional clinical observations, care given, patient concerns, appliance issues, plan, escalation, or anything relevant to this encounter." oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.encounter_notes||'')}</textarea></div>
@@ -7780,8 +7784,8 @@ function validateEmergencyStomaDailyReview(){
   const data=emergencyReviewCurrentFormData();
   const diff=emergencyReviewDateDiff(data.surgery_date,data.review_date);
   if(diff===null){alert('Please enter the Surgery Date and Review Date.');return false;}
-  if(diff<1){alert('The Post Operative Daily Review starts on the 1st post-operative day. Please choose the day after Surgery Date or later.');return false;}
-  if(diff>7){alert('The Post Operative Daily Review only accepts dates from post-operative Day 1 to Day 7. Please choose a Review Date within that window.');return false;}
+  if(diff<1){alert('The Post-Operative Review starts on the 1st post-operative day. Please choose the day after Surgery Date or later.');return false;}
+  if(diff>7){alert('The Post-Operative Review only accepts dates from post-operative Day 1 to Day 7. Please choose a Review Date within that window.');return false;}
   if(!data.stoma_colour||!data.stoma_function||!data.peristomal_skin||!data.time_of_review){
     alert('Please complete Stoma colour, Function, Peristomal skin and Time of review for the active day.');
     return false;
@@ -7804,7 +7808,7 @@ function appendEmergencyStomaDailyReviewToFindings(){
     }).join('\n');
   }catch(e){}
   const reviewText=[
-    'Post Operative Daily Review',
+    'Post-Operative Review',
     `Review Date: ${fmtLabel(data.review_date)}`,
     `Post-op Day: Post-op Day ${data.day_number} (${fmtLabel(data.day_date)})`,
     `Stoma colour: ${data.stoma_colour}${(data.stoma_colour_extra&&data.stoma_colour_extra.length)?' — Additional observations: '+data.stoma_colour_extra.join(', '):''}`,
@@ -14114,7 +14118,7 @@ function continueEpisodeButton(p){
     const cls=awaitingSurgeryUrgencyClass(p);
     const op=surgeryOrOperationDate(p);
     const title=op?`Surgery date: ${patientDateText(op)}`:'Surgery date not yet recorded';
-    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">Post-Op Clinical Assessment</button>`;
+    return `<button class="ncb-btn continue-episode-button awaiting-surgery-button ${cls}" title="${htmlSafe(title)}" onclick="openClinicalRecordForPatient('${p.id}')">Post-Op Clinical Details</button>`;
   }
   const cls=continueEpisodeUrgencyClass(p);
   const title=p?.planned_surgery_date?`Planned sitting: ${patientDateText(p.planned_surgery_date)}`:'Sitting date not recorded';
@@ -20011,7 +20015,7 @@ table thead th.v63-name-title,
   function entryTitle(e){if(e.category==='ward')return [e.patient_name,e.id_card].filter(Boolean).join(' · ')||'Patient review';if(e.category==='calls')return [e.contact_with,e.method].filter(Boolean).join(' · ')||'Email / call';return e.title||'Other diary entry';}
   function entryMeta(e){const bits=[];if(e.category==='ward'){if(e.ward)bits.push(e.ward);if(e.id_card)bits.push('ID: '+e.id_card);}else if(e.category==='calls'){if(e.method)bits.push(e.method);if(e.contact_with)bits.push('With: '+e.contact_with);}else{if(e.location)bits.push(e.location);if(e.contact_with)bits.push(e.contact_with);}if(e.created_by)bits.push('By: '+e.created_by);if(e.auto_source)bits.push('Auto: '+e.auto_source);return bits.join(' · ')||'Diary entry';}
   function categoryMeta(key){if(key==='inpatient')return {key:'inpatient',label:'Inpatients',short:'Inpatients',icon:'▣'};if(key==='ward')return {key:'ward',label:'Seen Follow-ups',short:'Seen',icon:'✓'};if(key==='calls')return {key:'calls',label:'Emails / Calls',short:'Emails/Calls',icon:'☎'};return {key:'other',label:'Other',short:'Other',icon:'•'};}
-  function entryRow(e,opts){opts=opts||{};const del=(!e.auto&&opts.deleteButton)?`<button type="button" class="ncb-btn ncb-del" onclick="v67DeleteDiaryEntry&&v67DeleteDiaryEntry('${esc(e.id)}')">Delete</button>`:'';const auto=e.auto?'<span class="v82-auto-badge">AUTO</span>':'';const autoNote=e.auto?(e.auto_source==='Inpatient'?'<div class="v82-diary-auto-note">Auto-added from inpatient register.</div>':e.auto_source==='Inpatient Seen'?'<div class="v82-diary-auto-note">Auto-added — Post-Op Clinical Assessment completed today.</div>':'<div class="v82-diary-auto-note">Auto-added from attended appointment.</div>'):'';return `<div class="diary-row"><div><div class="diary-row-title">${esc(entryTitle(e))}${auto}</div><div class="diary-row-meta">${esc(entryMeta(e))}</div>${e.note?`<div class="diary-row-note">${esc(e.note)}</div>`:''}${autoNote}</div><div class="diary-row-actions">${del}</div></div>`;}
+  function entryRow(e,opts){opts=opts||{};const del=(!e.auto&&opts.deleteButton)?`<button type="button" class="ncb-btn ncb-del" onclick="v67DeleteDiaryEntry&&v67DeleteDiaryEntry('${esc(e.id)}')">Delete</button>`:'';const auto=e.auto?'<span class="v82-auto-badge">AUTO</span>':'';const autoNote=e.auto?(e.auto_source==='Inpatient'?'<div class="v82-diary-auto-note">Auto-added from inpatient register.</div>':e.auto_source==='Inpatient Seen'?'<div class="v82-diary-auto-note">Auto-added — Post-Op Clinical Details completed today.</div>':'<div class="v82-diary-auto-note">Auto-added from attended appointment.</div>'):'';return `<div class="diary-row"><div><div class="diary-row-title">${esc(entryTitle(e))}${auto}</div><div class="diary-row-meta">${esc(entryMeta(e))}</div>${e.note?`<div class="diary-row-note">${esc(e.note)}</div>`:''}${autoNote}</div><div class="diary-row-actions">${del}</div></div>`;}
   function sectionHtml(category,items,opts){opts=opts||{};const meta=categoryMeta(category);const shown=items.slice(0,opts.limit||999);return `<div class="diary-section"><div class="diary-section-head"><div class="diary-section-title"><span class="diary-section-icon ${meta.key}">${meta.icon}</span>${esc(meta.label)}</div><span class="diary-count">${items.length}</span></div>${items.length?`<div class="diary-list">${shown.map(e=>entryRow(e,opts)).join('')}${items.length>shown.length?`<div class="diary-more">Showing ${shown.length} of ${items.length}. Open Patients Diary for the full list.</div>`:''}</div>`:`<div class="home-empty">No entries.</div>`}</div>`;}
   function followupAppointmentRows(appts,onlySeen){
     return (appts||[]).filter(a=>!isCancelledAppt(a)).filter(a=>onlySeen?isSeenAppt(a):true).map(a=>{
@@ -20029,7 +20033,7 @@ table thead th.v63-name-title,
         const{data:seenInpts}=await SB.from('patients').select('id,first_name,surname,id_card,inpatient_type').eq('last_outcome_date',d).not('inpatient_type','is',null);
         (seenInpts||[]).forEach(p=>{
           const name=[p.first_name,p.surname].filter(Boolean).join(' ')||'Patient';
-          out.push({id:'auto-inpatient-'+p.id,date:d,category:'ward',patient_name:name,id_card:p.id_card||'',ward:'Ward',note:'Post-Op Clinical Assessment completed.',created_at:d+'T12:00:00',created_by:'',auto:true,auto_source:'Inpatient Seen'});
+          out.push({id:'auto-inpatient-'+p.id,date:d,category:'ward',patient_name:name,id_card:p.id_card||'',ward:'Ward',note:'Post-Op Clinical Details completed.',created_at:d+'T12:00:00',created_by:'',auto:true,auto_source:'Inpatient Seen'});
         });
       }
     }catch(e){}
@@ -20191,7 +20195,7 @@ table thead th.v63-name-title,
   function parseDailyReviewEncountersFromFindings(findings){
     const raw=String(findings||'');
     if(!raw.trim())return [];
-    const blocks=raw.split(/\n(?=---\s*Encounter:\s*Post Operative Daily Review\s*---)/i).map(x=>x.trim()).filter(x=>/^---\s*Encounter:\s*Post Operative Daily Review/i.test(x));
+    const blocks=raw.split(/\n(?=---\s*Encounter:\s*Post-Operative Review\s*---)/i).map(x=>x.trim()).filter(x=>/^---\s*Encounter:\s*Post-Operative Review/i.test(x));
     return blocks.map(function(block,index){
       const code=(block.match(/^Encounter Code:\s*([^\n]+)/mi)||[])[1]||'';
       const base=(block.match(/^Base Encounter Code:\s*([^\n]+)/mi)||[])[1]||code.replace(/-V\d+$/,'');
@@ -20228,9 +20232,9 @@ table thead th.v63-name-title,
   }
   function updateDailyReviewHeader(){
     const title=document.querySelector('#page-admission-emergency-daily-review .phdr h2');
-    if(title)title.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
+    if(title)title.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post-Operative Review';
     const h3=document.querySelector('#page-admission-emergency-daily-review .route-page-card h3');
-    if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
+    if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post-Operative Review';
     const actions=document.getElementById('postop-review-actions');
     if(actions){
       actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
@@ -20307,7 +20311,7 @@ table thead th.v63-name-title,
       const changes=(dailyReviewMode==='edit'&&dailyReviewOriginal)?diffKeys(dailyReviewOriginal.data,data):[];
       const changeLabel=changes.length?changes.join(', '):'No field changes recorded';
       const lines=[
-        '--- Encounter: Post Operative Daily Review ---',
+        '--- Encounter: Post-Operative Review ---',
         'Encounter Code: '+code,
         'Base Encounter Code: '+base,
         'Version: '+version,
@@ -20320,6 +20324,8 @@ table thead th.v63-name-title,
         'Function: '+fieldValue(data,'stoma_function'),
         'Peristomal skin: '+fieldValue(data,'peristomal_skin'),
         'Time of review: '+fieldValue(data,'time_of_review'),
+        data.appliance?'Appliance Used: '+data.appliance:'',
+        data.accessories?'Accessories: '+data.accessories:'',
         'Recorded by: '+(data.signature||'Logged-in nurse'),
         data.comments?'Comments: '+data.comments:'',
         data.encounter_notes?'Additional encounter report: '+data.encounter_notes:'',
@@ -20396,7 +20402,7 @@ table thead th.v63-name-title,
   function dailyReviewEncounterRows(p){
     const rows=dailyReviewEncounters(p).sort((a,b)=>String(b.reviewDate||'').localeCompare(String(a.reviewDate||''))||b.version-a.version);
     if(!rows.length)return '<tr><td colspan="6" class="empty">No Daily Review encounters recorded yet.</td></tr>';
-    return rows.map(function(r){return '<tr><td><strong class="patient-record-no">'+esc(r.code)+'</strong></td><td>'+dateText(r.reviewDate)+'</td><td>Post Operative Daily Review</td><td>'+esc(r.by||'Logged-in nurse')+'</td><td>'+(r.version>1?'<span class="patient-record-status followup">Edited V'+esc(r.version)+'</span>':'<span class="patient-record-status">Original V1</span>')+'</td><td><button class="ncb-btn v86-reviewed-button" onclick="openTodaysReviewPage(\''+esc(p.id)+'\',\''+esc(r.reviewDate)+'\')">Reviewed</button></td></tr>';}).join('');
+    return rows.map(function(r){return '<tr><td><strong class="patient-record-no">'+esc(r.code)+'</strong></td><td>'+dateText(r.reviewDate)+'</td><td>Post-Operative Review</td><td>'+esc(r.by||'Logged-in nurse')+'</td><td>'+(r.version>1?'<span class="patient-record-status followup">Edited V'+esc(r.version)+'</span>':'<span class="patient-record-status">Original V1</span>')+'</td><td><button class="ncb-btn v86-reviewed-button" onclick="openTodaysReviewPage(\''+esc(p.id)+'\',\''+esc(r.reviewDate)+'\')">Reviewed</button></td></tr>';}).join('');
   }
   function careEpisodeTableHTMLV86(p){
     const has=hasAnyDailyReview(p);let latest='';try{latest=typeof latestDateFromCareBlocks==='function'?latestDateFromCareBlocks(p):'';}catch(e){}
@@ -20539,7 +20545,7 @@ table thead th.v63-name-title,
   function reviewBlocksFromFindings(findings){
     const raw=String(findings||'');
     if(!raw.trim())return [];
-    return raw.split(/\n(?=---\s*Encounter:\s*Post Operative Daily Review\s*---)/i).map(x=>x.trim()).filter(x=>/^---\s*Encounter:\s*Post Operative Daily Review/i.test(x)).map((block,index)=>{
+    return raw.split(/\n(?=---\s*Encounter:\s*Post-Operative Review\s*---)/i).map(x=>x.trim()).filter(x=>/^---\s*Encounter:\s*Post-Operative Review/i.test(x)).map((block,index)=>{
       const code=(block.match(/^Encounter Code:\s*([^\n]+)/mi)||[])[1]||'';
       const reviewDate=(block.match(/^Review Date:\s*([^\n]+)/mi)||[])[1]||(block.match(/^Date:\s*([^\n]+)/mi)||[])[1]||'';
       const version=Number((block.match(/^Version:\s*(\d+)/mi)||[])[1]||(code.match(/-V(\d+)$/)||[])[1]||1);
@@ -20663,7 +20669,7 @@ table thead th.v63-name-title,
       }).map(p=>{
         const sd=surgDateOf(p);
         const meta='ID '+esc(p.id_card||'—')+(sd?' · Surgery: '+esc(dText(sd)):' · No surgery date recorded');
-        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">Post-Op Clinical Assessment</button></div>':'';
+        const btn=p.id?'<div class="home-card-actions"><button class="ncb-btn" style="background:#0d7377;color:#fff;" onclick="openClinicalRecordForPatient(\''+esc(p.id)+'\')">Post-Op Clinical Details</button></div>':'';
         return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nm(p))+urgencyBadge(sd)+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+btn+'</div>';
       });
 
@@ -20785,7 +20791,7 @@ table thead th.v63-name-title,
 /* v88 manual stable core + patch loader: fixes hasReview and skips v88-dr-action-strip */
 (function(){
   'use strict';
-  const MARKER='--- Encounter: Post Operative Daily Review ---';
+  const MARKER='--- Encounter: Post-Operative Review ---';
   let activePatient=null, activeDate='', editSource=null;
   const q=(s,r=document)=>r.querySelector(s);
   const qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -20967,7 +20973,7 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Post-Op Clinical Assessment</button></div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Post-Op Clinical Details</button></div>';
         }
         return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
@@ -21074,17 +21080,6 @@ table thead th.v63-name-title,
         <label>Date of Rod Removal</label>
         <input type="date" id="fpr-rod-removal-${idx}"/>
       </div>
-      <div class="elective-section-label" style="font-size:13px;color:#475569;margin:14px 0 8px;">Stoma Review</div>
-      <div class="cor-2col">
-        <div class="fg"><label>Stoma Colour</label><select id="fpr-stoma-colour-${idx}"><option value="">-- Select --</option><option>Pink/Red (healthy)</option><option>Pale/Dusky</option><option>Dark/Necrotic</option></select></div>
-        <div class="fg"><label>Peristomal Skin</label><select id="fpr-peristomal-${idx}"><option value="">-- Select --</option><option>Intact</option><option>Mild irritation</option><option>Excoriation</option><option>Ulceration</option></select></div>
-      </div>
-      <div class="cor-2col">
-        <div class="fg"><label>Stoma Output</label><select id="fpr-output-${idx}"><option value="">-- Select --</option><option>Formed</option><option>Loose</option><option>Liquid</option><option>Nil output</option></select></div>
-        <div class="fg"><label>Appliance Used</label><input type="text" id="fpr-appliance-${idx}" placeholder="Type and size"/></div>
-      </div>
-      <div class="fg"><label>Accessories</label><input type="text" id="fpr-accessories-${idx}" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert"/></div>
-      <div class="fg"><label>Stoma Review Notes</label><textarea id="fpr-stoma-notes-${idx}" placeholder="Clinical observations, patient concerns, teaching started" style="height:80px;"></textarea></div>
     </div>`;
   }
   window.fprRemoveStoma=function(idx){
@@ -21151,7 +21146,7 @@ table thead th.v63-name-title,
           <div>
             <div class="pi-demo-head">
               <div>
-                <div class="pi-demo-title">Post-Op Clinical Assessment</div>
+                <div class="pi-demo-title">Post-Op Clinical Details</div>
                 <div class="pi-demo-sub">${esc(fullName||'Patient')} &nbsp;·&nbsp; ${esc(idCard||'No ID')}</div>
               </div>
             </div>
@@ -21191,7 +21186,7 @@ table thead th.v63-name-title,
         </div>
       </div>`;
       showElectivePage(page);
-    }catch(e){alert('Could not open Post-Op Clinical Assessment: '+(e?.message||e));}
+    }catch(e){alert('Could not open Post-Op Clinical Details: '+(e?.message||e));}
   };
   window.backToInpatients=backToInpatients;
 
@@ -21219,12 +21214,6 @@ table thead th.v63-name-title,
         _bid:bid,
         stoma_number:i+1,
         stoma_type:sType,stoma_site:sSite,stoma_formed_on:surgDate,
-        stoma_colour:(document.getElementById('fpr-stoma-colour-'+bid)?.value||'').trim(),
-        peristomal_skin:(document.getElementById('fpr-peristomal-'+bid)?.value||'').trim(),
-        stoma_output:(document.getElementById('fpr-output-'+bid)?.value||'').trim(),
-        appliance:(document.getElementById('fpr-appliance-'+bid)?.value||'').trim(),
-        accessories:(document.getElementById('fpr-accessories-'+bid)?.value||'').trim(),
-        stoma_notes:(document.getElementById('fpr-stoma-notes-'+bid)?.value||'').trim(),
         rod_in_situ:(document.querySelector(`input[name="fpr-rod-${bid}"]:checked`)?.value||'').trim(),
         rod_removal_date:(document.getElementById('fpr-rod-removal-'+bid)?.value||'').trim()
       });
@@ -21341,7 +21330,7 @@ table thead th.v63-name-title,
     }catch(e){alert('Error closing episode: '+(e?.message||e));}
   };
 
-  // Re-open Post-Op Centre from Inpatients "Open Post-Op Clinical Assessment" button for already-operated patients
+  // Re-open Post-Op Centre from Inpatients "Open Post-Op Clinical Details" button for already-operated patients
   const _prevOpenClinicalRecord=window.openClinicalRecordForPatient;
   window.openClinicalRecordForPatient=async function(patientId){
     try{
@@ -21440,7 +21429,7 @@ table thead th.v63-name-title,
           <div class="por-header-top">
             <div>
               <div class="por-clinic-name">MDH Stoma Care Clinic</div>
-              <div class="por-doc-title">Post-Op Clinical Assessment</div>
+              <div class="por-doc-title">Post-Op Clinical Details</div>
             </div>
             <div class="por-doc-badge">READ ONLY</div>
           </div>
@@ -21476,7 +21465,7 @@ table thead th.v63-name-title,
       </div>`;
       showElectivePage(page);
     }catch(e){
-      page.innerHTML='<div class="elective-page-shell por-shell"><div style="padding:12px 0 4px;" class="no-print"><button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button></div><div class="por-header"><div class="por-doc-title">Post-Op Clinical Assessment</div></div><div class="por-section"><div class="por-empty">Could not load review: '+esc(e?.message||e)+'</div></div></div>';
+      page.innerHTML='<div class="elective-page-shell por-shell"><div style="padding:12px 0 4px;" class="no-print"><button class="btn-cancel" onclick="backToInpatients()">← Back to Inpatients</button></div><div class="por-header"><div class="por-doc-title">Post-Op Clinical Details</div></div><div class="por-section"><div class="por-empty">Could not load review: '+esc(e?.message||e)+'</div></div></div>';
       showElectivePage(page);
     }
   };
