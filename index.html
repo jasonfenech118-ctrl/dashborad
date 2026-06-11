@@ -182,22 +182,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-tile-label{font-size:13px;font-weight:900;color:var(--navy);line-height:1.15;}
 .nav-tile-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.15;}
 .nav-tile-arrow{color:var(--muted);font-size:16px;font-weight:900;}
-.centre-hub.centre-tile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
-.centre-hub.nav-tile{flex-direction:column;align-items:center;justify-content:center;min-height:106px;height:100%;max-width:100%;padding:14px 10px 12px;border-radius:14px;gap:9px;text-align:center;}
-.centre-hub.nav-tile:before{display:none;}
-.centre-hub.nav-tile-icon{width:44px;height:44px;border-radius:50%;font-size:20px;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18);}
-.centre-hub.nav-tile-text{flex:0 0 auto;width:100%;text-align:center;}
-.centre-hub.nav-tile-label{font-size:12px;font-weight:900;color:#0f172a;text-align:center;line-height:1.25;}
-.centre-hub.nav-tile-sub{display:none;}
-.centre-hub.nav-tile-arrow{display:none;}
+.hub-page .centre-tile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.hub-page .nav-tile{flex-direction:column;align-items:center;justify-content:center;min-height:106px;height:100%;max-width:100%;padding:14px 10px 12px;border-radius:14px;gap:9px;text-align:center;}
+.hub-page .nav-tile:before{display:none;}
+.hub-page .nav-tile-icon{width:44px;height:44px;border-radius:50%;font-size:20px;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18);}
+.hub-page .nav-tile-text{flex:0 0 auto;width:100%;text-align:center;}
+.hub-page .nav-tile-label{font-size:12px;font-weight:900;color:#0f172a;text-align:center;line-height:1.25;}
+.hub-page .nav-tile-sub{display:none;}
+.hub-page .nav-tile-arrow{display:none;}
 @media(max-width:640px){
-  .centre-hub.centre-tile-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-  .centre-hub.nav-tile{min-height:94px;padding:12px 8px 10px;border-radius:12px;gap:7px;}
-  .centre-hub.nav-tile-icon{width:40px;height:40px;font-size:18px;}
-  .centre-hub.nav-tile-label{font-size:11.5px;}
+  .hub-page .centre-tile-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .hub-page .nav-tile{min-height:94px;padding:12px 8px 10px;border-radius:12px;gap:7px;}
+  .hub-page .nav-tile-icon{width:40px;height:40px;font-size:18px;}
+  .hub-page .nav-tile-label{font-size:11.5px;}
 }
-.centre-hub.centre-section-heading{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#475569;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--teal);}
-.centre-hub.active{display:flex!important;flex-direction:column;}
+.hub-page .centre-section-heading{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;color:#475569;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--teal);}
+.hub-page.active{display:flex!important;flex-direction:column;}
 .tab[data-tab="home"],.tab[data-tab="home"].active{background:#4f46e5!important;color:#fff!important;font-weight:900!important;border-bottom-color:#3730a3!important;border-radius:8px!important;padding:0 20px!important;font-size:14px!important;box-shadow:0 2px 8px rgba(79,70,229,.35)!important;letter-spacing:.01em!important;}
 .tab[data-tab="home"] .tab-pic,.tab[data-tab="home"].active .tab-pic{background:#fff!important;color:#4f46e5!important;border-color:#fff!important;width:26px!important;height:26px!important;font-size:14px!important;}
 .tab[data-tab="home"]:hover{background:#4338ca!important;box-shadow:0 4px 12px rgba(79,70,229,.5)!important;transform:translateY(-1px);}
@@ -5851,7 +5851,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 
 
     <!-- PATIENT CENTRE -->
-    <div class="page centre-hub" id="page-patient-center">
+    <div class="page hub-page" id="page-patient-center">
       <div class="phdr">
         <div><h2>Patient Centre</h2></div>
       </div>
@@ -5918,7 +5918,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <!-- STAFFING CENTRE HUB -->
-    <div class="page centre-hub" id="page-staffing-centre">
+    <div class="page hub-page" id="page-staffing-centre">
       <div class="phdr">
         <div><h2>Staffing</h2><p>Rosters, duty changes and the patients diary</p></div>
       </div>
@@ -5944,7 +5944,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <!-- APPOINTMENTS CENTRE HUB -->
-    <div class="page centre-hub" id="page-appointments-centre">
+    <div class="page hub-page" id="page-appointments-centre">
       <div class="phdr">
         <div><h2>Appointments</h2><p>Booking, calendars and follow-up tracking</p></div>
       </div>
@@ -5979,7 +5979,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
     <!-- REPORTS CENTRE HUB -->
-    <div class="page centre-hub" id="page-reports-centre">
+    <div class="page hub-page" id="page-reports-centre">
       <div class="phdr">
         <div><h2>Reports</h2><p>Dashboards, audits and patient group registers</p></div>
       </div>
@@ -21118,6 +21118,7 @@ table thead th.v63-name-title,
 
 <style>
 /* v79 — Indigo Slate: hub layout + button normalisation */
+.hub-page.active{display:flex!important;flex-direction:column;}
 .centre-hub-body{display:flex;flex-direction:column;gap:16px;padding:0 0 8px;}
 @media(max-width:700px){.tab[data-tab="home"],.tab[data-tab="home"].active{padding:0 8px!important;font-size:11px!important;}}
 /* Shape normalisation — colours come from class/inline styles (rebranded by hex map) */
