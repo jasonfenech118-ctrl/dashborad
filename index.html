@@ -14162,12 +14162,33 @@ function renderStomaSittingSession(){
         <div class="fg"><label>Surgery Date * <span style="color:#dc2626;">(required)</span></label><input type="date" id="sss-surgery-date" min="${TODAY}" placeholder="Confirmed surgery date"/></div>
         <div class="fg"><label>Auto signature</label><input type="text" id="sss-signature" readonly placeholder="Logged-in nurse"/></div>
       </div>
-      <div style="overflow-x:auto;"><table class="stoma-sitting-table">
-        <thead><tr><th>Checklist item</th><th>Met / Not Met</th><th>Comments</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>
-      <div id="sss-note" class="pi-confirm-note"></div>
-      <div class="stoma-sitting-actions"><button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button><button class="btn-save" onclick="confirmStomaSittingSession()" style="background:#e6a817;">Confirm</button><button class="btn-save btn-inpatients" id="sss-save-close" onclick="saveStomaSittingSession({goToInpatients:true})" disabled style="opacity:.55;">Save &amp; Close</button></div>
+      <div style="margin-bottom:14px;padding:12px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;">
+        <label style="font-weight:700;font-size:12px;display:block;margin-bottom:8px;">Did the patient attend?</label>
+        <div style="display:flex;gap:20px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="radio" name="sss-attended" value="yes" onchange="handleSittingAttendance()"/> Yes</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;"><input type="radio" name="sss-attended" value="no" onchange="handleSittingAttendance()"/> No</label>
+        </div>
+      </div>
+      <div id="sss-checklist-area">
+        <div style="overflow-x:auto;"><table class="stoma-sitting-table">
+          <thead><tr><th>Checklist item</th><th>Met / Not Met</th><th>Comments</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        <div id="sss-note" class="pi-confirm-note"></div>
+        <div class="stoma-sitting-actions"><button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button><button class="btn-save" onclick="confirmStomaSittingSession()" style="background:#e6a817;">Confirm</button><button class="btn-save btn-inpatients" id="sss-save-close" onclick="saveStomaSittingSession({goToInpatients:true})" disabled style="opacity:.55;">Save &amp; Close</button></div>
+      </div>
+      <div id="sss-dna-area" style="display:none;">
+        <div style="padding:14px;background:#fff8e1;border:1px solid #f0d060;border-radius:8px;margin-bottom:14px;">
+          <p style="margin:0 0 10px;font-size:12px;color:#856404;font-weight:600;">Patient did not attend. Please select a reschedule date and book a new slot.</p>
+          <div class="fg" style="max-width:240px;"><label style="font-size:11px;font-weight:700;">Reschedule Date</label><input type="date" id="sss-reschedule-date" min="${TODAY}" style="margin-top:4px;"/></div>
+        </div>
+        <div id="sss-dna-note" class="pi-confirm-note"></div>
+        <div class="stoma-sitting-actions">
+          <button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button>
+          <button class="btn-save" onclick="cancelSittingSessionOnly()" style="background:#6b7280;">Cancel Sitting</button>
+          <button class="btn-save" onclick="cancelAndRescheduleSittingSession()" style="background:#dc2626;">Cancel &amp; Reschedule</button>
+        </div>
+      </div>
     </div>`;
   ensureStomaSittingSignature();
 }
@@ -14255,6 +14276,41 @@ async function bookStomaSittingSlot(slot){
   closeModal();
   if(document.getElementById('page-appointments')?.classList.contains('active'))loadAppts();
   if(document.getElementById('page-reports')?.classList.contains('active'))loadReports();
+}
+function handleSittingAttendance(){
+  const val=document.querySelector('input[name="sss-attended"]:checked')?.value;
+  const checklist=document.getElementById('sss-checklist-area');
+  const dna=document.getElementById('sss-dna-area');
+  if(!checklist||!dna)return;
+  if(val==='no'){checklist.style.display='none';dna.style.display='';}
+  else{checklist.style.display='';dna.style.display='none';}
+}
+async function cancelSittingSessionOnly(){
+  const p=stomaSittingPatient;
+  const note=document.getElementById('sss-dna-note');
+  if(!p){alert('No patient selected.');return;}
+  const sessionDate=document.getElementById('sss-date')?.value||'';
+  if(sessionDate){
+    const{error}=await SB.from('appointments').update({status:'cancelled'}).eq('patient_id',p.id).eq('appt_date',sessionDate).eq('status','booked');
+    if(error)console.warn('Could not cancel appointment:',error.message);
+  }
+  returnFromStomaSittingSession();
+}
+async function cancelAndRescheduleSittingSession(){
+  const p=stomaSittingPatient;
+  const note=document.getElementById('sss-dna-note');
+  if(!p){alert('No patient selected.');return;}
+  const rescheduleDate=document.getElementById('sss-reschedule-date')?.value||'';
+  if(!rescheduleDate){if(note){note.style.color='var(--red)';note.textContent='Please select a reschedule date.';}return;}
+  const sessionDate=document.getElementById('sss-date')?.value||'';
+  if(sessionDate){
+    const{error}=await SB.from('appointments').update({status:'did_not_attend'}).eq('patient_id',p.id).eq('appt_date',sessionDate).eq('status','booked');
+    if(error)console.warn('Could not mark appointment DNTU:',error.message);
+  }
+  const{error:pErr}=await SB.from('patients').update({planned_surgery_date:rescheduleDate,followup_type:'new_case',followup_status:'inpatient',inpatient_type:'awaiting_surgery',patient_status_raw:'Awaiting Surgery'}).eq('id',p.id);
+  if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not update patient: '+(pErr.message||'Unknown error');}return;}
+  stomaSittingPatient={...p,planned_surgery_date:rescheduleDate};
+  await openStomaSittingBookingCard(rescheduleDate);
 }
 async function openStomaSittingSession(patientId){
   if(!patientId){alert('No patient selected.');return;}
