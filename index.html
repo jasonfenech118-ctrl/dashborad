@@ -7820,6 +7820,8 @@ function renderEmergencyStomaDailyReview(){
   const functionOptions=['','Haemoserous','Green/bilious','Liquid stool','Blood','Semi-formed/formed'];
   const skinOptions=['','Healthy/intact','Red','Broken/excoriated'];
   const optionHTML=(opts,val)=>opts.map(o=>`<option value="${htmlSafe(o)}" ${String(o)===String(val||'')?'selected':''}>${htmlSafe(o||'Select')}</option>`).join('');
+  const applianceOptionHTML=(val)=>applianceSelectOptions(val,'appliance');
+  const accessoryOptionHTML=(val)=>applianceSelectOptions(val,'accessory');
   const colourExtraOptions=['Covered with slough','Bruised'];
   const savedColourExtra=Array.isArray(saved.stoma_colour_extra)?saved.stoma_colour_extra:[];
   const checkboxHTML=(name,opts,vals)=>opts.map(o=>`<label class="choice-chip"><input type="checkbox" name="${name}" value="${htmlSafe(o)}" ${vals.includes(o)?'checked':''} onchange="syncEmergencyStomaDailyReviewData()"/> ${htmlSafe(o)}</label>`).join('');
@@ -7841,8 +7843,8 @@ function renderEmergencyStomaDailyReview(){
         <div class="fg"><label>Function *</label><select id="edr-function" onchange="syncEmergencyStomaDailyReviewData()">${optionHTML(functionOptions,saved.stoma_function)}</select></div>
         <div class="fg"><label>Peristomal skin *</label><select id="edr-skin" onchange="syncEmergencyStomaDailyReviewData()">${optionHTML(skinOptions,saved.peristomal_skin)}</select></div>
         <div class="fg"><label>Time of review *</label><input type="time" id="edr-time" value="${htmlSafe(saved.time_of_review||activeTime)}" onchange="syncEmergencyStomaDailyReviewData()"/></div>
-        <div class="fg full"><label>Appliance Used</label><input type="text" id="edr-appliance" value="${htmlSafe(saved.appliance||'')}" placeholder="Type and size" oninput="syncEmergencyStomaDailyReviewData()"/></div>
-        <div class="fg full"><label>Accessories</label><input type="text" id="edr-accessories" value="${htmlSafe(saved.accessories||'')}" placeholder="e.g. adhesive remover, barrier wipes, paste, convex insert" oninput="syncEmergencyStomaDailyReviewData()"/></div>
+        <div class="fg full"><label>Appliance Used</label><select id="edr-appliance" onchange="syncEmergencyStomaDailyReviewData()">${applianceOptionHTML(saved.appliance)}</select></div>
+        <div class="fg full"><label>Accessories</label><select id="edr-accessories" onchange="syncEmergencyStomaDailyReviewData()">${accessoryOptionHTML(saved.accessories)}</select></div>
         <div class="fg full"><label>Comments</label><textarea id="edr-comments" placeholder="Brief comments" oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.comments||'')}</textarea></div>
         <div class="fg full postop-report-extra"><label>Additional encounter report</label><textarea id="edr-encounter-notes" placeholder="Write any additional clinical observations, care given, patient concerns, appliance issues, plan, escalation, or anything relevant to this encounter." oninput="syncEmergencyStomaDailyReviewData()">${htmlSafe(saved.encounter_notes||'')}</textarea></div>
         <div class="fg full"><label>Automated signature</label><input type="text" value="${htmlSafe(document.getElementById('edr-signature')?.value||saved.signature||'Logged-in nurse')}" readonly/></div>
@@ -14259,6 +14261,7 @@ function renderStomaSittingSession(){
       <div class="card-title">Checklist</div>
       <div class="stoma-sitting-controls">
         <div class="fg"><label>Sitting Session Date *</label><input type="date" id="sss-date" value="${patientDateInputValue(p.planned_surgery_date)||TODAY}" onchange="handleStomaSittingDateChange()"/></div>
+        <div class="fg"><label>Planned Surgery Date</label><input type="date" id="sss-planned-surgery-date" value="${patientDateInputValue(p.planned_surgery_date)}"/></div>
         <div class="fg"><label>Nurse / Signature</label><input type="text" id="sss-signature" readonly placeholder="Logged-in nurse"/></div>
         <div class="fg"><label>Patient Attended</label><select id="sss-attended"><option value="">— Select —</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
       </div>
@@ -14845,6 +14848,7 @@ function confirmStomaSittingSession(){
 function collectStomaSittingSessionData(){
   return {
     date:document.getElementById('sss-date')?.value||'',
+    planned_surgery_date:document.getElementById('sss-planned-surgery-date')?.value||'',
     signature:document.getElementById('sss-signature')?.value||'',
     attended:document.getElementById('sss-attended')?.value||'',
     comments:document.getElementById('sss-comments')?.value?.trim()||'',
@@ -14872,6 +14876,7 @@ async function saveStomaSittingSession(options={}){
     `Nurse: ${data.signature}`,
     `Patient Attended: ${data.attended||'Not recorded'}`,
   ];
+  if(data.planned_surgery_date)summaryParts.push(`Planned Surgery Date: ${data.planned_surgery_date}`);
   if(data.education)summaryParts.push(`Education Given: ${data.education}`);
   if(data.marking)summaryParts.push(`Marking / Site Notes: ${data.marking}`);
   if(data.appliances)summaryParts.push(`Appliances Discussed: ${data.appliances}`);
@@ -14885,6 +14890,7 @@ async function saveStomaSittingSession(options={}){
     last_outcome_date:data.date,
     patient_status_raw:'Stoma Sitting Session Complete'
   };
+  if(data.planned_surgery_date)patientPayload.planned_surgery_date=data.planned_surgery_date;
   const{error:pErr}=await SB.from('patients').update(patientPayload).eq('id',p.id);
   if(pErr){if(note){note.style.color='var(--red)';note.textContent='Could not save session: '+(pErr.message||'Unknown');}return;}
   // 2. Mark step 3 (siting_session) complete with STO encounter code, step 4 in_progress
@@ -15317,9 +15323,21 @@ try{Object.assign(window,{openGenericEncounterModal,refreshGenericEncounterMonth
    Opens from Seen, records FU-ID-Date episode, and updates Patient Interface.
    ========================================================= */
 const FU_SEEN_APPLIANCE_OPTIONS = ["Closed Bag 45mm", "Closed Bag 57mm", "Closed Bag 70mm", "Deep Convexity 45/22mm", "Deep Convexity 57/41mm", "Deep Convexity Flange 45/25mm", "Deep Convexity Flange 45/28mm", "Deep Convexity Flange 45/32mm", "Deep Convexity Flange 45/35mm", "Deep Convexity Flange 57/38mm", "Drainable Bag 100mm", "Drainable Bag 45mm", "Drainable Bag 57mm", "Drainable Bag 70mm", "Esteem", "Hollister 24730 – Urostomy Bag 45mm", "Hollister 25300 – Convex Floating Flange 55mm", "Hollister 25760 – Drainable Bag 55mm", "Hollister 27300 – Convex Floating Flange 70mm", "Hollister 27420 – Closed Bag 70mm", "Hollister 27830 – Urostomy Bag 70mm", "Hollister 29500 – Flat One-Piece Urostomy Bag 15-55mm", "Hollister 34200 – Flat Floating Flange 45mm", "Lentell 201102M (70mm)", "Lentell 201108-1 (70mm trans)", "Lentell 201142 (90mm)", "Lentell 2011446M", "Lentell 201148 (80mm)", "Lentell 201156-1 (100mm)", "Little Ones", "Microporous Flange 45mm", "Microporous Flange 57mm", "Microporous Flange 70mm", "Salts NAL1390", "Salts NDAL13", "Salts XND1352", "Salts XNL1352", "Stomadress", "Stomahesive Flange 100mm", "Stomahesive Flange 45mm", "Stomahesive Flange 57mm", "Stomahesive Flange 70mm", "Urostomy Bag 45mm", "Urostomy Bag 57mm", "Urostomy Bag 70mm", "Welland 201148", "Welland MHCS513", "Welland XFM535", "Welland XMDS513", "Welland XMHCS513", "Welland XMHDX213", "Welland XMHNDS513", "Welland XNHNDL913", "Welland XPOP513"];
-const FU_SEEN_ACCESSORY_OPTIONS = ["Deodorant", "Filler Paste", "Flange Extenders", "Gelling Agents", "Hydrocolloid 20x20", "Hydrocolloid 5x20", "Powder", "Protective Wipes", "Stoma Belt", "Stoma Seals", "None"];
+const FU_SEEN_ACCESSORY_OPTIONS = ["Deodorant", "Dilators", "Filler Paste", "Flange Extenders", "Gelling Agents", "Hydrocolloid 20x20", "Hydrocolloid 5x20", "Powder", "Protective Wipes", "Stoma Belt", "Stoma Seals", "None"];
 window.FU_SEEN_APPLIANCE_OPTIONS=FU_SEEN_APPLIANCE_OPTIONS;
 window.FU_SEEN_ACCESSORY_OPTIONS=FU_SEEN_ACCESSORY_OPTIONS;
+// Shared <option> builder for appliance/accessory dropdowns. Keeps any saved
+// free-text value that isn't in the master list so legacy data is not lost.
+function applianceSelectOptions(val,kind){
+  const list=(kind==='accessory'?window.FU_SEEN_ACCESSORY_OPTIONS:window.FU_SEEN_APPLIANCE_OPTIONS)||[];
+  const esc=(typeof htmlSafe==='function')?htmlSafe:(s=>String(s==null?'':s));
+  const cur=String(val||'').trim();
+  const opts=[...list];
+  if(cur&&!opts.some(o=>String(o)===cur))opts.unshift(cur);
+  const placeholder=`<option value="">— Select ${kind==='accessory'?'accessory':'appliance'} —</option>`;
+  return placeholder+opts.map(o=>`<option value="${esc(o)}" ${String(o)===cur?'selected':''}>${esc(o)}</option>`).join('');
+}
+window.applianceSelectOptions=applianceSelectOptions;
 const FU_SEEN_STOMA_COLOUR_OPTIONS = ['Pink / healthy','Pale','Bruised','Flush / retracted','Other'];
 const FU_SEEN_FUNCTION_OPTIONS = ['Nil output at time of visit','Green / bilious','Liquid stool','Blood','Semi-formed / formed','Other'];
 const FU_SEEN_SKIN_OPTIONS = ['Healthy / intact','Red','Broken / excoriated','Other'];
