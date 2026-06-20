@@ -36,6 +36,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 #app{display:none;min-height:100vh;}
 .topbar{position:fixed;top:0;left:0;right:0;height:52px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .tb-logo{font-size:15px;font-weight:700;color:white;}.tb-logo span{color:var(--gold);}
+.btn-back-top{background:#e6a817;color:#1a2b4a;border:none;font-weight:800;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;margin-right:14px;box-shadow:0 1px 3px rgba(0,0,0,.25);letter-spacing:.3px;transition:background .15s;}
+.btn-back-top:hover{background:#f5b82e;}
+.btn-back-top:active{transform:translateY(1px);}
 .tb-date{font-size:12px;color:rgba(255,255,255,.55);margin-left:16px;}
 .btn-so{padding:6px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:rgba(255,255,255,.75);background:none;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
 .btn-so:hover{background:rgba(255,255,255,.1);}
@@ -5371,6 +5374,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 <div id="app">
   <div class="topbar">
     <div style="display:flex;align-items:center;">
+      <button class="btn-back-top" onclick="goBack()" title="Go back">← Back</button>
       <div class="tb-logo">MDH <span>Stoma Care</span> Clinic</div>
       <div class="tb-date" id="tb-date"></div><div class="v71-build-pill">v78</div>
     </div>
@@ -8089,8 +8093,36 @@ function confirmAdmissionReviewSave(){
   saveNewPatientTab();
   pendingAdmissionReview=null;
 }
+window.__navStack=window.__navStack||[];
+function goBack(){
+  // Close any open modal first
+  try{const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open')){closeModal();return;}}catch(e){}
+  window.__navBack=true;
+  try{
+    const prev=window.__navStack.pop();
+    if(prev){
+      const el=document.querySelector('.nav-tile[data-tab="'+prev+'"]')||document.querySelector('.tab-dd-item[data-tab="'+prev+'"]')||document.querySelector('.tab[data-tab="'+prev+'"]');
+      switchTab(prev,el);
+    }else{
+      try{goHome()}catch(e){}
+    }
+  }finally{window.__navBack=false;}
+}
 function switchTab(name,el){
   if(!name)name='roster';
+  // Record the page we are leaving, for the Back button
+  try{
+    if(!window.__navBack){
+      const cur=document.querySelector('.page.active');
+      let curName=cur?.id?.replace('page-','')||'';
+      if(curName==='patients-list')curName=(typeof currentPatientsTab!=='undefined'&&currentPatientsTab)||'patients-active';
+      if(curName==='report-patient-group')curName=(typeof currentReportPatientGroup!=='undefined'&&currentReportPatientGroup)||'report-followups';
+      if(curName&&curName!==String(name)){
+        const st=window.__navStack;
+        if(st[st.length-1]!==curName){st.push(curName);if(st.length>50)st.shift();}
+      }
+    }
+  }catch(e){}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const requestedName=String(name);
   const reportGroupPage=REPORT_PATIENT_GROUP_TABS.includes(requestedName)?'report-patient-group':requestedName;
