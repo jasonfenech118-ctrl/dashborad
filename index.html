@@ -5690,7 +5690,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         </div>
         <input type="hidden" id="np-stoma-daily-review-json" value=""/>
         <div id="emergency-daily-review-list" class="stoma-review-grid"></div>
-        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-save" onclick="confirmPostOperativeDailyReview()" style="background:#e6a817;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
+        <div class="route-actions" id="postop-review-actions"><button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back</button><button class="btn-warn" onclick="confirmPostOperativeDailyReview()">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-return" onclick="closePostOperativeEpisode()">Close Episode</button></div><div id="postop-review-note" class="postop-action-note"></div>
       </div>
     </div>
 
@@ -14175,7 +14175,7 @@ function renderStomaSittingSession(){
           <tbody>${rows}</tbody>
         </table></div>
         <div id="sss-note" class="pi-confirm-note"></div>
-        <div class="stoma-sitting-actions"><button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button><button class="btn-save" onclick="confirmStomaSittingSession()" style="background:#e6a817;">Confirm</button><button class="btn-save btn-inpatients" id="sss-save-close" onclick="saveStomaSittingSession({goToInpatients:true})" disabled style="opacity:.55;">Save &amp; Close</button></div>
+        <div class="stoma-sitting-actions"><button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button><button class="btn-warn" onclick="confirmStomaSittingSession()">Confirm</button><button class="btn-save btn-inpatients" id="sss-save-close" onclick="saveStomaSittingSession({goToInpatients:true})" disabled style="opacity:.55;">Save &amp; Close</button></div>
       </div>
       <div id="sss-dna-area" style="display:none;">
         <div style="padding:14px;background:#fff8e1;border:1px solid #f0d060;border-radius:8px;margin-bottom:14px;">
@@ -19141,7 +19141,7 @@ table thead th.v63-name-title,
   function statusKey(p){try{return typeof patientRegisterStatus==='function'?patientRegisterStatus(p):String(p.followup_status||p.patient_status_raw||'active').toLowerCase();}catch(e){return 'active';}}
   function isClosed(p){return /deceased|reversed|relocated/.test(statusKey(p));}
   function isAwaitingSiting(p){return String(p.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_').includes('awaiting_surgery')||String(p.patient_status_raw||'').toLowerCase().includes('awaiting');}
-  function openBtn(p){const aw=isAwaitingSiting(p);return '<div class="home-card-actions"><button class="ncb-btn '+(aw?'btn-add':'patient-interface-button')+'" '+(aw?'style="background:#0d7377;color:#fff;"':'')+' onclick="'+(aw?'openStomaSittingSession(\''+esc(p.id)+'\')':'openPatientInterface(\''+esc(p.id)+'\')')+'">'+(aw?'Open Sitting Session':'Open')+'</button></div>';}
+  function openBtn(p){const aw=isAwaitingSiting(p);return '<div class="home-card-actions"><button class="ncb-btn '+(aw?'btn-sitting':'patient-interface-button')+'" onclick="'+(aw?'openStomaSittingSession(\''+esc(p.id)+'\')':'openPatientInterface(\''+esc(p.id)+'\')')+'">'+(aw?'Open Sitting Session':'Open')+'</button></div>';}
   function opRow(p,meta){return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOf(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+openBtn(p)+'</div>';}
   function section(title,icon,items){return '<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.slice(0,8).join('')+(items.length>8?'<div class="surgery-watch-note">Showing first 8 of '+items.length+'.</div>':'')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';}
   async function renderOperationsToday(){
@@ -19815,7 +19815,7 @@ table thead th.v63-name-title,
     if(h3)h3.textContent=heading;
     const actions=document.getElementById('postop-review-actions');
     if(actions){
-      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="confirmPostOperativeDailyReview()" style="background:#e6a817;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
+      actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-warn" onclick="confirmPostOperativeDailyReview()">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-return" onclick="closePostOperativeEpisode()">Close Episode</button>';
     }
     const note=document.getElementById('postop-review-note');
     if(note){
@@ -20182,7 +20182,7 @@ table thead th.v63-name-title,
           const rawType=String(fullPat.inpatient_type||'').toLowerCase().replace(/[\s-]+/g,'_');
           const rawStatus=String(fullPat.patient_status_raw||'').toLowerCase();
           const isAwaitingSiting=rawType.includes('awaiting')||rawStatus.includes('awaiting');
-          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-add" style="background:#0d7377;color:#fff;" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Open Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
+          const actionBtn=pid?(isAwaitingSiting?'<div class="home-card-actions"><button class="ncb-btn btn-sitting" onclick="openStomaSittingSession(\''+esc(pid)+'\')">Open Sitting Session</button></div>':'<div class="home-card-actions"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+esc(pid)+'\')">Open</button></div>'):'';
           return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(x.name||nm(fullPat))+'<span class="v84-appt-status-pill '+esc(x.status||'')+'">'+esc(String(x.status||'booked').replace(/_/g,' '))+'</span></div><div class="v78-ops-meta">'+time+' · ID '+id+(isAwaitingSiting?' · Sitting session':'')+'</div></div>'+actionBtn+'</div>';
         });
       }catch(e){followRows=[];}
@@ -20276,7 +20276,7 @@ table thead th.v63-name-title,
   }
   function updateActions(){
     const a=q('#postop-review-actions');
-    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="try{confirmPostOperativeDailyReview()}catch(e){}" style="background:#e6a817;color:#111827;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-save" onclick="patientDischargePostOperativeEpisode()" style="background:#b91c1c;color:white;">Patient Discharge</button>';
+    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-warn" onclick="try{confirmPostOperativeDailyReview()}catch(e){}">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-danger" onclick="patientDischargePostOperativeEpisode()">Patient Discharge</button>';
     const n=q('#postop-review-note'); if(n)n.innerHTML=editSource?'Editing <b>'+safe(editSource.code)+'</b>. Changes are shown in red and save as a new encounter version.':'Complete Daily Review. Saving returns to Home.';
   }
   function markRed(){
@@ -20490,20 +20490,217 @@ table thead th.v63-name-title,
     try{
       if(typeof isAwaitingSurgeryPatient==='function'&&isAwaitingSurgeryPatient(p)){
         if(hasSittingSessionRecord(p)){
-          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#0d7377;color:#fff;font-weight:700;white-space:nowrap;" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open 1st Post-Op Review</button></div>';
+          return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn btn-postop" onclick="openClinicalRecordForPatient(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open 1st Post-Op Review</button></div>';
         }
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn" style="background:#e6a817;color:#111827;font-weight:700;white-space:nowrap;" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn btn-sitting" onclick="openStomaSittingSession(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Stoma Sitting Session</button></div>';
       }
       if(typeof inpatientCategory==='function'&&inpatientCategory(p)==='inpatient'){
-        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Open Sitting Session</button></div>';
+        return '<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open</button></div>';
       }
     }catch(e){}
-    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" style="white-space:nowrap;background:#0d7377;color:white;">Patient Interface</button></div>';
+    return prev?prev(p):'<div class="followup-actions" onclick="event.stopPropagation();"><button class="ncb-btn patient-interface-button" onclick="openPatientInterface(\''+String(p.id||'').replace(/'/g,"\\'")+'\')" >Open Patient</button></div>';
   };
   window.patientRegisterEditAction=patientRegisterEditAction;
   try{renderPatientsList&&renderPatientsList();}catch(e){}
 })();
 </script>
 <!-- /fix/inpatient-registry-awaiting-sitting-button -->
+
+<!-- btn-system — Unified button system -->
+<style id="btn-system">
+/*
+  BUTTON SYSTEM
+  ─────────────────────────────────────────────────────────────────────────────
+  Role            Class                    Colour          Use
+  ─────────────────────────────────────────────────────────────────────────────
+  Primary save    .btn-save / .btn-add     Teal            Save, Add, Book
+  Secondary       .btn-cancel              Slate           Back, Cancel, Close
+  Nav return      .btn-return              Navy            ← Return to page
+  Warning/confirm .btn-warn                Amber/gold      Confirm, Post-op
+  Danger          .btn-danger              Red             Delete, Discharge
+  ─────────────────────────────────────────────────────────────────────────────
+  Small (ncb)     .ncb-btn                 Slate bg        Inline row actions
+  Seen/attended   .ncb-attended            Green           Mark attended
+  DNA/DNTU        .ncb-dna                 Amber           Did not attend
+  Cancel appt     .ncb-cancel / .ncb-del   Red             Cancel / Delete
+  ─────────────────────────────────────────────────────────────────────────────
+  Patient open    .patient-interface-btn   Navy            Open patient record
+  History         .ncb-history             Slate border    View history
+  Episode open    .add-encounter-button    Forest green    Add encounter
+  Awaiting surg.  .awaiting-surgery-button Amber           Awaiting surgery
+  Sitting session .btn-sitting             Teal            Open sitting session
+  Post-Op review  .btn-postop              Gold            Input post-op review
+  ─────────────────────────────────────────────────────────────────────────────
+  Daily reviewed  .v86-review-ready        Green           Already reviewed today
+  Review pending  .v86-input-review-button Gold            Input today's review
+  View review     .v86-reviewed-button     Navy            View saved review
+  Inactive state  .v86-muted-action        Slate           No action available
+*/
+
+/* ── Base large buttons ─────────────────────────────────────────── */
+.btn-save, .btn-add {
+  background: var(--teal) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.btn-save:hover, .btn-add:hover { opacity: .88 !important; }
+
+.btn-cancel {
+  background: #f0f2f5 !important;
+  color: #1a2e4a !important;
+  border: 1px solid #d0d5dd !important;
+}
+.btn-cancel:hover { background: #e4e7ec !important; }
+
+.btn-return {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.btn-return:hover { opacity: .88 !important; }
+
+/* Warning / confirm actions (Confirm step, post-op save) */
+.btn-warn {
+  flex: 1;
+  padding: 10px;
+  background: #e6a817 !important;
+  color: #111827 !important;
+  border: none !important;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.btn-warn:hover { opacity: .88 !important; }
+
+/* Danger / destructive */
+.btn-danger {
+  flex: 1;
+  padding: 10px;
+  background: #b91c1c !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.btn-danger:hover { opacity: .88 !important; }
+
+/* ── Small inline (ncb) row buttons ────────────────────────────── */
+.ncb-attended {
+  background: #166534 !important;
+  color: #fff !important;
+  border: 1px solid #14532d !important;
+}
+.ncb-dna {
+  background: #d97706 !important;
+  color: #fff !important;
+  border: 1px solid #92400e !important;
+}
+.ncb-cancel, .ncb-del {
+  background: #b91c1c !important;
+  color: #fff !important;
+  border: 1px solid #7f1d1d !important;
+}
+
+/* ── Semantic action buttons ────────────────────────────────────── */
+/* Open patient interface — navy, clear intent */
+.patient-interface-button,
+.ncb-btn.patient-interface-button {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border: none !important;
+  white-space: nowrap;
+}
+.patient-interface-button:hover { opacity: .88 !important; }
+
+/* View history — subtle slate, low priority */
+.registry-history-button,
+.ncb-history {
+  background: #f1f5f9 !important;
+  color: #1a2e4a !important;
+  border: 1.5px solid #9fb0c3 !important;
+  font-weight: 900 !important;
+}
+.registry-history-button:hover, .ncb-history:hover {
+  background: #dbeafe !important;
+  border-color: var(--navy) !important;
+}
+
+/* Add encounter — forest green, positive forward action */
+.add-encounter-button {
+  background: #166534 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.add-encounter-button:hover { opacity: .88 !important; }
+
+/* Awaiting surgery badge-button — amber */
+.awaiting-surgery-button {
+  background: #d97706 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.awaiting-surgery-button:hover { opacity: .88 !important; }
+
+/* Open sitting session — teal, primary pathway action */
+.btn-sitting,
+.ncb-btn.btn-sitting {
+  background: var(--teal) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+.btn-sitting:hover { opacity: .88 !important; }
+
+/* Open 1st Post-Op Review — teal (same weight as sitting) */
+.btn-postop,
+.ncb-btn.btn-postop {
+  background: var(--teal) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+.btn-postop:hover { opacity: .88 !important; }
+
+/* ── Daily review state buttons ────────────────────────────────── */
+/* Input pending — gold, needs attention */
+.v86-input-review-button {
+  background: #e6a817 !important;
+  color: #111827 !important;
+  border: 1px solid #92400e !important;
+}
+/* Input done for today — green */
+.v86-review-ready {
+  background: #166534 !important;
+  color: #fff !important;
+  border: 1px solid #14532d !important;
+}
+/* View saved review — navy */
+.v86-reviewed-button {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border: 1px solid #0f1f33 !important;
+}
+/* Disabled/inactive — muted slate */
+.v86-muted-action {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid #cbd5e1 !important;
+  cursor: default !important;
+}
+
+/* ── Continue-episode urgency colours (keep existing logic) ─────── */
+.continue-episode-button { color: #10243d !important; font-weight: 900 !important; }
+.continue-episode-button.episode-red  { background: #ef4444 !important; color: #fff !important; }
+.continue-episode-button.episode-amber { background: #d97706 !important; color: #fff !important; }
+.continue-episode-button.episode-lime { background: #65a30d !important; color: #fff !important; }
+</style>
+<!-- /btn-system -->
 </body>
 </html>
