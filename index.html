@@ -19805,10 +19805,14 @@ table thead th.v63-name-title,
     const routeEl=document.getElementById('np-admission-route');if(routeEl)routeEl.value=p?.admission_route||'Emergency surgery';
   }
   function updateDailyReviewHeader(){
+    // First encounter after surgery is the Post-Op Review; subsequent encounters are Daily Reviews.
+    const rp=window.postOperativeReviewPatient||((typeof postOperativeReviewPatient!=='undefined')?postOperativeReviewPatient:null);
+    const isFirst=rp?!hasAnyDailyReview(rp):false;
+    const heading=dailyReviewMode==='edit'?'Edit Daily Review':(isFirst?'Post Operative Review':'Post Operative Daily Review');
     const title=document.querySelector('#page-admission-emergency-daily-review .phdr h2');
-    if(title)title.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
+    if(title)title.textContent=heading;
     const h3=document.querySelector('#page-admission-emergency-daily-review .route-page-card h3');
-    if(h3)h3.textContent=dailyReviewMode==='edit'?'Edit Daily Review':'Post Operative Daily Review';
+    if(h3)h3.textContent=heading;
     const actions=document.getElementById('postop-review-actions');
     if(actions){
       actions.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-save" onclick="confirmPostOperativeDailyReview()" style="background:#e6a817;">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save and Close Encounter</button><button class="btn-save" onclick="closePostOperativeEpisode()" style="background:#1a2e4a;">Close Episode</button>';
@@ -19933,8 +19937,10 @@ table thead th.v63-name-title,
     const id=esc(p.id||'');
     const d=esc(validDate(date)||today());
     const inputClass=latest?'v86-review-ready':'v86-input-review-button';
+    // First encounter after surgery is the Post-Op Review; subsequent encounters are Daily Reviews.
+    const inputLabel=hasAnyDailyReview(p)?'Input Daily Review':'Input Post-Op Review';
     const reviewed=latest?'<button class="ncb-btn v86-reviewed-button" onclick="openTodaysReviewPage(\''+id+'\',\''+d+'\')">Reviewed</button>':'';
-    return '<div class="home-card-actions"><button class="ncb-btn '+inputClass+'" onclick="openPatientDailyReviewFromPatientsReview(\''+id+'\',\''+d+'\')">Input Daily Review</button>'+reviewed+'</div>';
+    return '<div class="home-card-actions"><button class="ncb-btn '+inputClass+'" onclick="openPatientDailyReviewFromPatientsReview(\''+id+'\',\''+d+'\')">'+inputLabel+'</button>'+reviewed+'</div>';
   }
 
   function ensureTodaysReviewPage(){
@@ -20045,7 +20051,7 @@ table thead th.v63-name-title,
       if(!nonWorking){const pts=typeof getPatients==='function'?await getPatients():[];inRows=(pts||[]).filter(function(p){let st='';try{st=typeof patientRegisterStatus==='function'?patientRegisterStatus(p):String(p.followup_status||p.patient_status_raw||'').toLowerCase();}catch(e){}return !/deceased|reversed|relocated/.test(st)&&st==='inpatient';}).sort((a,b)=>nameOfPatient(a).localeCompare(nameOfPatient(b))).map(function(p){const meta='ID '+esc(p.id_card||'—')+' · '+esc(p.inpatient_type||'Inpatient')+' · Planned '+dateText(p.planned_surgery_date);return '<div class="v78-ops-row"><div><div class="v78-ops-name">'+esc(nameOfPatient(p))+'</div><div class="v78-ops-meta">'+meta+'</div></div>'+reviewButtonsForPatient(p,d)+'</div>';});}
       function sec(title,icon,items){return '<div class="v78-ops-section"><div class="v78-ops-section-head"><div class="v78-ops-title"><span class="v78-ops-icon">'+esc(icon)+'</span>'+esc(title)+'</div><span class="v78-ops-count">'+items.length+'</span></div>'+(items.length?'<div class="v78-ops-list">'+items.slice(0,8).join('')+(items.length>8?'<div class="surgery-watch-note">Showing first 8 of '+items.length+'.</div>':'')+'</div>':'<div class="v78-ops-empty">No patients in this group for the selected date.</div>')+'</div>';}
       const note=nonWorking?'<div class="v84-nonworking-note">Non-working day: ward review list is hidden; showing follow-up appointments only.</div>':'';
-      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Today\'s Follow-ups','✓',followRows)+'</div><div class="diary-note">Use Input Daily Review for ward Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
+      body.innerHTML=note+'<div class="v78-ops-grid">'+(nonWorking?'':sec('Patients for Ward Review','▣',inRows))+sec('Today\'s Follow-ups','✓',followRows)+'</div><div class="diary-note">The first review after surgery is the Post-Op Review; subsequent reviews are Daily Reviews. After saving, the button changes colour and Reviewed opens Today\'s Review.</div>';
     }catch(err){body.innerHTML='<div class="home-empty">Could not load Patients Review: '+esc(err?.message||err)+'</div>';}
   }
   window.v84RenderPatientsReview=renderPatientsReviewV86;window.v82RenderPatientsReview=renderPatientsReviewV86;window.v78RenderOperationsToday=renderPatientsReviewV86;
