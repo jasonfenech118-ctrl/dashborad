@@ -5424,6 +5424,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
       </div>
     </div>
     <button type="button" class="tab tab-single" data-tab="account" onclick="switchTab('account',this)"><span class="tab-pic" aria-hidden="true">⚙</span><span class="tab-title">Account</span></button>
+    <button type="button" class="tab tab-single" data-tab="pages" onclick="switchTab('pages',this)"><span class="tab-pic" aria-hidden="true">⊞</span><span class="tab-title">Pages</span></button>
   </div>
 
   <div class="main">
@@ -6402,6 +6403,216 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
 
 
 
+
+    <!-- PAGES SHORTCUT PANEL -->
+    <div class="page" id="page-pages">
+      <div class="pages-shell">
+        <div class="pages-hero">
+          <div>
+            <div class="pages-title">Pages</div>
+            <div class="pages-sub">Click any card to open that form or page directly — no need to navigate through the full patient journey.</div>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Patient Admission</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('admission-route-menu',document.querySelector('[data-tab=&quot;admission-route-menu&quot;]'))">
+              <span class="pages-card-icon">＋</span>
+              <span class="pages-card-label">Admission Route Menu</span>
+              <span class="pages-card-sub">Choose elective, emergency, etc.</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('new-patient',null)">
+              <span class="pages-card-icon">✎</span>
+              <span class="pages-card-label">New Patient Form</span>
+              <span class="pages-card-sub">Demographics, history, DPA</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-elective',null)">
+              <span class="pages-card-icon">◷</span>
+              <span class="pages-card-label">Elective Surgery</span>
+              <span class="pages-card-sub">Planned elective pathway</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-emergency',null)">
+              <span class="pages-card-icon">!</span>
+              <span class="pages-card-label">Emergency Surgery</span>
+              <span class="pages-card-sub">Emergency admission form</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-fistula',null)">
+              <span class="pages-card-icon">⊕</span>
+              <span class="pages-card-label">Fistula / Wound</span>
+              <span class="pages-card-sub">Fistula / wound management</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-outside-mdh',null)">
+              <span class="pages-card-icon">⇢</span>
+              <span class="pages-card-label">Outside MDH</span>
+              <span class="pages-card-sub">Ostomy formed elsewhere</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-review',null)">
+              <span class="pages-card-icon">✓</span>
+              <span class="pages-card-label">Admission Review</span>
+              <span class="pages-card-sub">Review before saving</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Inpatient Workflow</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('stoma-sitting-session',document.querySelector('[data-tab=&quot;stoma-sitting-session&quot;]'))">
+              <span class="pages-card-icon">▣</span>
+              <span class="pages-card-label">Stoma Sitting Session</span>
+              <span class="pages-card-sub">Pre-op checklist + attendance</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('admission-emergency-daily-review',null)">
+              <span class="pages-card-icon">R</span>
+              <span class="pages-card-label">Post-Op / Daily Review</span>
+              <span class="pages-card-sub">Daily encounter form (Days 1–7)</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){const p=window.stomaSittingPatient||null;if(p)openStomaSittingBookingCard(p.planned_surgery_date||(typeof TODAY!=='undefined'?TODAY:new Date().toISOString().slice(0,10)));else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a patient\'s Stoma Sitting Session first, then return here to preview this modal.</div>';openMo();}})()">
+              <span class="pages-card-icon">⊞</span>
+              <span class="pages-card-label">Book Sitting Slot <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Nurse column + time slot picker</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){if(typeof openGenericEncounterModal==='function'){const pid=(window.patientInterfacePatient||window.stomaSittingPatient||{}).id;if(pid)openGenericEncounterModal(pid,'postop_stoma_review');else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first, then return here.</div>';openMo();}}})()">
+              <span class="pages-card-icon">✚</span>
+              <span class="pages-card-label">Generic Encounter <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Post-op stoma review encounter</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openClinicalRecordForPatient==='function')openClinicalRecordForPatient(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first, then return here.</div>';openMo();}})()">
+              <span class="pages-card-icon">⊙</span>
+              <span class="pages-card-label">Clinical Operative Record <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Surgery record + post-op date</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Patient Records</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('patients-all',document.querySelector('[data-tab=&quot;patients-all&quot;]'))">
+              <span class="pages-card-icon">☷</span>
+              <span class="pages-card-label">All Patients</span>
+              <span class="pages-card-sub">Full patient register</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('patients-inpatients',document.querySelector('[data-tab=&quot;patients-inpatients&quot;]'))">
+              <span class="pages-card-icon">▣</span>
+              <span class="pages-card-label">Inpatients</span>
+              <span class="pages-card-sub">Ward + awaiting surgery</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('patients-active',document.querySelector('[data-tab=&quot;patients-active&quot;]'))">
+              <span class="pages-card-icon">✓</span>
+              <span class="pages-card-label">Active Patients</span>
+              <span class="pages-card-sub">Follow-up register</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openPatientInterface==='function')openPatientInterface(pid);else{if(typeof openPatientInterface==='function')switchTab('patients-all',document.querySelector('[data-tab=&quot;patients-all&quot;]'));else alert('Navigate to a patient first.');}})()">
+              <span class="pages-card-icon">☑</span>
+              <span class="pages-card-label">Patient Interface</span>
+              <span class="pages-card-sub">Re-open last viewed patient</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openFollowupHistory==='function')openFollowupHistory(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first.</div>';openMo();}})()">
+              <span class="pages-card-icon">≣</span>
+              <span class="pages-card-label">Follow-up History <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Patient appointment history</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openPatientRebookModal==='function')openPatientRebookModal(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first.</div>';openMo();}})()">
+              <span class="pages-card-icon">↻</span>
+              <span class="pages-card-label">Rebook Patient <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Book a new appointment</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Appointments &amp; Outcomes</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('appointments',document.querySelector('[data-tab=&quot;appointments&quot;]'))">
+              <span class="pages-card-icon">◷</span>
+              <span class="pages-card-label">Appointments</span>
+              <span class="pages-card-sub">Slot grid + booking</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('dntu-policy',document.querySelector('[data-tab=&quot;dntu-policy&quot;]'))">
+              <span class="pages-card-icon">!</span>
+              <span class="pages-card-label">DNTU Tracking</span>
+              <span class="pages-card-sub">Missed attendance review</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('clinic-audit',document.querySelector('[data-tab=&quot;clinic-audit&quot;]'))">
+              <span class="pages-card-icon">□</span>
+              <span class="pages-card-label">Clinical Calendar</span>
+              <span class="pages-card-sub">Calendar day view</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('follow-up-seen-review',null)">
+              <span class="pages-card-icon">✓</span>
+              <span class="pages-card-label">Follow-up Seen Review</span>
+              <span class="pages-card-sub">Record seen appointment</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('cancel-appointment',null)">
+              <span class="pages-card-icon">✕</span>
+              <span class="pages-card-label">Cancel Appointment</span>
+              <span class="pages-card-sub">Cancel &amp; reason form</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Staffing &amp; Diary</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('roster',document.querySelector('[data-tab=&quot;roster&quot;]'))">
+              <span class="pages-card-icon">▥</span>
+              <span class="pages-card-label">Monthly Roster</span>
+              <span class="pages-card-sub">Nurse scheduling</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('cod',document.querySelector('[data-tab=&quot;cod&quot;]'))">
+              <span class="pages-card-icon">⇄</span>
+              <span class="pages-card-label">Change of Duty</span>
+              <span class="pages-card-sub">Shift swaps</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('daily-diary',document.querySelector('[data-tab=&quot;daily-diary&quot;]'))">
+              <span class="pages-card-icon">▤</span>
+              <span class="pages-card-label">Patients Diary</span>
+              <span class="pages-card-sub">Ward reviews, calls, notes</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('staff-audit',document.querySelector('[data-tab=&quot;staff-audit&quot;]'))">
+              <span class="pages-card-icon">↻</span>
+              <span class="pages-card-label">Follow-up Planning</span>
+              <span class="pages-card-sub">Owner assignment</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">Reports</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('reports',document.querySelector('[data-tab=&quot;reports&quot;]'))">
+              <span class="pages-card-icon">◫</span>
+              <span class="pages-card-label">Dashboard Report</span>
+              <span class="pages-card-sub">KPIs &amp; charts</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('ot-audit',document.querySelector('[data-tab=&quot;ot-audit&quot;]'))">
+              <span class="pages-card-icon">⏱</span>
+              <span class="pages-card-label">Over Time Report</span>
+              <span class="pages-card-sub">OT hours</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('audit-trail',document.querySelector('[data-tab=&quot;audit-trail&quot;]'))">
+              <span class="pages-card-icon">≣</span>
+              <span class="pages-card-label">Audit Trail</span>
+              <span class="pages-card-sub">Change log</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('report-patients',document.querySelector('[data-tab=&quot;report-patients&quot;]'))">
+              <span class="pages-card-icon">☷</span>
+              <span class="pages-card-label">Patients Report</span>
+              <span class="pages-card-sub">Booked period</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('report-followups',document.querySelector('[data-tab=&quot;report-followups&quot;]'))">
+              <span class="pages-card-icon">↻</span>
+              <span class="pages-card-label">Follow-Up Report</span>
+              <span class="pages-card-sub">Due lists</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /PAGES SHORTCUT PANEL -->
 
     <!-- ACCOUNT -->
     <div class="page" id="page-account">
@@ -20710,5 +20921,28 @@ table thead th.v63-name-title,
 .continue-episode-button.episode-lime { background: #65a30d !important; color: #fff !important; }
 </style>
 <!-- /btn-system -->
+
+<!-- pages-panel styles -->
+<style id="pages-panel-styles">
+.pages-shell{max-width:1100px;margin:0 auto;padding:24px 20px 40px;}
+.pages-hero{margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.pages-title{font-size:22px;font-weight:1000;color:var(--navy);letter-spacing:-.3px;}
+.pages-sub{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600;line-height:1.5;}
+.pages-group{margin-bottom:28px;}
+.pages-group-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.pages-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.pages-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:14px 14px 12px;background:#fff;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s,transform .1s;font-family:'Inter',sans-serif;}
+.pages-card:hover{border-color:var(--teal);box-shadow:0 3px 12px rgba(13,115,119,.13);transform:translateY(-1px);}
+.pages-card:active{transform:translateY(0);}
+.pages-card-icon{font-size:18px;line-height:1;margin-bottom:4px;color:var(--teal);}
+.pages-card-label{font-size:12px;font-weight:800;color:var(--navy);line-height:1.3;}
+.pages-card-sub{font-size:10px;color:var(--muted);font-weight:600;line-height:1.4;}
+.pages-card-modal{border-style:dashed;}
+.pages-card-modal:hover{border-style:solid;}
+.pages-modal-badge{display:inline-block;background:#e8f5f4;color:var(--teal);border:1px solid #b7ddd9;border-radius:4px;font-size:8px;font-weight:900;padding:1px 4px;text-transform:uppercase;letter-spacing:.4px;vertical-align:middle;margin-left:4px;}
+@media(max-width:600px){.pages-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+.pages-shell{padding:16px 12px 32px;}}
+</style>
+<!-- /pages-panel styles -->
 </body>
 </html>
