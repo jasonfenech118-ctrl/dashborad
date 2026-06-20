@@ -44,6 +44,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .topbar .btn-so:active{transform:translateY(1px);}
 .topbar .btn-refresh-top,.btn-refresh-top{background:#faf3b0 !important;color:#5c4d00 !important;}
 .topbar .btn-refresh-top:hover,.btn-refresh-top:hover{background:#f5ec8e !important;}
+/* Make Global patient search fill the full width of the home hero */
+#page-home .home-hero{grid-template-columns:1fr !important;}
+#page-home .home-search-panel{grid-column:1 / -1 !important;width:100% !important;padding:18px 20px !important;}
+#page-home .home-search-title{font-size:14px !important;}
+#page-home .home-search-row input{padding:14px 16px !important;font-size:16px !important;}
+#page-home .home-search-row button{padding:14px 24px !important;font-size:14px !important;}
 .tb-date{font-size:12px;color:rgba(255,255,255,.55);margin-left:16px;}
 .btn-so{padding:6px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:rgba(255,255,255,.75);background:none;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
 .btn-so:hover{background:rgba(255,255,255,.1);}
