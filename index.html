@@ -14181,13 +14181,13 @@ function renderStomaSittingSession(){
       <div id="sss-dna-area" style="display:none;">
         <div style="padding:14px;background:#fff8e1;border:1px solid #f0d060;border-radius:8px;margin-bottom:14px;">
           <p style="margin:0 0 10px;font-size:12px;color:#856404;font-weight:600;">Patient did not attend. Please select a reschedule date and book a new slot.</p>
-          <div class="fg" style="max-width:240px;"><label style="font-size:11px;font-weight:700;">Reschedule Date</label><input type="date" id="sss-reschedule-date" min="${TODAY}" style="margin-top:4px;"/></div>
+          <div class="fg" style="max-width:240px;"><label style="font-size:11px;font-weight:700;">Reschedule Date</label><input type="date" id="sss-reschedule-date" min="${TODAY}" style="margin-top:4px;" onchange="handleRescheduleDateChange(this.value)"/></div>
         </div>
         <div id="sss-dna-note" class="pi-confirm-note"></div>
         <div class="stoma-sitting-actions">
           <button class="btn-cancel" onclick="returnFromStomaSittingSession()">Back</button>
           <button class="btn-save" onclick="cancelSittingSessionOnly()" style="background:#6b7280;">Cancel Sitting</button>
-          <button class="btn-save" onclick="cancelAndRescheduleSittingSession()" style="background:#dc2626;">Cancel &amp; Reschedule</button>
+          <button class="btn-save" onclick="cancelAndRescheduleSittingSession()">Save &amp; Reschedule</button>
         </div>
       </div>
     </div>`;
@@ -14285,6 +14285,11 @@ function handleSittingAttendance(){
   if(!checklist||!dna)return;
   if(val==='no'){checklist.style.display='none';dna.style.display='';}
   else{checklist.style.display='';dna.style.display='none';}
+}
+async function handleRescheduleDateChange(date){
+  if(!date||!stomaSittingPatient)return;
+  // Open the slot booking modal immediately so the nurse can pick a time slot.
+  await openStomaSittingBookingCard(date);
 }
 async function cancelSittingSessionOnly(){
   const p=stomaSittingPatient;
