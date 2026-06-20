@@ -20495,7 +20495,7 @@ table thead th.v63-name-title,
   }
   function updateActions(){
     const a=q('#postop-review-actions');
-    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-warn" onclick="try{confirmPostOperativeDailyReview()}catch(e){}">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button><button class="btn-danger" onclick="patientDischargePostOperativeEpisode()">Patient Discharge</button>';
+    if(a)a.innerHTML='<button class="btn-cancel" onclick="returnFromPostOperativeDailyReview()">Back Home</button><button class="btn-warn" onclick="try{confirmPostOperativeDailyReview()}catch(e){}">Confirm</button><button class="btn-save" onclick="savePostOperativeEncounter()">Save Encounter</button>';
     const n=q('#postop-review-note'); if(n)n.innerHTML=editSource?'Editing <b>'+safe(editSource.code)+'</b>. Changes are shown in red and save as a new encounter version.':'Complete Daily Review. Saving returns to Home.';
   }
   function markRed(){
