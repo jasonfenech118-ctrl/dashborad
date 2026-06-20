@@ -6458,27 +6458,27 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
         <div class="pages-group">
           <div class="pages-group-title">Inpatient Workflow</div>
           <div class="pages-grid">
-            <button class="pages-card" onclick="switchTab('stoma-sitting-session',document.querySelector('[data-tab=&quot;stoma-sitting-session&quot;]'))">
+            <button class="pages-card" onclick="pagesOpen('sitting-session')">
               <span class="pages-card-icon">▣</span>
               <span class="pages-card-label">Stoma Sitting Session</span>
               <span class="pages-card-sub">Pre-op checklist + attendance</span>
             </button>
-            <button class="pages-card" onclick="switchTab('admission-emergency-daily-review',null)">
+            <button class="pages-card" onclick="pagesOpen('daily-review')">
               <span class="pages-card-icon">R</span>
               <span class="pages-card-label">Post-Op / Daily Review</span>
               <span class="pages-card-sub">Daily encounter form (Days 1–7)</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){const p=window.stomaSittingPatient||null;if(p)openStomaSittingBookingCard(p.planned_surgery_date||(typeof TODAY!=='undefined'?TODAY:new Date().toISOString().slice(0,10)));else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a patient\'s Stoma Sitting Session first, then return here to preview this modal.</div>';openMo();}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('book-slot')">
               <span class="pages-card-icon">⊞</span>
               <span class="pages-card-label">Book Sitting Slot <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Nurse column + time slot picker</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){if(typeof openGenericEncounterModal==='function'){const pid=(window.patientInterfacePatient||window.stomaSittingPatient||{}).id;if(pid)openGenericEncounterModal(pid,'postop_stoma_review');else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first, then return here.</div>';openMo();}}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('generic-encounter')">
               <span class="pages-card-icon">✚</span>
               <span class="pages-card-label">Generic Encounter <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Post-op stoma review encounter</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openClinicalRecordForPatient==='function')openClinicalRecordForPatient(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first, then return here.</div>';openMo();}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('clinical-record')">
               <span class="pages-card-icon">⊙</span>
               <span class="pages-card-label">Clinical Operative Record <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Surgery record + post-op date</span>
@@ -6504,17 +6504,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-label">Active Patients</span>
               <span class="pages-card-sub">Follow-up register</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openPatientInterface==='function')openPatientInterface(pid);else{if(typeof openPatientInterface==='function')switchTab('patients-all',document.querySelector('[data-tab=&quot;patients-all&quot;]'));else alert('Navigate to a patient first.');}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('patient-interface')">
               <span class="pages-card-icon">☑</span>
               <span class="pages-card-label">Patient Interface</span>
-              <span class="pages-card-sub">Re-open last viewed patient</span>
+              <span class="pages-card-sub">Opens a sample patient record</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openFollowupHistory==='function')openFollowupHistory(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first.</div>';openMo();}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('followup-history')">
               <span class="pages-card-icon">≣</span>
               <span class="pages-card-label">Follow-up History <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Patient appointment history</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="(function(){const pid=(window.patientInterfacePatient||{}).id;if(pid&&typeof openPatientRebookModal==='function')openPatientRebookModal(pid);else{document.getElementById('mb').innerHTML='<div style=\'padding:20px;text-align:center;color:#856404;\'>Open a Patient Interface first.</div>';openMo();}})()">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('rebook')">
               <span class="pages-card-icon">↻</span>
               <span class="pages-card-label">Rebook Patient <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Book a new appointment</span>
@@ -6540,12 +6540,12 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-label">Clinical Calendar</span>
               <span class="pages-card-sub">Calendar day view</span>
             </button>
-            <button class="pages-card" onclick="switchTab('follow-up-seen-review',null)">
+            <button class="pages-card" onclick="pagesOpen('seen-review')">
               <span class="pages-card-icon">✓</span>
               <span class="pages-card-label">Follow-up Seen Review</span>
               <span class="pages-card-sub">Record seen appointment</span>
             </button>
-            <button class="pages-card" onclick="switchTab('cancel-appointment',null)">
+            <button class="pages-card" onclick="pagesOpen('cancel-appt')">
               <span class="pages-card-icon">✕</span>
               <span class="pages-card-label">Cancel Appointment</span>
               <span class="pages-card-sub">Cancel &amp; reason form</span>
@@ -20944,5 +20944,53 @@ table thead th.v63-name-title,
 .pages-shell{padding:16px 12px 32px;}}
 </style>
 <!-- /pages-panel styles -->
+
+<!-- pages-preview helpers -->
+<script id="pages-preview-helpers">
+(function(){
+  async function previewPatient(){
+    const sel=(window.patientInterfacePatient||window.stomaSittingPatient||window.postOperativeReviewPatient||{});
+    if(sel&&sel.id)return sel;
+    try{if(window.homeDashboardCache&&homeDashboardCache.patients&&homeDashboardCache.patients.length)return homeDashboardCache.patients[0];}catch(e){}
+    try{if(typeof homeLoadPatients==='function'){const ps=await homeLoadPatients();if(ps&&ps.length)return ps[0];}}catch(e){}
+    try{if(typeof SB!=='undefined'){const r=await SB.from('patients').select('*').limit(1);if(r.data&&r.data.length)return r.data[0];}}catch(e){}
+    return null;
+  }
+  async function previewAppointment(){
+    try{if(typeof SB!=='undefined'){const r=await SB.from('appointments').select('*').order('appt_date',{ascending:false}).limit(1);if(r.data&&r.data.length)return r.data[0];}}catch(e){}
+    return null;
+  }
+  function emptyMsg(msg){try{document.getElementById('mb').innerHTML='<div style="padding:24px;text-align:center;color:#856404;font-weight:600;line-height:1.5;">'+msg+'</div>';openMo();}catch(e){alert(msg);}}
+  window.pagesOpen=function(kind){
+    (async function(){
+      try{
+        if(kind==='seen-review'||kind==='cancel-appt'){
+          const a=await previewAppointment();
+          if(!a||!a.id){emptyMsg('No appointment records exist yet. Book an appointment first to preview this page.');return;}
+          if(kind==='seen-review')return openFollowupSeenReviewPage(a.id);
+          if(kind==='cancel-appt')return openCancelAppointmentPage(a.id);
+          return;
+        }
+        const p=await previewPatient();
+        if(!p||!p.id){emptyMsg('No patient records exist yet. Add a patient first to preview this form with data.');return;}
+        const id=p.id;
+        switch(kind){
+          case 'patient-interface': return openPatientInterface(id);
+          case 'sitting-session': return openStomaSittingSession(id);
+          case 'daily-review': return (window.openPostOperativeDailyReviewFromPatient||openPostOperativeDailyReviewFromPatient)(id,true);
+          case 'generic-encounter': return openGenericEncounterModal(id,'postop_stoma_review');
+          case 'clinical-record': return openClinicalRecordForPatient(id);
+          case 'followup-history': return openFollowupHistory(id);
+          case 'rebook': return openPatientRebookModal(id);
+          case 'book-slot':
+            window.stomaSittingPatient=p;try{stomaSittingPatient=p;}catch(e){}
+            return openStomaSittingBookingCard(p.planned_surgery_date||(typeof TODAY!=='undefined'?TODAY:new Date().toISOString().slice(0,10)));
+        }
+      }catch(err){alert('Could not open preview: '+(err&&err.message||err));}
+    })();
+  };
+})();
+</script>
+<!-- /pages-preview helpers -->
 </body>
 </html>
