@@ -5826,6 +5826,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     </div>
 
 
+    <!-- DAILY STOMA REVIEW PAGE -->
+    <div class="page" id="page-daily-stoma-review">
+      <div class="phdr">
+        <div><h2>Daily Stoma Review</h2><p>Record the daily stoma review encounter.</p></div>
+        <button class="btn-add btn-return" onclick="returnFromDailyStormaReview()">← Return</button>
+      </div>
+      <div id="daily-stoma-review-body" class="followup-seen-page-shell">
+        <div class="card"><div class="empty">Select a patient to open a Daily Stoma Review.</div></div>
+      </div>
+    </div>
+
     <!-- CANCEL APPOINTMENT PAGE -->
     <div class="page" id="page-cancel-appointment">
       <div class="phdr">
@@ -21166,5 +21177,205 @@ window.openGenericEncounterModal=async function(patientId,type='followup_review'
 })();
 </script>
 <!-- /v89 encounter fix -->
+
+<!-- v90 — Daily Stoma Review full page (mirrors Follow-up Seen Review structure) -->
+<script>
+(function(){
+'use strict';
+
+let _dsrPatient=null;
+
+window.openDailyStormaReview=async function(patientId){
+  if(!patientId){alert('No patient selected.');return;}
+  const htmlSafe2=typeof window.htmlSafe==='function'?window.htmlSafe:s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const TODAY2=typeof TODAY!=='undefined'?TODAY:new Date().toISOString().slice(0,10);
+
+  /* Load patient */
+  let p=null;
+  try{
+    const piP=window.patientInterfacePatient;
+    const epP=window.episodePagePatient;
+    if(piP&&piP.id===patientId)p=piP;
+    else if(epP&&epP.id===patientId)p=epP;
+  }catch(e){}
+  if(!p){
+    try{
+      const{data}=await SB.from('patients').select('id,first_name,surname,id_card,phone_number,followup_owner,followup_due_month,followup_year,followup_status').eq('id',patientId).maybeSingle();
+      p=data||{id:patientId};
+    }catch(e){p={id:patientId};}
+  }
+  _dsrPatient=p;
+
+  let sig='';
+  try{sig=typeof encounterCurrentUserName==='function'?await encounterCurrentUserName():'';}catch(e){}
+
+  const ownerDefault=typeof normaliseFollowupOwner==='function'?normaliseFollowupOwner(p.followup_owner||'Common'):(p.followup_owner||'Common');
+  const defaultYear=Number(p.followup_year)||new Date().getFullYear();
+  const defaultMonth=Number(p.followup_due_month)||(new Date().getMonth()+1);
+
+  let availability={};
+  try{if(typeof getMonthlyClinicAvailability==='function'&&typeof contextForFollowupOwner==='function')availability=await getMonthlyClinicAvailability(defaultYear,contextForFollowupOwner(ownerDefault));}catch(e){}
+
+  const ownerOpts=typeof followupOwnerOptions==='function'?followupOwnerOptions(ownerDefault):`<option value="${htmlSafe2(ownerDefault)}">${htmlSafe2(ownerDefault)}</option>`;
+  const yearOpts=typeof followupEditYearOptions==='function'?followupEditYearOptions(defaultYear):`<option value="${defaultYear}">${defaultYear}</option>`;
+  const monthOpts=typeof buildAvailabilityMonthOptions==='function'?buildAvailabilityMonthOptions(defaultYear,ownerDefault,defaultMonth,availability):`<option value="${defaultMonth}">${defaultMonth}</option>`;
+  const availNote=typeof availabilityPreviewHTML==='function'?availabilityPreviewHTML((availability||{})[defaultMonth]||{booked:0,capacity:0},typeof contextForFollowupOwner==='function'?contextForFollowupOwner(ownerDefault):{},defaultMonth):'';
+  const radioGrp=typeof fuSeenRadioGroupHTML==='function'?fuSeenRadioGroupHTML:function(name,label,opts){return `<div class="fu-radio-group"><div class="fu-radio-label">${htmlSafe2(label)}</div><div class="fu-radio-row">${opts.map(o=>`<label class="fu-radio-chip"><input type="radio" name="${htmlSafe2(name)}" value="${htmlSafe2(o)}"/>${htmlSafe2(o)}</label>`).join('')}</div></div>`;};
+  const multiPick=typeof fuSeenMultiPickerHTML==='function'?fuSeenMultiPickerHTML:function(id,label,opts){return `<div class="fg full"><label>${htmlSafe2(label)}</label><div class="fu-multi-row">${opts.map(o=>`<label class="fu-radio-chip"><input type="checkbox" name="${htmlSafe2(id)}" value="${htmlSafe2(o)}"/>${htmlSafe2(o)}</label>`).join('')}</div></div>`;};
+  const statusOpts=typeof fuSeenStatusOptions==='function'?fuSeenStatusOptions(p.followup_status||'active'):'<option value="active">Active</option>';
+  const stomaColourOpts=typeof FU_SEEN_STOMA_COLOUR_OPTIONS!=='undefined'?FU_SEEN_STOMA_COLOUR_OPTIONS:['Pink / healthy','Pale','Bruised','Flush / retracted','Other'];
+  const functionOpts=typeof FU_SEEN_FUNCTION_OPTIONS!=='undefined'?FU_SEEN_FUNCTION_OPTIONS:['Nil output at time of visit','Green / bilious','Liquid stool','Blood','Semi-formed / formed','Other'];
+  const skinOpts=typeof FU_SEEN_SKIN_OPTIONS!=='undefined'?FU_SEEN_SKIN_OPTIONS:['Healthy / intact','Red','Broken / excoriated','Other'];
+  const compOpts=typeof FU_SEEN_COMPLICATION_OPTIONS!=='undefined'?FU_SEEN_COMPLICATION_OPTIONS:['None','Prolapse','Ulcerated','Granulomas','Hernia','Deeply retracted','Flush to skin','Stenosis','Fungal infection'];
+  const applianceOpts=typeof FU_SEEN_APPLIANCE_OPTIONS!=='undefined'?FU_SEEN_APPLIANCE_OPTIONS:['1-Piece Closed','1-Piece Drainable','2-Piece Closed','2-Piece Drainable','Urostomy bag'];
+  const accessoryOpts=typeof FU_SEEN_ACCESSORY_OPTIONS!=='undefined'?FU_SEEN_ACCESSORY_OPTIONS:['Filler Paste','Flange Extenders','Powder','Protective Wipes','Stoma Belt','Stoma Seals','None'];
+
+  const fullName=`${p.first_name||''} ${p.surname||''}`.trim()||'Patient';
+
+  if(typeof switchTab==='function')switchTab('daily-stoma-review',null);
+  const body=document.getElementById('daily-stoma-review-body');
+  if(!body)return;
+
+  body.innerHTML=`
+    <div class="fu-seen-card">
+      <div class="fu-seen-card-head"><div class="fu-seen-card-title"><span class="fu-seen-card-icon" style="background:#0d7377;">DS</span><span>Daily Stoma Review</span></div></div>
+      <div class="fu-seen-card-body">
+        <div id="dsr-errors" class="fu-error-box"></div>
+        <div class="fu-patient-identity">
+          <div class="fu-patient-summary"><div><div class="fu-patient-name">${htmlSafe2(fullName)}</div><div class="fu-patient-meta"><span class="fu-meta-pill">ID ${htmlSafe2(p.id_card||'No ID')}</span>${p.phone_number?`<span class="fu-meta-pill phone">☎ ${htmlSafe2(p.phone_number)}</span>`:''}</div></div></div>
+          <div class="fu-seen-grid">
+            <div class="fg fu-review-date-inline"><label>Date of review *</label><input type="date" id="dsr-review-date" value="${TODAY2}"/></div>
+            <div class="fg"><label>Recorded by</label><input type="text" id="dsr-sig" value="${htmlSafe2(sig)}" readonly/></div>
+          </div>
+        </div>
+        <div class="fu-section"><div class="fu-section-title" data-icon="S">Stoma assessment</div><div class="fu-stoma-assessment-grid">${radioGrp('dsr-stoma-colour','Stoma appearance',stomaColourOpts)}${radioGrp('dsr-function','Function',functionOpts)}${radioGrp('dsr-skin','Peristomal skin',skinOpts)}${radioGrp('dsr-complications','Complications',compOpts,false)}</div></div>
+        <div class="fu-section"><div class="fu-section-title" data-icon="A">Appliances and accessories</div><div class="fu-seen-grid">${multiPick('dsr-appliances','Appliances used',applianceOpts)}${multiPick('dsr-accessories','Accessories',accessoryOpts)}</div></div>
+        <div class="fu-section"><div class="fu-section-title" data-icon="N">Nursing report</div><textarea id="dsr-nursing-report" class="fu-nursing-report" placeholder="Enter free-text nursing report..."></textarea></div>
+        <div class="fu-section fu-planning-section"><div class="fu-section-title" data-icon="P">Follow-up planning</div><div class="fu-seen-grid">
+          <div class="fg"><label>Follow-up status</label><select id="dsr-followup-status" class="fu-page-status-select">${statusOpts}</select></div>
+          <div class="fg"><label>Follow-up owner</label><select id="dsr-owner">${ownerOpts}</select></div>
+          <div class="fg"><label>Follow-up due year</label><select id="dsr-year">${yearOpts}</select></div>
+          <div class="fg" style="grid-column:1/-1;"><label>Follow-up due month</label><select id="dsr-month" data-default-month="${defaultMonth}">${monthOpts}</select><div id="dsr-availability-note" style="margin-top:5px;">${availNote}</div></div>
+        </div></div>
+      </div>
+      <div class="fu-actions">
+        <button class="btn-cancel" onclick="returnFromDailyStormaReview()">Cancel / Return</button>
+        <button class="btn-save" onclick="saveDailyStormaReview()">Save Daily Stoma Review</button>
+      </div>
+    </div>`;
+};
+
+window.returnFromDailyStormaReview=function(){
+  _dsrPatient=null;
+  try{if(typeof switchTab==='function')switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e){}
+};
+
+window.saveDailyStormaReview=async function(){
+  const q=id=>document.getElementById(id);
+  const p=_dsrPatient;
+  if(!p||!p.id){alert('No patient loaded.');return;}
+  const htmlSafe2=typeof window.htmlSafe==='function'?window.htmlSafe:s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const errors=[];
+  const date=q('dsr-review-date')?.value||'';
+  const sig=q('dsr-sig')?.value||'';
+  const nursingReport=(q('dsr-nursing-report')?.value||'').trim();
+  const stomaColour=document.querySelector('input[name="dsr-stoma-colour"]:checked')?.value||'';
+  const stomaFunction=document.querySelector('input[name="dsr-function"]:checked')?.value||'';
+  const peristomalSkin=document.querySelector('input[name="dsr-skin"]:checked')?.value||'';
+  const complications=document.querySelector('input[name="dsr-complications"]:checked')?.value||'';
+  const appliances=[...document.querySelectorAll('input[name="dsr-appliances"]:checked')].map(el=>el.value);
+  const accessories=[...document.querySelectorAll('input[name="dsr-accessories"]:checked')].map(el=>el.value);
+  const owner=q('dsr-owner')?.value||'Common';
+  const year=q('dsr-year')?.value||String(new Date().getFullYear());
+  const monthEl=q('dsr-month');
+  const month=monthEl?.value||String(new Date().getMonth()+1);
+  const followupStatus=q('dsr-followup-status')?.value||'active';
+
+  if(!date)errors.push('Date of review');
+  if(!stomaColour)errors.push('Stoma appearance');
+  if(!stomaFunction)errors.push('Function');
+  if(!peristomalSkin)errors.push('Peristomal skin');
+  if(!complications)errors.push('Complications');
+  if(!appliances.length)errors.push('Appliances used');
+  if(!accessories.length)errors.push('Accessories');
+  if(!nursingReport)errors.push('Nursing report');
+
+  const errBox=q('dsr-errors');
+  if(errors.length){
+    if(errBox)errBox.innerHTML='<strong>Please complete:</strong> '+errors.map(e=>`<span class="fu-error-item">${e}</span>`).join('');
+    return;
+  }
+  if(errBox)errBox.innerHTML='';
+
+  const block=[
+    '--- Encounter: Daily Stoma Review ---',
+    `Date: ${date}`,
+    sig?`Recorded by: ${sig}`:'',
+    `Stoma appearance: ${stomaColour}`,
+    `Function: ${stomaFunction}`,
+    `Peristomal skin: ${peristomalSkin}`,
+    `Complications: ${complications}`,
+    appliances.length?`Appliances used: ${appliances.join(', ')}`:'',
+    accessories.length?`Accessories: ${accessories.join(', ')}`:'',
+    `Follow-up owner: ${owner}`,
+    `Next due: ${month}/${year}`,
+    'Nursing Report:',
+    nursingReport,
+    '---'
+  ].filter(Boolean).join('\n');
+
+  try{
+    const{data:existing}=await SB.from('patients').select('findings').eq('id',p.id).maybeSingle();
+    const prev=String(existing?.findings||'').trim();
+    const{error}=await SB.from('patients').update({
+      followup_owner:owner,
+      followup_due_month:Number(month),
+      followup_year:Number(year),
+      followup_status:followupStatus,
+      last_outcome_date:date,
+      findings:(prev?prev+'\n\n':'')+block
+    }).eq('id',p.id);
+    if(error)throw error;
+    alert('Daily Stoma Review saved.');
+    _dsrPatient=null;
+    if(typeof openPatientInterface==='function')await openPatientInterface(p.id);
+    else if(typeof switchTab==='function')switchTab('home',document.querySelector('[data-tab="home"]'));
+  }catch(err){
+    if(errBox)errBox.innerHTML='Save failed: '+String(err?.message||err);
+  }
+};
+
+/* Route postop_stoma_review to the new full page instead of the simple modal */
+(function(){
+  const _prev89=window.openGenericEncounterModal;
+  window.openGenericEncounterModal=async function(patientId,type,appointmentId){
+    if(type==='postop_stoma_review'||type==='stoma_review'){
+      return window.openDailyStormaReview(patientId);
+    }
+    if(typeof _prev89==='function')return _prev89(patientId,type,appointmentId);
+  };
+})();
+
+/* pagesOpen wiring for daily-stoma-review */
+(function(){
+  const _origPagesOpen=window.pagesOpen;
+  window.pagesOpen=function(kind){
+    if(kind==='daily-stoma-review'){
+      (async function(){
+        try{
+          const p=typeof previewPatient==='function'?await previewPatient():null;
+          if(!p||!p.id){alert('No patient records exist yet. Add a patient first.');return;}
+          window.openDailyStormaReview(p.id);
+        }catch(e){alert('Could not open Daily Stoma Review: '+(e?.message||e));}
+      })();
+      return;
+    }
+    if(typeof _origPagesOpen==='function')_origPagesOpen(kind);
+  };
+})();
+
+})();
+</script>
+<!-- /v90 daily stoma review page -->
 </body>
 </html>
