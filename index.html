@@ -6493,6 +6493,11 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-label">Generic Encounter <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Post-op stoma review encounter</span>
             </button>
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('daily-stoma-review')">
+              <span class="pages-card-icon">⊕</span>
+              <span class="pages-card-label">Daily Stoma Review <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Community / post-op daily stoma review</span>
+            </button>
           </div>
         </div>
 
@@ -21017,6 +21022,7 @@ table thead th.v63-name-title,
           case 'sitting-session': return openStomaSittingSession(id);
           case 'daily-review': return (window.openPostOperativeDailyReviewFromPatient||openPostOperativeDailyReviewFromPatient)(id,true);
           case 'generic-encounter': return openGenericEncounterModal(id,'postop_stoma_review');
+          case 'daily-stoma-review': return openGenericEncounterModal(id,'postop_stoma_review');
           case 'clinical-record': return openClinicalRecordForPatient(id);
           case 'followup-history': return openFollowupHistory(id);
           case 'rebook': return openPatientRebookModal(id);
