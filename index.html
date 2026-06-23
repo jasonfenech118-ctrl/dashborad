@@ -7424,7 +7424,7 @@ async function saveNewPatientTab(options={}){
         const {data:epRow,error:epErr}=await SB.from('episodes').insert({patient_id:epPatientId,pathway_type:'elective',status:'open',created_by:createdBy}).select('id').single();
         if(!epErr&&epRow&&epRow.id){
           const nowIso=new Date().toISOString();
-          const STEP_DEFS=[[1,'pathway','complete'],[2,'booking','complete'],[3,'siting','not_started'],[4,'clinical','not_started'],[5,'post_op_review','not_started'],[6,'discharge_planning','not_started'],[7,'teaching','not_started']];
+          const STEP_DEFS=[[1,'pathway_selection','complete'],[2,'siting_booking','complete'],[3,'siting_session','not_started'],[4,'clinical_operative','not_started'],[5,'post_op_review','not_started'],[6,'discharge_planning','not_started'],[7,'teaching_education','not_started']];
           const stepRows=STEP_DEFS.map(s=>({episode_id:epRow.id,step_no:s[0],step_key:s[1],status:s[2],completed_by:s[2]==='complete'?createdBy:null,completed_at:s[2]==='complete'?nowIso:null}));
           await SB.from('episode_steps').insert(stepRows);
         }
@@ -9617,10 +9617,7 @@ function updateAppointmentReviewAvailabilityPreview(){
   }
   note.innerHTML=planningNote+(chosen.isAuto?availabilityAutoNoteHTML(chosen.month):'')+availabilityPreviewHTML(counts[chosen.month]||{booked:0,capacity:0},ctx,chosen.month);
 }
-async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
-  const targetStatus=statusDefault || (mode==='seen'?'attended':'');
-  return openOutcomeFollowupModal(apptId,targetStatus);
-}
+/* openAppointmentReviewCard — superseded; canonical definition lives later in this scope (v34). */
 async function saveAppointmentReview(apptId,patientId){
   const fn=document.getElementById('ar-fn')?.value.trim();
   const sn=document.getElementById('ar-sn')?.value.trim();
@@ -14738,21 +14735,7 @@ async function saveClinicalOperativeRecord(patientId, episodeId){
   },800);
 }
 
-async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
-  const {data:raw,error}=await SB.from('appointments').select('*').eq('id',apptId).single();
-  if(error||!raw){alert('Could not load this appointment.');return;}
-  const enriched=(await enrichAppointments([raw]))[0]||raw;
-  const p=enriched.patients||{};
-  if(!enriched.patient_id){alert('This appointment is not linked to a patient record.');return;}
-  await openGenericEncounterModal(enriched.patient_id,'followup_review',apptId);
-  const title=document.querySelector('#mb h2');
-  if(title)title.textContent='Follow-up Review';
-  const source=document.createElement('div');
-  source.className='encounter-modal-note';
-  source.innerHTML=`<span class="encounter-source-badge">Seen appointment</span> Saving this review will mark the appointment as Seen.`;
-  const strip=document.querySelector('#mb .encounter-patient-strip');
-  if(strip)strip.insertAdjacentElement('afterend',source);
-}
+/* openAppointmentReviewCard — superseded; canonical definition lives later in this scope (v34). */
 function renderEpisodeTimeline(p,context='patient-interface'){
   if(!isFirstElectiveEmergencyEpisode(p))return '';
   return `<div class="episode-timeline">${episodeTimelineSteps(p).map(s=>`<button type="button" class="episode-timeline-step ${s.status}" onclick="handleEpisodeTimelineAction('${s.action}')"><div class="episode-step-label">${htmlSafe(s.label)}</div><div class="episode-step-status ${s.status}">${htmlSafe(s.status.replace('_',' '))}</div></button>`).join('')}</div>`;
@@ -15069,10 +15052,7 @@ function nextReviewMonthYearFromEncounter(){
   return {month:null,year:null};
 }
 
-async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
-  const targetStatus=statusDefault || (mode==='seen'?'attended':'');
-  return openOutcomeFollowupModal(apptId,targetStatus);
-}
+/* openAppointmentReviewCard — superseded; canonical definition lives later in this scope (v34). */
 
 try{Object.assign(window,{openGenericEncounterModal,refreshGenericEncounterMonthOptions,updateGenericEncounterAvailabilityPreview,nextReviewMonthYearFromEncounter,openAppointmentReviewCard});}catch(e){console.warn('v33B follow-up due month/doughnut globals skipped',e);}
 
