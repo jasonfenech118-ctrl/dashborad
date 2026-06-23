@@ -15042,7 +15042,7 @@ async function openGenericEncounterModal(patientId,type='followup_review',appoin
     <input type="hidden" id="er-appointment-id" value="${htmlSafe(appointmentId||'')}"/>
     <input type="hidden" id="er-type" value="followup_review"/>
     <div class="encounter-modal-note"><span class="encounter-source-badge">Seen appointment</span> This is the Follow-up Review card. Saving will mark the appointment as Seen when opened from an appointment.</div>
-    <div id="encounter-type-cards">${encounterTypeCardsHTML('followup_review')}</div>
+    <div id="encounter-type-cards">${typeof encounterTypeCardsHTML==='function'?encounterTypeCardsHTML('followup_review'):''}</div>
     <div class="encounter-form-grid">
       ${encounterInput('Review date','er-date','date',TODAY)}
       ${encounterInput('Time','er-time','time',emergencyReviewTimeNow())}
@@ -21036,5 +21036,135 @@ table thead th.v63-name-title,
 })();
 </script>
 <!-- /pages-preview helpers -->
+
+<!-- v89 — Fix openGenericEncounterModal: remove infinite recursion + define encounterTypeCardsHTML -->
+<script>
+(function(){
+'use strict';
+
+/* encounterTypeCardsHTML was referenced but never defined — dummy to prevent ReferenceError */
+if(typeof window.encounterTypeCardsHTML!=='function'){
+  window.encounterTypeCardsHTML=function(){return '';};
+}
+
+/* Encounter type metadata */
+const ENC_META={
+  general_note:       {label:'Care Encounter Note',     icon:'CE', colour:'#0d7377'},
+  wound_review:       {label:'Wound Review',             icon:'W',  colour:'#7c3aed'},
+  fistula_review:     {label:'Fistula Review',           icon:'F',  colour:'#7c3aed'},
+  phone_advice:       {label:'Phone / Advice',           icon:'☎',  colour:'#1a2e4a'},
+  postop_stoma_review:{label:'Post-op Stoma Review',     icon:'R',  colour:'#e6a817'},
+  teaching_session:   {label:'Teaching Session',         icon:'T',  colour:'#166534'},
+  discharge_planning: {label:'Discharge Planning',       icon:'D',  colour:'#b91c1c'},
+  stoma_review:       {label:'Stoma Review',             icon:'S',  colour:'#0d7377'},
+};
+
+async function openCareEncounterModal(patientId, type, appointmentId){
+  const meta=ENC_META[type]||{label:type, icon:'E', colour:'#0d7377'};
+  const q=id=>document.getElementById(id);
+  const htmlSafe=typeof window.htmlSafe==='function'?window.htmlSafe:s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const TODAY2=typeof TODAY!=='undefined'?TODAY:new Date().toISOString().slice(0,10);
+
+  /* Load patient */
+  let p=null;
+  try{
+    const piP=window.patientInterfacePatient;
+    const epP=window.episodePagePatient;
+    if(piP&&piP.id===patientId)p=piP;
+    else if(epP&&epP.id===patientId)p=epP;
+  }catch(e){}
+  if(!p){
+    try{
+      const {data}=await SB.from('patients').select('id,first_name,surname,id_card').eq('id',patientId).maybeSingle();
+      p=data||{id:patientId};
+    }catch(e){p={id:patientId};}
+  }
+
+  /* Recorded-by name */
+  let sig='';
+  try{sig=typeof encounterCurrentUserName==='function'?await encounterCurrentUserName():'';} catch(e){}
+
+  const fullName=`${p.first_name||''} ${p.surname||''}`.trim()||'Patient';
+  const box=q('mb');
+  if(!box){alert('Modal container not found.');return;}
+  box.className='mb mb-wide';
+  box.innerHTML=`
+    <h2 style="color:${meta.colour};">${htmlSafe(meta.label)}</h2>
+    <div class="msub"><strong>${htmlSafe(fullName)}</strong>${p.id_card?' — '+htmlSafe(p.id_card):''}</div>
+    <input type="hidden" id="ce-patient-id" value="${htmlSafe(patientId)}"/>
+    <input type="hidden" id="ce-appt-id" value="${htmlSafe(appointmentId||'')}"/>
+    <input type="hidden" id="ce-type" value="${htmlSafe(type)}"/>
+    <input type="hidden" id="ce-type-label" value="${htmlSafe(meta.label)}"/>
+    <div class="encounter-form-grid">
+      <div class="fg"><label>Encounter date</label><input type="date" id="ce-date" value="${TODAY2}"/></div>
+      <div class="fg"><label>Time</label><input type="time" id="ce-time" value="${typeof emergencyReviewTimeNow==='function'?emergencyReviewTimeNow():''}"/></div>
+      <div class="fg"><label>Recorded by</label><input type="text" id="ce-sig" value="${htmlSafe(sig)}" readonly/></div>
+      <div class="fg full" style="grid-column:1/-1;"><label>Assessment / findings *</label><textarea id="ce-assessment" style="height:110px;" placeholder="Describe assessment, findings, or clinical notes…"></textarea></div>
+      <div class="fg full" style="grid-column:1/-1;"><label>Care / advice given</label><textarea id="ce-care" style="height:80px;" placeholder="Appliance changes, skin care, education, supplies, advice…"></textarea></div>
+      <div class="fg full" style="grid-column:1/-1;"><label>Plan / next steps</label><textarea id="ce-plan" style="height:70px;" placeholder="Next plan, referrals, follow-up actions…"></textarea></div>
+    </div>
+    <div id="ce-note" style="margin:10px 0;font-size:12px;color:var(--red);"></div>
+    <div class="mact">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveCareEncounterModal()">Save ${htmlSafe(meta.label)}</button>
+    </div>`;
+  if(typeof openMo==='function')openMo();
+}
+
+window.saveCareEncounterModal=async function(){
+  const q=id=>document.getElementById(id);
+  const patientId=q('ce-patient-id')?.value||'';
+  const apptId=q('ce-appt-id')?.value||'';
+  const type=q('ce-type')?.value||'general_note';
+  const typeLabel=q('ce-type-label')?.value||type;
+  const date=q('ce-date')?.value||new Date().toISOString().slice(0,10);
+  const time=q('ce-time')?.value||'';
+  const sig=q('ce-sig')?.value||'';
+  const assessment=(q('ce-assessment')?.value||'').trim();
+  const care=(q('ce-care')?.value||'').trim();
+  const plan=(q('ce-plan')?.value||'').trim();
+  const note=q('ce-note');
+  if(!assessment){if(note)note.textContent='Please enter assessment / findings.';return;}
+  const block=[
+    `--- ${typeLabel.toUpperCase()} — ${date}${time?' '+time:''} ---`,
+    sig?`Recorded by: ${sig}`:'',
+    `Assessment / findings: ${assessment}`,
+    care?`Care / advice: ${care}`:'',
+    plan?`Plan: ${plan}`:'',
+    `---`
+  ].filter(Boolean).join('\n');
+  try{
+    const {data:existing}=await SB.from('patients').select('findings').eq('id',patientId).maybeSingle();
+    const prev=existing?.findings||'';
+    const {error}=await SB.from('patients').update({findings:(prev?prev+'\n\n':'')+block}).eq('id',patientId);
+    if(error)throw error;
+    if(apptId)await SB.from('appointments').update({status:'attended',notes:block}).eq('id',apptId);
+    if(typeof closeModal==='function')closeModal();
+    if(typeof renderPatientInterface==='function')renderPatientInterface();
+    if(typeof renderEpisodePage==='function')renderEpisodePage();
+    if(typeof refreshAppointmentViews==='function')refreshAppointmentViews();
+  }catch(err){
+    if(note)note.textContent='Save failed: '+(err?.message||err);
+  }
+};
+
+/* Replace openGenericEncounterModal — routes follow-up to original v33B logic, all others to openCareEncounterModal */
+const _origFollowupModal=(function(){
+  /* Capture the v33B followup-only version before we overwrite it */
+  const cur=window.openGenericEncounterModal;
+  return (typeof cur==='function')?cur:null;
+})();
+
+window.openGenericEncounterModal=async function(patientId,type='followup_review',appointmentId=''){
+  if(type==='followup_review'){
+    if(_origFollowupModal)return _origFollowupModal(patientId,type,appointmentId);
+    alert('Follow-up review modal not available.');return;
+  }
+  return openCareEncounterModal(patientId,type,appointmentId);
+};
+
+})();
+</script>
+<!-- /v89 encounter fix -->
 </body>
 </html>
