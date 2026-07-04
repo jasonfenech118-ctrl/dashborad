@@ -4,7 +4,7 @@
   UI polish release candidate: Bold High-Contrast Clinical Theme
   Visual-only CSS/markup polish layer; no Supabase/database workflow logic intentionally changed.
 -->
-<html lang="en" data-ui-version="v76-episode-interface-fix">
+<html lang="en" data-ui-version="v91-review-pass">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -5377,7 +5377,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <input type="password" id="li-pass" placeholder="Password" autocomplete="current-password"/>
     <button class="btn-li" onclick="doLogin()">Sign In</button>
     <div class="lerr" id="lerr"></div>
-    <div class="v71-login-build">Build v84 loaded</div>
+    <div class="v71-login-build">Build v91 loaded</div>
   </div>
 </div>
 
@@ -5387,7 +5387,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
     <div style="display:flex;align-items:center;">
       <button class="btn-back-top" onclick="goBack()" title="Go back">← Back</button>
       <div class="tb-logo">MDH <span>Stoma Care</span> Clinic</div>
-      <div class="tb-date" id="tb-date"></div><div class="v71-build-pill">v78</div>
+      <div class="tb-date" id="tb-date"></div><div class="v71-build-pill">v91</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;"><button class="btn-so btn-home-top" onclick="goHome()">Home</button><button class="btn-so btn-refresh-top" onclick="location.reload()" title="Refresh page">⟳ Refresh</button><button class="btn-so" onclick="doLogout()">Sign Out</button></div>
   </div>
@@ -6440,6 +6440,10 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
           </div>
         </div>
 
+        <div class="pages-filter-row">
+          <input type="text" id="pages-filter" placeholder="Filter pages… e.g. review, booking, report" oninput="filterPagesCards(this.value)"/>
+        </div>
+
         <div class="pages-group">
           <div class="pages-group-title">Patient Admission</div>
           <div class="pages-grid">
@@ -6499,10 +6503,10 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-label">Book Sitting Slot <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Nurse column + time slot picker</span>
             </button>
-            <button class="pages-card pages-card-modal" onclick="pagesOpen('generic-encounter')">
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('care-note')">
               <span class="pages-card-icon">✚</span>
-              <span class="pages-card-label">Generic Encounter <span class="pages-modal-badge">modal</span></span>
-              <span class="pages-card-sub">Post-op stoma review encounter</span>
+              <span class="pages-card-label">Care Encounter Note <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">General care / ward encounter note</span>
             </button>
             <button class="pages-card pages-card-modal" onclick="pagesOpen('daily-stoma-review')">
               <span class="pages-card-icon">⊕</span>
@@ -6545,6 +6549,21 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-label">Rebook Patient <span class="pages-modal-badge">modal</span></span>
               <span class="pages-card-sub">Book a new appointment</span>
             </button>
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('episode-page')">
+              <span class="pages-card-icon">CE</span>
+              <span class="pages-card-label">Care Episode Page</span>
+              <span class="pages-card-sub">Multi-encounter episode view</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('record-history')">
+              <span class="pages-card-icon">≡</span>
+              <span class="pages-card-label">Patient Record History</span>
+              <span class="pages-card-sub">Read-only closed patient history</span>
+            </button>
+            <button class="pages-card pages-card-modal" onclick="pagesOpen('reversal')">
+              <span class="pages-card-icon">↺</span>
+              <span class="pages-card-label">Reversal Lookup <span class="pages-modal-badge">modal</span></span>
+              <span class="pages-card-sub">Record a stoma reversal</span>
+            </button>
           </div>
         </div>
 
@@ -6575,6 +6594,11 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-icon">✕</span>
               <span class="pages-card-label">Cancel Appointment</span>
               <span class="pages-card-sub">Cancel &amp; reason form</span>
+            </button>
+            <button class="pages-card" onclick="switchTab('appointment-outcomes',null)">
+              <span class="pages-card-icon">◎</span>
+              <span class="pages-card-label">Appointment Outcomes</span>
+              <span class="pages-card-sub">Seen / DNTU / cancelled log</span>
             </button>
           </div>
         </div>
@@ -6632,6 +6656,17 @@ button:disabled,input:disabled,select:disabled,textarea:disabled,.disabled,[aria
               <span class="pages-card-icon">↻</span>
               <span class="pages-card-label">Follow-Up Report</span>
               <span class="pages-card-sub">Due lists</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pages-group">
+          <div class="pages-group-title">System</div>
+          <div class="pages-grid">
+            <button class="pages-card" onclick="switchTab('account',document.querySelector('[data-tab=&quot;account&quot;]'))">
+              <span class="pages-card-icon">⚙</span>
+              <span class="pages-card-label">Account &amp; Security</span>
+              <span class="pages-card-sub">Login details and password</span>
             </button>
           </div>
         </div>
@@ -15146,54 +15181,7 @@ function fuSeenUpdateCodePreview(){
   const el=document.getElementById('fu-seen-code');
   if(el)el.textContent=code;
 }
-async function openFollowupSeenReviewPage(apptId){
-  const {data:raw,error}=await SB.from('appointments').select('*').eq('id',apptId).single();
-  if(error||!raw){alert('Could not load this appointment.');return;}
-  const appt=(await enrichAppointments([raw]))[0]||raw;
-  if(!appt.patient_id){alert('This appointment is not linked to a patient record.');return;}
-  const p=appt.patients||{};
-  followupSeenReviewContext=appt;
-  followupSeenReviewReturnPage=followupSeenReturnTarget();
-  const ownerDefault=normaliseFollowupOwner(p.followup_owner||appointmentNurseLabel(appt)||'Common');
-  const originalMonth=Number(p.followup_due_month)||0;
-  const originalYear=Number(p.followup_year)||0;
-  const defaultYear=originalYear||new Date().getFullYear();
-  const defaultMonth=(originalMonth>=1&&originalMonth<=12)?originalMonth:(dueMonthListForYear(defaultYear)[0]||new Date().getMonth()+1);
-  const availability=await getMonthlyClinicAvailability(defaultYear,contextForFollowupOwner(ownerDefault));
-  const originalDueLabel=originalMonth?followupDueLabel(originalMonth,originalYear):'No month currently allocated';
-  const reviewDate=TODAY;
-  const code=fuSeenEpisodeCode(p,reviewDate);
-  switchTab('followup-seen-review',null);
-  const body=document.getElementById('followup-seen-review-body');
-  if(!body)return;
-  body.innerHTML=`
-    <div class="fu-seen-card">
-      <div class="fu-seen-card-head"><div class="fu-seen-card-title"><span class="fu-seen-card-icon">FU</span><span>Follow-up Seen Review</span></div><span id="fu-seen-code" class="fu-seen-code">${htmlSafe(code)}</span></div>
-      <div class="fu-seen-card-body">
-        <div id="fu-seen-errors" class="fu-error-box"></div>
-        <div class="fu-patient-identity">
-          <div class="fu-patient-summary"><div><div class="fu-patient-name">${htmlSafe(fuSeenDisplayName(p))}</div><div class="fu-patient-meta"><span class="fu-meta-pill">ID ${htmlSafe(p.id_card||'No ID')}</span>${p.phone_number?`<span class="fu-meta-pill phone">☎ ${htmlSafe(p.phone_number)}</span>`:''}<span class="fu-meta-pill owner">Owner ${htmlSafe(ownerDefault)}</span></div></div></div>
-          <div class="fu-seen-grid">
-            <div class="fg fu-review-date-inline"><label>Date of review *</label><input type="date" id="of-review-date" value="${htmlSafe(reviewDate)}" onchange="fuSeenUpdateCodePreview()"/></div>
-            <div class="fg"><label>ID Card Number *</label><input type="text" id="of-idcard" value="${htmlSafe(p.id_card||'')}" oninput="fuSeenUpdateCodePreview()"/></div>
-            <div class="fg"><label>Phone</label><input type="tel" id="of-phone" value="${htmlSafe(p.phone_number||'')}"/></div>
-            <div class="fg"><label>Name *</label><input type="text" id="of-fn" value="${htmlSafe(p.first_name||'')}"/></div>
-            <div class="fg"><label>Surname *</label><input type="text" id="of-sn" value="${htmlSafe(p.surname||'')}"/></div>
-          </div>
-        </div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="S">Stoma assessment</div><div class="fu-stoma-assessment-grid">${fuSeenRadioGroupHTML('fu-stoma-colour','Stoma colour',FU_SEEN_STOMA_COLOUR_OPTIONS)}${fuSeenRadioGroupHTML('fu-function','Function',FU_SEEN_FUNCTION_OPTIONS)}${fuSeenRadioGroupHTML('fu-skin','Peristomal skin',FU_SEEN_SKIN_OPTIONS)}</div></div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="A">Appliances and accessories</div><div class="fu-seen-grid">${fuSeenMultiPickerHTML('fu-appliances','Appliances used',FU_SEEN_APPLIANCE_OPTIONS)}${fuSeenMultiPickerHTML('fu-accessories','Accessories',FU_SEEN_ACCESSORY_OPTIONS)}</div></div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="N">Nursing report</div><textarea id="fu-nursing-report" class="fu-nursing-report" placeholder="Enter free-text nursing report..."></textarea></div>
-        <div class="fu-section fu-planning-section"><div class="fu-section-title" data-icon="P">Follow-up planning</div><div class="fu-seen-grid"><div class="fg"><label>Follow-up allocation / owner</label><select id="of-owner" onchange="refreshOutcomeMonthOptions();updateFollowupChangeWarning()">${followupOwnerOptions(ownerDefault)}</select></div><div class="fg"><label>Follow-up due year</label><select id="of-year" onchange="refreshOutcomeMonthOptions();updateFollowupChangeWarning()">${followupEditYearOptions(defaultYear)}</select></div><div class="fg" style="grid-column:1/-1;"><label>Follow-up due month — different month required when saving as Seen</label><select id="of-month" data-default-month="${defaultMonth}" onchange="updateOutcomeAvailabilityPreview();updateFollowupChangeWarning()">${buildOutcomeMonthOptions(defaultYear,ownerDefault,defaultMonth,availability)}</select><div class="registry-lookup-note new" style="margin-top:5px;">Current saved due month: <strong>${htmlSafe(originalDueLabel)}</strong>. Choose a different month when closing this appointment as Seen.</div><div id="of-availability-note" style="margin-top:5px;">${availabilityPreviewHTML(availability[defaultMonth]||{booked:0,capacity:0},contextForFollowupOwner(ownerDefault),defaultMonth)}</div><div id="of-followup-change-note" class="registry-lookup-note new" style="margin-top:8px;">Clinical safety: choose a different follow-up due month so the next appointment is actively planned.</div></div></div></div>
-      </div>
-      <div class="fu-actions"><button class="btn-cancel" onclick="returnFromFollowupSeenReview()">Cancel</button><button class="btn-save" onclick="saveFollowupSeenEpisode()">Save Follow-up Episode</button></div>
-    </div>`;
-  const ofMonth=document.getElementById('of-month');
-  storeAvailabilityOnSelect(ofMonth,availability,contextForFollowupOwner(ownerDefault));
-  if(ofMonth)ofMonth.onchange=()=>{updateOutcomeAvailabilityPreview();updateFollowupChangeWarning();};
-  updateOutcomeAvailabilityPreview();
-  updateFollowupChangeWarning();
-}
+/* openFollowupSeenReviewPage (v34 copy) removed — superseded by the final definition later in this scope. */
 function fuSeenShowErrors(messages){
   const box=document.getElementById('fu-seen-errors');
   if(!box)return;
@@ -15232,76 +15220,7 @@ function fuSeenReviewBlock(data){
   ];
   return lines.join('\n');
 }
-async function saveFollowupSeenEpisode(){
-  const appt=followupSeenReviewContext;
-  if(!appt?.id||!appt?.patient_id){alert('No Seen appointment is loaded.');return;}
-  const p=appt.patients||{};
-  const reviewDate=document.getElementById('of-review-date')?.value||TODAY;
-  const fn=document.getElementById('of-fn')?.value.trim()||'';
-  const sn=document.getElementById('of-sn')?.value.trim()||'';
-  const idcard=normaliseIdCard(document.getElementById('of-idcard')?.value||'');
-  const phone=document.getElementById('of-phone')?.value.trim()||'';
-  const year=document.getElementById('of-year')?.value;
-  const monthSelect=document.getElementById('of-month');
-  const rawMonthChoice=String(monthSelect?.value||'');
-  const month=resolveMonthValueFromSelect(monthSelect,year);
-  const owner=document.getElementById('of-owner')?.value||'Common';
-  const appliances=fuSeenSelectedValues('fu-appliances');
-  const accessories=fuSeenSelectedValues('fu-accessories');
-  const report=document.getElementById('fu-nursing-report')?.value.trim()||'';
-  const errors=[];
-  if(!reviewDate)errors.push('Date of review');
-  if(!idcard)errors.push('ID Card Number');
-  if(!fn)errors.push('Name');
-  if(!sn)errors.push('Surname');
-  fuSeenRequiredOtherCheck(errors,'Stoma colour','fu-stoma-colour');
-  fuSeenRequiredOtherCheck(errors,'Function','fu-function');
-  fuSeenRequiredOtherCheck(errors,'Peristomal skin','fu-skin');
-  if(!appliances.length)errors.push('Appliances used');
-  if(!accessories.length)errors.push('Accessories');
-  if(rawMonthChoice===AUTO_AVAILABILITY_VALUE)errors.push('Specific follow-up due month');
-  if(!month||!year)errors.push('Follow-up due month and year');
-  if(!report)errors.push('Nursing Report');
-  const planningCheck=outcomeFollowupChangeCheck(month,year,'active','attended');
-  if(!planningCheck.ok)errors.push(planningCheck.message);
-  if(errors.length){fuSeenShowErrors(errors);return;}
-  fuSeenShowErrors([]);
-  const code=fuSeenEpisodeCode({...p,id_card:idcard},reviewDate);
-  const user=await getCurrentUserForAudit();
-  const block=fuSeenReviewBlock({patient:{...p,first_name:fn,surname:sn,id_card:idcard,phone_number:phone},code,reviewDate,recordedBy:user.name||user.email,idcard,phone,appliances,accessories,owner,month:Number(month),year:Number(year),report});
-  const {data:freshPatient,error:freshErr}=await SB.from('patients').select('id,findings').eq('id',appt.patient_id).maybeSingle();
-  if(freshErr){alert('Could not load patient before saving: '+freshErr.message);return;}
-  const previous=String(freshPatient?.findings||'').trim();
-  const patientPayload={
-    first_name:fn,
-    surname:sn,
-    id_card:idcard,
-    phone_number:phone||null,
-    followup_owner:owner,
-    followup_status:'active',
-    followup_type:'follow_up',
-    followup_due_month:Number(month),
-    followup_year:Number(year),
-    last_outcome_date:reviewDate,
-    findings:(previous ? previous + '\n\n' : '') + block
-  };
-  const {error:pErr}=await SB.from('patients').update(patientPayload).eq('id',appt.patient_id);
-  if(pErr){alert('Could not save patient follow-up episode: '+pErr.message);return;}
-  const apptPayload={status:'attended',notes:block,outcome_recorded_at:new Date().toISOString(),outcome_recorded_by_email:user.email,outcome_recorded_by_name:user.name};
-  let {error:aErr}=await SB.from('appointments').update(apptPayload).eq('id',appt.id);
-  if(aErr && String(aErr.message||'').toLowerCase().includes('column')){
-    const retry=await SB.from('appointments').update({status:'attended',notes:block}).eq('id',appt.id);
-    aErr=retry.error;
-  }
-  if(aErr){alert('Episode saved to patient record, but appointment could not be marked Seen: '+aErr.message);return;}
-  followupSeenReviewContext=null;
-  alert('Follow-up episode saved: '+code);
-  await openPatientInterface(appt.patient_id);
-  patientInterfaceActiveSection='follow-up-history';
-  renderPatientInterface();
-  refreshAppointmentViews();
-  if(currentPatientsTab)loadPatientsList(currentPatientsTab);
-}
+/* saveFollowupSeenEpisode (v34 copy) removed — superseded by the final definition later in this scope. */
 async function openAppointmentReviewCard(apptId,mode='edit',statusDefault=''){
   const targetStatus=statusDefault || (mode==='seen'?'attended':'');
   if(mode==='seen'||targetStatus==='attended')return openFollowupSeenReviewPage(apptId);
@@ -15546,73 +15465,7 @@ function fuSeenPrefillPage(data){
   fuSeenUpdateCodePreview();updateOutcomeAvailabilityPreview();
 }
 function fuSeenStatusBadgeText(status){return followupStatusText?followupStatusText(status):String(status||'Active');}
-async function openFollowupSeenReviewPage(apptId,mode='seen',episodeId=''){
-  const {data:raw,error}=await SB.from('appointments').select('*').eq('id',apptId).single();
-  if(error||!raw){alert('Could not load this appointment.');return;}
-  const appt=(await enrichAppointments([raw]))[0]||raw;
-  if(!appt.patient_id){alert('This appointment is not linked to a patient record.');return;}
-  const p=appt.patients||{};
-  followupSeenReviewContext=appt;
-  followupSeenReviewReturnPage=followupSeenReturnTarget();
-  let existing=null;
-  if(episodeId){
-    const res=await SB.from('followup_seen_episodes').select('*').eq('id',episodeId).maybeSingle();
-    if(res.error){alert('Could not load saved Follow-up episode. Make sure the SQL table has been created.');return;}
-    existing=res.data||null;
-  }else{
-    const latest=await fuSeenLatestEpisodeForAppointment(apptId);
-    if(latest.missing){alert('The Follow-up Seen Episodes SQL table is missing. Please run followup_seen_episodes_SQL.sql in Supabase first.');return;}
-    existing=latest.episode||null;
-  }
-  followupSeenOriginalEpisode=existing;
-  followupSeenEditingEpisodeId=existing?.id||null;
-  followupSeenReviewMode=(mode==='edit'||existing)?'edit':'new';
-  const fallbackData=fuSeenParseNotesFallback(appt,p);
-  const existingData=fuSeenEpisodeDataFromRow(existing)||fallbackData||null;
-  followupSeenOriginalData=existingData?JSON.parse(JSON.stringify(existingData)):null;
-  const ownerDefault=normaliseFollowupOwner(existingData?.owner||p.followup_owner||appointmentNurseLabel(appt)||'Common');
-  const defaultYear=Number(existingData?.year||p.followup_year)||new Date().getFullYear();
-  const defaultMonth=Number(existingData?.month||p.followup_due_month)||((dueMonthListForYear(defaultYear)||[])[0]||new Date().getMonth()+1);
-  const reviewDate=existingData?.reviewDate||appt.appt_date||TODAY;
-  const baseCode=existing?.base_episode_code||fuSeenBaseEpisodeCode({...p,id_card:existingData?.idcard||p.id_card},reviewDate);
-  const nextVersion=existing?Number(existing.version_number||1)+1:1;
-  const displayCode=existing?fuSeenFullCode(baseCode,nextVersion):baseCode;
-  const availability=await getMonthlyClinicAvailability(defaultYear,contextForFollowupOwner(ownerDefault));
-  switchTab('followup-seen-review',null);
-  const body=document.getElementById('followup-seen-review-body');
-  if(!body)return;
-  const modeText=existing?`Editing ${htmlSafe(existing.full_episode_code||baseCode)}. Changes will show in red and save as ${htmlSafe(displayCode)}.`:'New Follow-up Seen episode.';
-  body.innerHTML=`
-    <div class="fu-version-banner ${existing?'editing':''}"><span>${modeText}</span><span class="fu-version-badge" id="fu-next-version-badge">${htmlSafe(displayCode)}</span></div>
-    <div class="fu-seen-card">
-      <div class="fu-seen-card-head"><div class="fu-seen-card-title"><span class="fu-seen-card-icon">FU</span><span>Follow-up Seen Review</span></div><span id="fu-seen-code" class="fu-seen-code">${htmlSafe(displayCode)}</span></div>
-      <div class="fu-seen-card-body">
-        <div id="fu-seen-errors" class="fu-error-box"></div><div id="fu-change-summary"></div>
-        <div class="fu-patient-identity">
-          <div class="fu-patient-summary"><div><div class="fu-patient-name">${htmlSafe(fuSeenDisplayName(p))}</div><div class="fu-patient-meta"><span class="fu-meta-pill">ID ${htmlSafe(p.id_card||'No ID')}</span>${p.phone_number?`<span class="fu-meta-pill phone">☎ ${htmlSafe(p.phone_number)}</span>`:''}<span class="fu-meta-pill owner">Owner ${htmlSafe(ownerDefault)}</span></div></div></div>
-          <div class="fu-seen-grid">
-            <div class="fg fu-review-date-inline"><label>Date of review *</label><input type="date" id="of-review-date" value="${htmlSafe(reviewDate)}" onchange="fuSeenUpdateCodePreview();fuSeenApplyChangeHighlights()"/></div>
-            <div class="fg"><label>ID Card Number *</label><input type="text" id="of-idcard" value="${htmlSafe(existingData?.idcard||p.id_card||'')}" oninput="fuSeenUpdateCodePreview();fuSeenApplyChangeHighlights()"/></div>
-            <div class="fg"><label>Phone</label><input type="tel" id="of-phone" value="${htmlSafe(existingData?.phone||p.phone_number||'')}"/></div>
-            <div class="fg"><label>Name *</label><input type="text" id="of-fn" value="${htmlSafe(existingData?.firstName||p.first_name||'')}"/></div>
-            <div class="fg"><label>Surname *</label><input type="text" id="of-sn" value="${htmlSafe(existingData?.surname||p.surname||'')}"/></div>
-          </div>
-        </div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="S">Stoma assessment</div><div class="fu-stoma-assessment-grid">${fuSeenRadioGroupHTML('fu-stoma-colour','Stoma colour',FU_SEEN_STOMA_COLOUR_OPTIONS)}${fuSeenRadioGroupHTML('fu-function','Function',FU_SEEN_FUNCTION_OPTIONS)}${fuSeenRadioGroupHTML('fu-skin','Peristomal skin',FU_SEEN_SKIN_OPTIONS)}</div></div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="A">Appliances and accessories</div><div class="fu-seen-grid">${fuSeenMultiPickerHTML('fu-appliances','Appliances used',FU_SEEN_APPLIANCE_OPTIONS)}${fuSeenMultiPickerHTML('fu-accessories','Accessories',FU_SEEN_ACCESSORY_OPTIONS)}</div></div>
-        <div class="fu-section"><div class="fu-section-title" data-icon="N">Nursing report</div><textarea id="fu-nursing-report" class="fu-nursing-report" placeholder="Enter free-text nursing report..."></textarea></div>
-        <div class="fu-section fu-planning-section"><div class="fu-section-title" data-icon="P">Follow-up planning</div><div class="fu-seen-grid"><div class="fg"><label>Follow-up status</label><select id="of-followup-status" class="fu-page-status-select">${fuSeenStatusOptions(existingData?.followupStatus||p.followup_status||'active')}</select></div><div class="fg"><label>Follow-up allocation / owner</label><select id="of-owner" onchange="refreshOutcomeMonthOptions();updateFollowupChangeWarning();fuSeenApplyChangeHighlights()">${followupOwnerOptions(ownerDefault)}</select></div><div class="fg"><label>Follow-up due year</label><select id="of-year" onchange="refreshOutcomeMonthOptions();updateFollowupChangeWarning();fuSeenApplyChangeHighlights()">${followupEditYearOptions(defaultYear)}</select></div><div class="fg" style="grid-column:1/-1;"><label>Follow-up due month</label><select id="of-month" data-default-month="${defaultMonth}" onchange="updateOutcomeAvailabilityPreview();updateFollowupChangeWarning();fuSeenApplyChangeHighlights()">${buildOutcomeMonthOptions(defaultYear,ownerDefault,defaultMonth,availability)}</select><div id="of-availability-note" style="margin-top:5px;">${availabilityPreviewHTML(availability[defaultMonth]||{booked:0,capacity:0},contextForFollowupOwner(ownerDefault),defaultMonth)}</div></div></div></div>
-      </div>
-      <div class="fu-actions"><button class="btn-cancel" onclick="returnFromFollowupSeenReview()">Cancel / Return</button><button class="btn-save" onclick="saveFollowupSeenEpisode()">${existing?'Save New Version':'Save Follow-up Episode'}</button></div>
-    </div>`;
-  const monthSelect=document.getElementById('of-month');
-  storeAvailabilityOnSelect(monthSelect,availability,contextForFollowupOwner(ownerDefault));
-  if(monthSelect)monthSelect.value=String(defaultMonth);
-  if(existingData)fuSeenPrefillPage(existingData);
-  else {fuSeenUpdateMultiPreview('fu-appliances','fu-appliances-preview');fuSeenUpdateMultiPreview('fu-accessories','fu-accessories-preview');}
-  updateOutcomeAvailabilityPreview();
-  fuSeenBindChangeTracking();
-}
+/* openFollowupSeenReviewPage (v35 copy) removed — superseded by the final definition later in this scope. */
 function fuSeenEpisodePayloadFromData(data,p,code,base,version,user,changed){
   return {
     patient_id:followupSeenReviewContext.patient_id,
@@ -15650,45 +15503,7 @@ function fuSeenReviewBlockFromData(data,code,user){
   const lines=['--- Encounter: Follow-up Review ---',`Follow-up Episode Code: ${code}`,`Date of review: ${data.reviewDate}`,`Version: ${code.includes('-V')?code.split('-V').pop():'Original'}`,`Recorded by: ${user.name||user.email||'Logged-in nurse'}`,`Patient: ${(data.firstName||'')+' '+(data.surname||'')}`,`ID Card: ${data.idcard}`,`Phone: ${data.phone||'—'}`,`Stoma colour: ${data.stomaColour}${data.stomaColour==='Other'&&data.stomaColourOther?' — '+data.stomaColourOther:''}`,`Function: ${data.stomaFunction}${data.stomaFunction==='Other'&&data.stomaFunctionOther?' — '+data.stomaFunctionOther:''}`,`Peristomal skin: ${data.peristomalSkin}${data.peristomalSkin==='Other'&&data.peristomalSkinOther?' — '+data.peristomalSkinOther:''}`,`Appliances used: ${data.appliances.join(', ')}`,`Accessories: ${data.accessories.join(', ')}`,`Follow-up status: ${fuSeenStatusBadgeText(data.followupStatus)}`,`Follow-up owner: ${data.owner}`,`Next follow-up due: ${followupDueLabel(data.month,data.year)}`,'Nursing Report:',data.nursingReport||'—'];
   return lines.join('\n');
 }
-async function saveFollowupSeenEpisode(){
-  const appt=followupSeenReviewContext;
-  if(!appt?.id||!appt?.patient_id){alert('No Follow-up Seen review is loaded.');return;}
-  const data=fuSeenCollectFormData();
-  const errors=[];
-  if(!data.reviewDate)errors.push('Date of review');if(!data.idcard)errors.push('ID Card Number');if(!data.firstName)errors.push('Name');if(!data.surname)errors.push('Surname');
-  fuSeenRequiredOtherCheck(errors,'Stoma colour','fu-stoma-colour');fuSeenRequiredOtherCheck(errors,'Function','fu-function');fuSeenRequiredOtherCheck(errors,'Peristomal skin','fu-skin');
-  if(!data.appliances.length)errors.push('Appliances used');if(!data.accessories.length)errors.push('Accessories');
-  if(data.rawMonthChoice===AUTO_AVAILABILITY_VALUE)errors.push('Specific follow-up due month');if(!data.month||!data.year)errors.push('Follow-up due month and year');if(!data.nursingReport)errors.push('Nursing Report');
-  if(errors.length){fuSeenShowErrors(errors);return;}fuSeenShowErrors([]);
-  const base=followupSeenOriginalEpisode?.base_episode_code||fuSeenBaseEpisodeCode({id_card:data.idcard},data.reviewDate);
-  let version=1;
-  try{version=followupSeenOriginalEpisode?Number((await fuSeenNextVersion(base))||2):await fuSeenNextVersion(base);}catch(e){alert('Could not save because the SQL table is not ready. Please run followup_seen_episodes_SQL.sql in Supabase.');return;}
-  const code=fuSeenFullCode(base,version);
-  const changed=fuSeenChangedFields(followupSeenOriginalData,data);
-  if(followupSeenOriginalEpisode && !Object.keys(changed).length){alert('No changes were made. Nothing to save as a new version.');return;}
-  const user=await getCurrentUserForAudit();
-  const payload=fuSeenEpisodePayloadFromData(data,appt.patients||{},code,base,version,user,changed);
-  const {error:insErr}=await SB.from('followup_seen_episodes').insert(payload);
-  if(insErr){alert('Could not save Follow-up episode. If this is the first time, run the SQL table script first. Error: '+insErr.message);return;}
-  const block=fuSeenReviewBlockFromData(data,code,user);
-  const {data:freshPatient,error:freshErr}=await SB.from('patients').select('id,findings').eq('id',appt.patient_id).maybeSingle();
-  if(freshErr){alert('Follow-up episode saved, but patient could not be refreshed: '+freshErr.message);return;}
-  const previous=String(freshPatient?.findings||'').trim();
-  const patientPayload={first_name:data.firstName,surname:data.surname,id_card:data.idcard,phone_number:data.phone||null,followup_owner:data.owner,followup_status:data.followupStatus,followup_type:'follow_up',followup_due_month:Number(data.month),followup_year:Number(data.year),last_outcome_date:data.reviewDate,findings:(previous?previous+'\n\n':'')+block};
-  const {error:pErr}=await SB.from('patients').update(patientPayload).eq('id',appt.patient_id);
-  if(pErr){alert('Episode saved, but patient follow-up fields could not update: '+pErr.message);}
-  const apptPayload={status:'attended',notes:block,outcome_recorded_at:new Date().toISOString(),outcome_recorded_by_email:user.email,outcome_recorded_by_name:user.name};
-  let {error:aErr}=await SB.from('appointments').update(apptPayload).eq('id',appt.id);
-  if(aErr && String(aErr.message||'').toLowerCase().includes('column')){const retry=await SB.from('appointments').update({status:'attended',notes:block}).eq('id',appt.id);aErr=retry.error;}
-  if(aErr){alert('Episode saved, but appointment could not be updated: '+aErr.message);}
-  followupSeenReviewContext=null;followupSeenOriginalEpisode=null;followupSeenOriginalData=null;
-  alert('Follow-up episode saved: '+code);
-  await openPatientInterface(appt.patient_id);
-  patientInterfaceActiveSection='follow-up-history';
-  await loadFollowupSeenEpisodesForPatient(appt.patient_id);
-  renderPatientInterface();
-  refreshAppointmentViews();if(currentPatientsTab)loadPatientsList(currentPatientsTab);
-}
+/* saveFollowupSeenEpisode (v35 copy) removed — superseded by the final definition later in this scope. */
 async function loadFollowupSeenEpisodesForPatient(patientId){
   followupSeenEpisodesForPatient=[];
   if(!patientId)return [];
@@ -21015,6 +20830,7 @@ table thead th.v63-name-title,
     return null;
   }
   function emptyMsg(msg){try{document.getElementById('mb').innerHTML='<div style="padding:24px;text-align:center;color:#856404;font-weight:600;line-height:1.5;">'+msg+'</div>';openMo();}catch(e){alert(msg);}}
+  window.previewPatient=previewPatient;window.previewAppointment=previewAppointment;
   window.pagesOpen=function(kind){
     (async function(){
       try{
@@ -21377,5 +21193,82 @@ window.saveDailyStormaReview=async function(){
 })();
 </script>
 <!-- /v90 daily stoma review page -->
+
+<!-- v91 — review-pass fixes: define missing handlers -->
+<script>
+(function(){
+'use strict';
+
+/* "Confirm" on the Post-Op Review page had no definition — the button silently failed. */
+if(typeof window.confirmPostOperativeDailyReview!=='function'){
+  window.confirmPostOperativeDailyReview=function(){
+    const note=document.getElementById('postop-review-note');
+    if(note){
+      note.style.color='var(--green,#166534)';
+      note.textContent='Review confirmed. Press "Save Encounter" to record it.';
+      note.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+  };
+}
+
+/* "← Return" on the Care Episode page had no definition — the button silently failed. */
+if(typeof window.returnFromEpisodePage!=='function'){
+  window.returnFromEpisodePage=function(){
+    try{
+      const p=window.episodePagePatient;
+      if(p&&p.id&&typeof openPatientInterface==='function')return openPatientInterface(p.id);
+    }catch(e){}
+    try{switchTab('home',document.querySelector('[data-tab="home"]'));}catch(e){}
+  };
+}
+
+/* Pages tab: new kinds + default fallback so unknown kinds no longer fail silently */
+(function(){
+  const prev=window.pagesOpen;
+  const KNOWN=['patient-interface','sitting-session','daily-review','generic-encounter','daily-stoma-review','clinical-record','followup-history','rebook','book-slot','seen-review','cancel-appt','care-note','episode-page','record-history','reversal'];
+  window.pagesOpen=function(kind){
+    if(kind==='reversal'){
+      if(typeof window.v70OpenReversalModal==='function')return window.v70OpenReversalModal();
+      alert('Reversal lookup is not available.');return;
+    }
+    if(kind==='care-note'||kind==='episode-page'||kind==='record-history'){
+      (async function(){
+        try{
+          const p=typeof previewPatient==='function'?await previewPatient():null;
+          if(!p||!p.id){alert('No patient records exist yet. Add a patient first.');return;}
+          if(kind==='care-note')return openGenericEncounterModal(p.id,'general_note');
+          if(kind==='episode-page')return openPatientEpisodePage(p.id,'encounters');
+          if(kind==='record-history')return openPatientRecordHistoryPage(p.id);
+        }catch(e){alert('Could not open preview: '+(e?.message||e));}
+      })();
+      return;
+    }
+    if(!KNOWN.includes(kind)){alert('This page shortcut ("'+kind+'") is not wired up yet.');return;}
+    if(typeof prev==='function')return prev(kind);
+  };
+})();
+
+/* Pages tab filter box */
+window.filterPagesCards=function(qs){
+  const needle=String(qs||'').trim().toLowerCase();
+  document.querySelectorAll('#page-pages .pages-group').forEach(group=>{
+    let visible=0;
+    group.querySelectorAll('.pages-card').forEach(card=>{
+      const hit=!needle||card.textContent.toLowerCase().includes(needle);
+      card.style.display=hit?'':'none';
+      if(hit)visible++;
+    });
+    group.style.display=visible?'':'none';
+  });
+};
+
+})();
+</script>
+<style>
+.pages-filter-row{margin:0 0 16px;}
+.pages-filter-row input{width:100%;max-width:420px;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.pages-filter-row input:focus{border-color:var(--teal);}
+</style>
+<!-- /v91 review-pass fixes -->
 </body>
 </html>
