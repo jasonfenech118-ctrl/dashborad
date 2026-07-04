@@ -11721,6 +11721,7 @@ async function saveGenericEncounter(){
   if(appointmentId){
     await SB.from('appointments').update({status:'attended',notes:block}).eq('id',appointmentId);
   }
+  if(typeof recordEncounterRow==='function')await recordEncounterRow({patient_id:patientId,appointment_id:appointmentId||null,encounter_type:'followup_review',encounter_date:reviewDate,encounter_time:reviewTime||null,recorded_by:signature||null,data:{frequency,location,reason,assessment,care,outcome,plan,owner,month:Number(month),year:Number(year)},summary:block});
   closeModal();
   if(typeof refreshAppointmentViews==='function')refreshAppointmentViews();
   if(typeof renderPatientInterface==='function')renderPatientInterface();
@@ -20966,6 +20967,7 @@ window.saveCareEncounterModal=async function(){
     const {error}=await SB.from('patients').update({findings:(prev?prev+'\n\n':'')+block}).eq('id',patientId);
     if(error)throw error;
     if(apptId)await SB.from('appointments').update({status:'attended',notes:block}).eq('id',apptId);
+    if(typeof recordEncounterRow==='function')await recordEncounterRow({patient_id:patientId,appointment_id:apptId||null,encounter_type:type,encounter_date:date,encounter_time:time||null,recorded_by:sig||null,data:{assessment,care,plan,typeLabel},summary:block});
     if(typeof closeModal==='function')closeModal();
     if(typeof renderPatientInterface==='function')renderPatientInterface();
     if(typeof renderEpisodePage==='function')renderEpisodePage();
@@ -21152,6 +21154,7 @@ window.saveDailyStormaReview=async function(){
       findings:(prev?prev+'\n\n':'')+block
     }).eq('id',p.id);
     if(error)throw error;
+    if(typeof recordEncounterRow==='function')await recordEncounterRow({patient_id:p.id,encounter_type:'daily_stoma_review',encounter_date:date,recorded_by:sig||null,data:{stomaColour,stomaFunction,peristomalSkin,complications,appliances,accessories,nursingReport,owner,month:Number(month),year:Number(year),followupStatus},summary:block});
     alert('Daily Stoma Review saved.');
     _dsrPatient=null;
     if(typeof openPatientInterface==='function')await openPatientInterface(p.id);
@@ -21270,5 +21273,31 @@ window.filterPagesCards=function(qs){
 .pages-filter-row input:focus{border-color:var(--teal);}
 </style>
 <!-- /v91 review-pass fixes -->
+
+<!-- v92 — structured encounters backend (see supabase-encounters.sql) -->
+<script>
+(function(){
+'use strict';
+/* Inserts a structured encounter row into the `encounters` table.
+   Non-fatal by design: if the table has not been created yet (run
+   supabase-encounters.sql), saving still succeeds via patients.findings. */
+window.recordEncounterRow=async function(row){
+  try{
+    if(typeof SB==='undefined'||!row||!row.patient_id)return false;
+    const {error}=await SB.from('encounters').insert(row);
+    if(error){
+      console.warn('encounters insert skipped:',error.message);
+      if(/relation .* does not exist|schema cache/i.test(String(error.message||'')) && !window.__encTableWarned){
+        window.__encTableWarned=true;
+        console.warn('The `encounters` table is missing. Run supabase-encounters.sql in the Supabase SQL editor to enable the structured backend.');
+      }
+      return false;
+    }
+    return true;
+  }catch(e){console.warn('encounters insert failed:',e);return false;}
+};
+})();
+</script>
+<!-- /v92 structured encounters backend -->
 </body>
 </html>
