@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
+  <style>
+    :root{--teal:#0d7377;--navy:#1a2e4a;--gold:#e6a817;--border:#dbe7e6;--muted:#6b7a86;}
+    *{box-sizing:border-box;}
+    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f4fbfa;color:var(--navy);margin:0;}
+    .topbar{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;}
+    .topbar .logo{font-weight:800;}.topbar .logo span{color:var(--gold);}
+    .topbar a{color:#fff;text-decoration:none;font-size:13px;font-weight:600;opacity:.85;}
+    .topbar a:hover{opacity:1;}
+    .topbar .spacer{flex:1;}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+    h1{font-size:22px;margin:0 0 16px;}
+    h2{font-size:16px;margin:24px 0 10px;color:var(--teal);}
+    a{color:var(--teal);}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    th,td{text-align:left;padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);}
+    th{background:#eef6f5;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:#f8fdfc;}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;}
+    .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
+    .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#eef6f5;color:var(--teal);}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+    .kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+    .kv .v{font-weight:700;font-size:14px;}
+    .muted{color:var(--muted);}
+    .pager{margin-top:16px;display:flex;gap:8px;align-items:center;font-size:13px;}
+    pre{white-space:pre-wrap;font-family:inherit;margin:0;font-size:12px;}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="logo">MDH <span>Stoma Care</span> Clinic</span>
+    <a href="{% url 'clinic:dashboard' %}">Home</a>
+    <a href="{% url 'clinic:patient_list' %}">Patients</a>
+    <a href="/admin/">Admin</a>
+    <span class="spacer"></span>
+    {% if user.is_authenticated %}<span style="font-size:12px;opacity:.8;">{{ user.username }}</span>
+    <a href="/admin/logout/">Sign out</a>{% endif %}
+  </div>
+  <div class="wrap">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
