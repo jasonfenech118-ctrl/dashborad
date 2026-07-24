@@ -1,0 +1,45 @@
+{% extends "clinic/base.html" %}
+{% block title %}Patients — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<h1>Patients <span class="muted" style="font-size:14px;">({{ page.paginator.count }})</span></h1>
+
+<form method="get" class="controls">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID card, phone, locality…" style="min-width:280px;"/>
+  <select name="status">
+    <option value="">All statuses</option>
+    {% for s in statuses %}
+      <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn" type="submit">Search</button>
+</form>
+
+<table>
+  <thead>
+    <tr><th>Surname</th><th>Name</th><th>ID Card</th><th>Status</th><th>Owner</th><th>Route</th><th>Surgery</th></tr>
+  </thead>
+  <tbody>
+    {% for p in page %}
+    <tr>
+      <td><a href="{% url 'clinic:patient_detail' p.id %}"><strong>{{ p.surname|default:"—" }}</strong></a></td>
+      <td>{{ p.first_name|default:"—" }}</td>
+      <td>{{ p.id_card|default:"—" }}</td>
+      <td>{% if p.followup_status %}<span class="pill">{{ p.followup_status }}</span>{% else %}—{% endif %}</td>
+      <td>{{ p.followup_owner|default:"—" }}</td>
+      <td>{{ p.admission_route|default:"—" }}</td>
+      <td>{{ p.surgery_date|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="muted" style="text-align:center;padding:24px;">No patients found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+  <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}
