@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MDH Stoma Care — Ward Workspace</title>
+<style>
+  :root{
+    --navy:#122036; --navy-2:#1b2f4d; --navy-3:#20496b; --teal:#0d7377; --teal-2:#14a2a8;
+    --gold:#e6a817; --ink:#1a2333; --muted:#6b7a8d; --line:#e4ebf0; --line-2:#eef2f6;
+    --bg:#eef2f6; --card:#ffffff; --red:#e5604d; --green:#2fae66; --purple:#8b5cf6;
+    --cyan:#2bb7d6; --slate:#64798f; --shadow:0 6px 22px rgba(18,32,54,.10); --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:'Segoe UI',-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);
+    color:var(--ink);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:54px;padding:0 16px;
+    background:linear-gradient(180deg,var(--navy),var(--navy-2));color:#fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.22);z-index:40;}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;white-space:nowrap;padding-right:8px;}
+  .brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--teal-2),var(--teal));
+    display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  .brand span{color:var(--gold);}
+  .nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;margin-left:6px;}
+  .nav::-webkit-scrollbar{display:none;}
+  .nav a{padding:7px 11px;border-radius:8px;font-size:13px;font-weight:600;color:#cdd9e8;white-space:nowrap;
+    transition:background .14s,color .14s;}
+  .nav a:hover{background:rgba(255,255,255,.10);color:#fff;}
+  .nav a.active{background:var(--teal);color:#fff;box-shadow:0 2px 8px rgba(13,115,119,.4);}
+  .nav a .car{opacity:.7;font-size:10px;margin-left:3px;}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:8px;}
+  .top-search{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:6px 10px;color:#dbe6f0;}
+  .top-search input{background:none;border:none;outline:none;color:#fff;font-size:13px;width:150px;}
+  .top-search input::placeholder{color:#9fb2c9;}
+  .icon-btn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+    background:rgba(255,255,255,.10);font-size:15px;transition:background .14s;}
+  .icon-btn:hover{background:rgba(255,255,255,.2);}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#c8890a);
+    display:grid;place-items:center;font-weight:800;color:#3a2a00;font-size:13px;}
+
+  /* ---------- Workspace layout ---------- */
+  .workspace{flex:1 1 auto;display:grid;grid-template-columns:266px 1fr;min-height:0;}
+
+  /* ---------- Left: patients at the ward ---------- */
+  .ward{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .ward-head{padding:12px 14px 10px;border-bottom:1px solid var(--line);}
+  .ward-title{display:flex;align-items:center;gap:8px;}
+  .ward-title h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--navy);}
+  .ward-title .n{background:var(--teal);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;}
+  .ward-title .tools{margin-left:auto;display:flex;gap:4px;}
+  .ward-title .tools .icon-btn{width:28px;height:28px;background:var(--line-2);color:var(--navy);font-size:13px;}
+  .ward-title .tools .icon-btn:hover{background:#dde6ee;}
+  .ward-search{margin-top:10px;display:flex;align-items:center;gap:7px;background:var(--line-2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--muted);}
+  .ward-search input{background:none;border:none;outline:none;font-size:13px;flex:1;color:var(--ink);}
+  .pager{display:flex;gap:5px;margin-top:10px;}
+  .pager button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;
+    font-size:12px;font-weight:700;color:var(--muted);}
+  .pager button.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  .plist{flex:1 1 auto;overflow-y:auto;padding:6px;}
+  .prow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;transition:background .12s,border-color .12s;}
+  .prow:hover{background:var(--line-2);}
+  .prow.sel{background:#e8f5f4;border-color:#bfe3e1;box-shadow:inset 3px 0 0 var(--teal);}
+  .prow .pinit{width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+    font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,var(--navy-3),var(--navy-2));}
+  .prow.sel .pinit{background:linear-gradient(135deg,var(--teal-2),var(--teal));}
+  .prow .pmeta{min-width:0;flex:1;}
+  .prow .pname{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prow .psub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prow .warn{color:var(--red);font-size:14px;flex:0 0 auto;}
+  .prow .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .ward-foot{flex:0 0 auto;padding:10px;border-top:1px solid var(--line);}
+  .add-btn{width:100%;padding:10px;border:none;border-radius:9px;font-size:13px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--green),#158048);box-shadow:0 3px 10px rgba(21,128,72,.3);
+    display:flex;align-items:center;justify-content:center;gap:7px;}
+  .add-btn:hover{filter:brightness(1.05);}
+
+  /* ---------- Right: patient record ---------- */
+  .record{display:flex;flex-direction:column;min-width:0;min-height:0;}
+  .phdr{background:linear-gradient(120deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;padding:12px 18px;}
+  .phdr-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .phdr-name{font-size:17px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;}
+  .phdr-name .info{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);
+    display:grid;place-items:center;font-size:11px;font-style:italic;font-weight:700;}
+  .phdr-id{font-size:12.5px;color:#d6f3f1;}
+  .phdr-ledger{margin-left:auto;font-size:12px;color:#d6f3f1;text-align:right;}
+  .phdr-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:8px;
+    padding:4px 10px;font-size:12px;white-space:nowrap;}
+  .chip b{font-weight:700;color:#fff;}
+  .chip .lab{color:#cdeeeb;font-weight:400;}
+  .chip.warnpill{background:#fff2f0;border-color:#f6c3bb;color:#a3271a;}
+  .chip.paid{background:#fff6e2;border-color:#f0d79a;color:#7a5600;}
+  .adv-btn{margin-left:auto;background:#fff;color:var(--teal);border:none;border-radius:8px;padding:6px 14px;
+    font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;background:var(--card);border-bottom:1px solid var(--line);padding:0 12px;
+    overflow-x:auto;scrollbar-width:none;flex:0 0 auto;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{padding:12px 14px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;
+    border-bottom:2.5px solid transparent;transition:color .12s,border-color .12s;}
+  .tab:hover{color:var(--navy);}
+  .tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:800;}
+
+  /* record body: doc-type list + table */
+  .rbody{flex:1 1 auto;display:grid;grid-template-columns:230px 1fr;min-height:0;background:var(--bg);}
+  .doctypes{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .doctypes .dt-search{margin:12px;display:flex;align-items:center;gap:7px;background:var(--line-2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--muted);}
+  .doctypes .dt-search input{background:none;border:none;outline:none;font-size:12.5px;flex:1;color:var(--ink);}
+  .dt-list{overflow-y:auto;padding:0 8px 10px;}
+  .dt-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;
+    color:var(--ink);transition:background .12s;}
+  .dt-item:hover{background:var(--line-2);}
+  .dt-item.sel{background:#e8f5f4;color:var(--teal);font-weight:800;}
+  .dt-item .dt-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .dt-item .dt-ct{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);background:var(--line-2);
+    border-radius:999px;padding:1px 7px;}
+  .dt-item.sel .dt-ct{background:#d3ecea;color:var(--teal);}
+
+  .records{overflow:auto;padding:14px;}
+  .rec-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .rec-head h4{font-size:14px;font-weight:800;color:var(--navy);}
+  .rec-head .sub{font-size:12px;color:var(--muted);}
+  .rec-head .spacer{margin-left:auto;}
+  .rec-head .mini-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;
+    font-size:12px;font-weight:700;color:var(--navy);}
+  .rec-head .mini-btn:hover{border-color:var(--teal);color:var(--teal);}
+  table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+    font-weight:800;padding:11px 14px;background:var(--line-2);border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--line-2);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#f7fafb;}
+  .td-date{white-space:nowrap;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .td-date .t{display:block;font-size:11px;color:var(--muted);font-weight:500;}
+  .td-person{white-space:nowrap;}
+  .td-person .who{font-weight:600;}
+  .td-person .sys{display:block;font-size:11px;color:var(--muted);}
+  .doc-pill{display:inline-flex;align-items:center;gap:8px;}
+  .doc-pill .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .td-action{white-space:nowrap;text-align:right;}
+  .act{width:30px;height:30px;border-radius:7px;display:inline-grid;place-items:center;border:1px solid var(--line);
+    background:#fff;font-size:14px;color:var(--slate);margin-left:5px;}
+  .act:hover{border-color:var(--teal);color:var(--teal);background:#f0fbfa;}
+  .empty{padding:44px;text-align:center;color:var(--muted);font-size:13px;}
+
+  .banner{background:#fff8e6;border:1px solid #f0d79a;color:#7a5600;font-size:12px;padding:8px 14px;
+    display:none;align-items:center;gap:8px;}
+  .banner.show{display:flex;}
+
+  @media(max-width:900px){
+    .workspace{grid-template-columns:1fr;}
+    .ward{display:none;}
+    .rbody{grid-template-columns:1fr;}
+    .doctypes{display:none;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand"><span class="mark">✚</span>MDH<span>&nbsp;Stoma</span></div>
+    <nav class="nav">
+      <a class="active">Ward</a>
+      <a>Patients</a>
+      <a>Calendar</a>
+      <a>Appointments</a>
+      <a>Tasks</a>
+      <a>Aggregate</a>
+      <a>Reports</a>
+      <a>Rosters</a>
+      <a>Settlements<span class="car">▾</span></a>
+      <a>More<span class="car">▾</span></a>
+    </nav>
+    <div class="top-right">
+      <label class="top-search">🔍<input type="text" placeholder="Search patients…" /></label>
+      <div class="icon-btn" title="Messages">💬</div>
+      <div class="icon-btn" title="Notifications">🔔</div>
+      <div class="avatar" title="Jason Fenech">JF</div>
+    </div>
+  </header>
+
+  <div class="banner" id="banner">⚠ Showing demo data — the live clinic database isn't reachable from here.</div>
+
+  <div class="workspace">
+
+    <!-- LEFT: PATIENTS AT THE WARD -->
+    <aside class="ward">
+      <div class="ward-head">
+        <div class="ward-title">
+          <h3>Patients at the ward</h3>
+          <span class="n" id="wardCount">0</span>
+          <div class="tools">
+            <div class="icon-btn" title="Refresh" onclick="loadPatients()">⟳</div>
+            <div class="icon-btn" title="Filter">▼</div>
+          </div>
+        </div>
+        <label class="ward-search">🔍<input type="text" id="wardSearch" placeholder="Search…" oninput="renderPatients()" /></label>
+        <div class="pager">
+          <button class="active">1</button><button>2</button><button>3</button><button>4</button><button>5</button>
+        </div>
+      </div>
+      <div class="plist" id="plist"></div>
+      <div class="ward-foot">
+        <button class="add-btn">＋ Add patient</button>
+      </div>
+    </aside>
+
+    <!-- RIGHT: PATIENT RECORD -->
+    <section class="record">
+      <div class="phdr" id="phdr"></div>
+
+      <div class="tabs">
+        <div class="tab active">Documents</div>
+        <div class="tab">Summary</div>
+        <div class="tab">Last events</div>
+        <div class="tab">Results</div>
+        <div class="tab">Requests</div>
+        <div class="tab">Medicine cards</div>
+        <div class="tab">Tasks</div>
+        <div class="tab">Prescriptions &amp; referrals</div>
+      </div>
+
+      <div class="rbody">
+        <div class="doctypes">
+          <label class="dt-search">🔍<input type="text" id="dtSearch" placeholder="Search document…" oninput="renderDocTypes()" /></label>
+          <div class="dt-list" id="dtList"></div>
+        </div>
+        <div class="records">
+          <div class="rec-head">
+            <h4 id="recTitle">Documents</h4>
+            <span class="sub" id="recSub"></span>
+            <span class="spacer"></span>
+            <button class="mini-btn">＋ New document</button>
+          </div>
+          <div id="recTableWrap"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+/* =====================================================================
+   MDH Stoma Care — Ward Workspace
+   Layout modelled on a hospital EMR: patient list, patient header,
+   document tabs, and a records table. Reads live data from Supabase in
+   the browser; falls back to demo data so the screen always renders.
+   ===================================================================== */
+(function(){
+  const SB_URL = 'https://jucunagrwqkzdfajmblg.supabase.co';
+  const SB_KEY = 'sb_publishable_oaTKxc-aLZB2J6aE-_unMw_wFI_WMIE';
+  const HEADERS = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+  /* ---- Encounter (document) type catalogue: label + colour ---- */
+  const TYPES = {
+    daily_stoma_review:  { label: 'Daily Stoma Review',   color: '#0d7377' },
+    stoma_review:        { label: 'Stoma Review',          color: '#14a2a8' },
+    postop_daily_review: { label: 'Post-op Daily Review',  color: '#2bb7d6' },
+    wound_review:        { label: 'Wound Review',          color: '#e6a817' },
+    fistula_review:      { label: 'Fistula Review',        color: '#8b5cf6' },
+    followup_review:     { label: 'Follow-up Review',      color: '#2fae66' },
+    teaching_session:    { label: 'Teaching',              color: '#158048' },
+    phone_advice:        { label: 'Phone / Advice',        color: '#64798f' },
+    discharge_planning:  { label: 'Discharge Planning',    color: '#26456e' },
+    general_note:        { label: 'General Note',          color: '#8895a6' },
+  };
+  const typeInfo = t => TYPES[t] || { label: (t||'Document').replace(/_/g,' '), color: '#64798f' };
+
+  /* ---- Demo fallback data (stoma-care flavoured) ---- */
+  const DEMO_PATIENTS = [
+    { id:'d1', first_name:'Monica',  surname:'Churchwell', id_card:'0142M', followup_status:'inpatient', followup_owner:'Jacqueline', locality:'Mosta',    phone_number:'7942 1180', due:true  },
+    { id:'d2', first_name:'John',    surname:'Harrison',   id_card:'0088H', followup_status:'inpatient', followup_owner:'Jason',      locality:'Birkirkara',phone_number:'9987 4410', due:true  },
+    { id:'d3', first_name:'Emma',    surname:'Isaac',      id_card:'0210I', followup_status:'active',    followup_owner:'Lorraine',   locality:'Sliema',   phone_number:'7788 0092', due:false },
+    { id:'d4', first_name:'John',    surname:'Novak',      id_card:'0173N', followup_status:'inpatient', followup_owner:'Common',     locality:'Qormi',    phone_number:'9911 2231', due:false },
+    { id:'d5', first_name:'David',   surname:'Swank',      id_card:'0301S', followup_status:'active',    followup_owner:'Jacqueline', locality:'Zejtun',   phone_number:'7942 8890', due:true  },
+    { id:'d6', first_name:'Joanna',  surname:'Cat',        id_card:'0119C', followup_status:'active',    followup_owner:'Jason',      locality:'Naxxar',   phone_number:'9988 1100', due:false },
+    { id:'d7', first_name:'Megan',   surname:'Pounds',     id_card:'0256P', followup_status:'inpatient', followup_owner:'Lorraine',   locality:'Rabat',    phone_number:'7700 5521', due:false },
+    { id:'d8', first_name:'William', surname:'Bell',       id_card:'0064B', followup_status:'active',    followup_owner:'Common',     locality:'Paola',    phone_number:'9944 3300', due:false },
+    { id:'d9', first_name:'Marilyn', surname:'Conklin',    id_card:'0288K', followup_status:'active',    followup_owner:'Jacqueline', locality:'Fgura',    phone_number:'7912 6654', due:false },
+    { id:'d10',first_name:'Jon',     surname:'Arndt',      id_card:'0150A', followup_status:'inpatient', followup_owner:'Jason',      locality:'Attard',   phone_number:'9922 7788', due:false },
+    { id:'d11',first_name:'William', surname:'Price',      id_card:'0197R', followup_status:'active',    followup_owner:'Lorraine',   locality:'Mellieha', phone_number:'7955 1234', due:false },
+  ];
+  const DEMO_ENCOUNTERS = {
+    d1: [
+      { encounter_date:'2021-03-23', encounter_time:'15:57', recorded_by:'J. Farrugia', encounter_type:'daily_stoma_review',  summary:'Stoma pink & functioning; peristomal skin intact.' },
+      { encounter_date:'2021-03-23', encounter_time:'15:57', recorded_by:'J. Farrugia', encounter_type:'general_note',         summary:'Entry into main record.' },
+      { encounter_date:'2020-10-06', encounter_time:'08:16', recorded_by:'L. Vella',    encounter_type:'wound_review',         summary:'Request for drug administration.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:43', recorded_by:'J. Fenech',   encounter_type:'postop_daily_review',  summary:'Vital parameters recorded.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:18', recorded_by:'L. Vella',    encounter_type:'fistula_review',       summary:'Request for laboratory tests.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:00', recorded_by:'J. Farrugia', encounter_type:'teaching_session',     summary:'Assessment of nutritional condition.' },
+      { encounter_date:'2020-02-04', encounter_time:'08:09', recorded_by:'J. Fenech',   encounter_type:'discharge_planning',   summary:'Change of the doctor in charge.' },
+      { encounter_date:'2020-02-04', encounter_time:'08:04', recorded_by:'J. Farrugia', encounter_type:'followup_review',      summary:'Follow-up planned for next month.' },
+    ],
+  };
+  const demoEnc = id => DEMO_ENCOUNTERS[id] || [
+    { encounter_date:'2021-02-18', encounter_time:'10:12', recorded_by:'J. Fenech',   encounter_type:'daily_stoma_review', summary:'Routine stoma review — no concerns.' },
+    { encounter_date:'2021-01-30', encounter_time:'09:40', recorded_by:'L. Vella',    encounter_type:'phone_advice',       summary:'Telephone advice re appliance leakage.' },
+    { encounter_date:'2020-12-11', encounter_time:'14:05', recorded_by:'J. Farrugia', encounter_type:'followup_review',     summary:'Follow-up seen — stable.' },
+  ];
+
+  /* ---- State ---- */
+  let patients = [];
+  let encounters = [];
+  let selected = null;
+  let typeFilter = 'all';
+  let live = false;
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const initials = p => ((p.first_name||' ')[0] + (p.surname||' ')[0]).toUpperCase();
+  const fullName = p => `${(p.surname||'').toUpperCase()} ${(p.first_name||'')}`.trim();
+  const statusColor = s => ({inpatient:'#2bb7d6', active:'#2fae66', reversed:'#e6a817',
+    deceased:'#122036', relocated_gozo:'#64798f'}[s] || '#8895a6');
+  const fmtDate = d => { if(!d) return '—'; const p=String(d).split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; };
+
+  /* ---- Data loading ---- */
+  async function loadPatients(){
+    try{
+      const cols = 'id,first_name,surname,id_card,followup_status,followup_owner,locality,phone_number,followup_due_month,followup_year';
+      const res = await fetch(
+        `${SB_URL}/rest/v1/patients?select=${cols}&or=(followup_status.eq.inpatient,followup_status.eq.active)&order=surname.asc&limit=100`,
+        { headers: HEADERS });
+      if(!res.ok) throw new Error('http '+res.status);
+      const rows = await res.json();
+      if(!Array.isArray(rows) || !rows.length) throw new Error('empty');
+      const now = new Date();
+      rows.forEach(r => { r.due = r.followup_status==='active'
+        && r.followup_year && r.followup_due_month
+        && (r.followup_year < now.getFullYear() ||
+           (r.followup_year === now.getFullYear() && r.followup_due_month <= now.getMonth()+1)); });
+      patients = rows; live = true;
+    }catch(e){
+      patients = DEMO_PATIENTS; live = false;
+    }
+    $('#banner').classList.toggle('show', !live);
+    renderPatients();
+    if(patients.length) selectPatient(patients[0]);
+  }
+
+  async function loadEncounters(p){
+    try{
+      if(!live || String(p.id).startsWith('d')) throw new Error('demo');
+      const res = await fetch(
+        `${SB_URL}/rest/v1/encounters?select=encounter_date,encounter_time,recorded_by,encounter_type,summary&patient_id=eq.${p.id}&order=encounter_date.desc&limit=200`,
+        { headers: HEADERS });
+      if(!res.ok) throw new Error('http '+res.status);
+      const rows = await res.json();
+      encounters = Array.isArray(rows) ? rows : [];
+    }catch(e){
+      encounters = demoEnc(p.id);
+    }
+    typeFilter = 'all';
+    renderDocTypes();
+    renderRecords();
+  }
+
+  /* ---- Rendering ---- */
+  function renderPatients(){
+    const q = ($('#wardSearch').value||'').toLowerCase();
+    const list = patients.filter(p => !q || fullName(p).toLowerCase().includes(q) || (p.id_card||'').toLowerCase().includes(q));
+    $('#wardCount').textContent = list.length;
+    $('#plist').innerHTML = list.map(p => `
+      <div class="prow ${selected&&selected.id===p.id?'sel':''}" onclick='pick("${p.id}")'>
+        <div class="pinit">${esc(initials(p))}</div>
+        <div class="pmeta">
+          <div class="pname">${esc(fullName(p))}</div>
+          <div class="psub">${esc(p.followup_owner||'Unassigned')} · ${esc((p.followup_status||'').replace(/_/g,' ')||'—')}</div>
+        </div>
+        ${p.due ? '<span class="warn" title="Follow-up due">⚠</span>'
+                : `<span class="dot" style="background:${statusColor(p.followup_status)}"></span>`}
+      </div>`).join('') || '<div class="empty">No patients match.</div>';
+  }
+
+  function renderHeader(p){
+    if(!p){ $('#phdr').innerHTML=''; return; }
+    const due = p.due;
+    $('#phdr').innerHTML = `
+      <div class="phdr-top">
+        <div class="phdr-name">${esc(fullName(p))}<span class="info">i</span></div>
+        <div class="phdr-id">Patient ID: ${esc(p.id_card||'—')} · Age: —</div>
+        <div class="phdr-ledger">Main Ledger No. /${esc(p.id_card||'—')}/2025<br>Ward Ledger No. /${esc(p.id_card||'—')}/2025</div>
+      </div>
+      <div class="phdr-sub">
+        <span class="chip"><span class="lab">Nurse:</span> <b>${esc(p.followup_owner||'Unassigned')}</b></span>
+        <span class="chip"><span class="lab">Status:</span> <b>${esc((p.followup_status||'—').replace(/_/g,' '))}</b></span>
+        <span class="chip"><span class="lab">Locality:</span> <b>${esc(p.locality||'—')}</b></span>
+        <span class="chip"><span class="lab">Phone:</span> <b>${esc(p.phone_number||'—')}</b></span>
+        ${due ? '<span class="chip warnpill"><b>⚠ Follow-up due</b></span>' : ''}
+        <button class="adv-btn">Advanced ⚙</button>
+      </div>`;
+  }
+
+  function typeCounts(){
+    const c = {}; encounters.forEach(e => { c[e.encounter_type] = (c[e.encounter_type]||0)+1; });
+    return c;
+  }
+
+  function renderDocTypes(){
+    const q = ($('#dtSearch').value||'').toLowerCase();
+    const counts = typeCounts();
+    const present = Object.keys(TYPES).filter(t => counts[t]);
+    let html = `
+      <div class="dt-item ${typeFilter==='all'?'sel':''}" onclick="setType('all')">
+        <span class="dt-dot" style="background:#122036"></span>All documents
+        <span class="dt-ct">${encounters.length}</span>
+      </div>`;
+    present.forEach(t => {
+      const info = typeInfo(t);
+      if(q && !info.label.toLowerCase().includes(q)) return;
+      html += `
+        <div class="dt-item ${typeFilter===t?'sel':''}" onclick="setType('${t}')">
+          <span class="dt-dot" style="background:${info.color}"></span>${esc(info.label)}
+          <span class="dt-ct">${counts[t]}</span>
+        </div>`;
+    });
+    $('#dtList').innerHTML = html;
+  }
+
+  function renderRecords(){
+    const rows = encounters.filter(e => typeFilter==='all' || e.encounter_type===typeFilter);
+    $('#recTitle').textContent = typeFilter==='all' ? 'Documents' : typeInfo(typeFilter).label;
+    $('#recSub').textContent = `${rows.length} record${rows.length===1?'':'s'}`;
+    if(!rows.length){ $('#recTableWrap').innerHTML = '<div class="empty">No documents for this patient yet.</div>'; return; }
+    $('#recTableWrap').innerHTML = `
+      <table>
+        <thead><tr><th>Date</th><th>Person</th><th>Document</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>${rows.map(e => {
+          const info = typeInfo(e.encounter_type);
+          return `<tr>
+            <td class="td-date">${fmtDate(e.encounter_date)}<span class="t">${esc(e.encounter_time||'')}</span></td>
+            <td class="td-person"><span class="who">${esc(e.recorded_by||'—')}</span><span class="sys">MDH Stoma Care</span></td>
+            <td><span class="doc-pill"><span class="dot" style="background:${info.color}"></span>
+                <span><b>${esc(info.label)}</b>${e.summary?`<div class="sys" style="font-size:11px;color:var(--muted)">${esc(e.summary)}</div>`:''}</span></span></td>
+            <td class="td-action"><span class="act" title="Open">🗀</span><span class="act" title="Print">🖨</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+
+  /* ---- Interactions ---- */
+  function selectPatient(p){ selected = p; renderPatients(); renderHeader(p); loadEncounters(p); }
+  window.pick = id => { const p = patients.find(x => String(x.id)===String(id)); if(p) selectPatient(p); };
+  window.setType = t => { typeFilter = t; renderDocTypes(); renderRecords(); };
+  window.loadPatients = loadPatients;
+  window.renderPatients = renderPatients;
+  window.renderDocTypes = renderDocTypes;
+
+  loadPatients();
+})();
+</script>
+</body>
+</html>
