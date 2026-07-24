@@ -16,15 +16,40 @@ When the rewrite is complete and you no longer use Supabase's client, flip
 
 ## Setup
 
+### Quick (one command)
+
 ```bash
 cd backend
-python3 -m venv .venv && source .venv/bin/activate     # optional but recommended
+./setup.sh
+```
+
+`setup.sh` creates a virtual environment, installs dependencies, writes a
+`.env` with a freshly generated `DJANGO_SECRET_KEY`, and runs the Django
+auth migrations. It then tells you the remaining steps. You only need to
+paste your Supabase database password into `.env`.
+
+### Manual
+
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
 # edit .env — set DJANGO_SECRET_KEY and the Supabase Postgres credentials
 # (Supabase dashboard -> Project Settings -> Database -> Connection info)
 ```
+
+### Verify the connection
+
+After filling in `.env`, confirm Django can reach your Supabase database and
+that every table is present:
+
+```bash
+python manage.py check_db
+```
+
+It prints row counts for all 12 tables, or tells you exactly what's missing.
 
 ### Run against Supabase (real data)
 
