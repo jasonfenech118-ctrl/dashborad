@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -72,3 +73,11 @@ def patient_detail(request, patient_id):
         "encounters": encounters,
         "followups": followups,
     })
+=======
+from django.shortcuts import render
+
+
+def dashboard(request):
+    """Landing page for the Django rewrite. Links to the admin panel."""
+    return render(request, "clinic/dashboard.html")
+>>>>>>> origin/main
