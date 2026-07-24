@@ -117,10 +117,10 @@
       <h1>MDH Nursing Stoma Care</h1>
       <p>Central workspace for the stoma care team — patient records, clinical forms, nurse workloads and outcome registers, all in one place.</p>
       <div class="stat-row">
-        <div class="stat"><div class="n">—</div><div class="l">Active Patients</div></div>
-        <div class="stat"><div class="n">—</div><div class="l">Inpatients</div></div>
-        <div class="stat"><div class="n">—</div><div class="l">Today's Reviews</div></div>
-        <div class="stat"><div class="n">—</div><div class="l">Follow-ups Due</div></div>
+        <div class="stat"><div class="n" data-stat="active">—</div><div class="l">Active Patients</div></div>
+        <div class="stat"><div class="n" data-stat="inpatient">—</div><div class="l">Inpatients</div></div>
+        <div class="stat"><div class="n" data-stat="reviews_today">—</div><div class="l">Today's Reviews</div></div>
+        <div class="stat"><div class="n" data-stat="followups_due">—</div><div class="l">Follow-ups Due</div></div>
       </div>
     </div>
   </section>
@@ -131,9 +131,9 @@
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Clinical Workspace</h2><span class="count">8 tools</span></div>
       <div class="grid">
-        <a class="tile"><span class="ico c-teal">＋</span><span class="txt"><span class="t">Add New Patient</span><span class="s">Start a new admission</span></span><span class="chev">›</span></a>
-        <a class="tile"><span class="ico c-navy">☷</span><span class="txt"><span class="t">Patients (Master List)</span><span class="s">Full register</span></span><span class="chev">›</span></a>
-        <a class="tile"><span class="ico c-cyan">⇄</span><span class="txt"><span class="t">Inpatients Handover</span><span class="s">Ward handover</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html"><span class="ico c-teal">＋</span><span class="txt"><span class="t">Add New Patient</span><span class="s">Start a new admission</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html"><span class="ico c-navy">☷</span><span class="txt"><span class="t">Patients (Master List)</span><span class="s">Full register</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?status=inpatient"><span class="ico c-cyan">⇄</span><span class="txt"><span class="t">Inpatients Handover</span><span class="s">Ward handover</span></span><span class="chev">›</span></a>
         <a class="tile"><span class="ico c-purple">✉</span><span class="txt"><span class="t">Discharge Letter Form</span><span class="s">Generate letter</span></span><span class="chev">›</span></a>
         <a class="tile"><span class="ico c-slate">◷</span><span class="txt"><span class="t">Surgical Rotation</span><span class="s">Theatre schedule</span></span><span class="chev">›</span></a>
         <a class="tile"><span class="ico c-gold">▥</span><span class="txt"><span class="t">Rosters</span><span class="s">Nurse scheduling</span></span><span class="chev">›</span></a>
@@ -146,10 +146,10 @@
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Nurse Workloads</h2><span class="count">4 lists</span></div>
       <div class="grid">
-        <a class="tile"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jacqueline — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Lorraine — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jason — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile"><span class="ico c-gold">👨‍👩‍👧</span><span class="txt"><span class="t">Common — Our Patients</span><span class="s">Shared caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?owner=Jacqueline"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jacqueline — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?owner=Lorraine"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Lorraine — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?owner=Jason"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jason — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?owner=Common"><span class="ico c-gold">👨‍👩‍👧</span><span class="txt"><span class="t">Common — Our Patients</span><span class="s">Shared caseload</span></span><span class="chev">›</span></a>
       </div>
     </section>
 
@@ -157,16 +157,16 @@
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Patient Outcomes</h2><span class="count">10 registers</span></div>
       <div class="grid">
-        <a class="tile"><span class="ico c-green">✓</span><span class="txt"><span class="t">Active Patients</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-cyan">▣</span><span class="txt"><span class="t">Inpatients</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-teal">◐</span><span class="txt"><span class="t">Ileo-Anal Pouch</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-purple">🏥</span><span class="txt"><span class="t">Discharges (Post Operative)</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-slate">⇢</span><span class="txt"><span class="t">Discharged to Gozo</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-gold">↺</span><span class="txt"><span class="t">Reversed</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-slate">⏸</span><span class="txt"><span class="t">Temporary Paused</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-red">⚠</span><span class="txt"><span class="t">DNTU</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-navy">✝</span><span class="txt"><span class="t">Deceased</span></span><span class="badge">—</span></a>
-        <a class="tile"><span class="ico c-slate">🗄</span><span class="txt"><span class="t">Deceased (Archived 2025)</span></span><span class="badge">—</span></a>
+        <a class="tile" href="ward.html?status=active"><span class="ico c-green">✓</span><span class="txt"><span class="t">Active Patients</span></span><span class="badge" data-badge="active">—</span></a>
+        <a class="tile" href="ward.html?status=inpatient"><span class="ico c-cyan">▣</span><span class="txt"><span class="t">Inpatients</span></span><span class="badge" data-badge="inpatient">—</span></a>
+        <a class="tile"><span class="ico c-teal">◐</span><span class="txt"><span class="t">Ileo-Anal Pouch</span></span><span class="chev">›</span></a>
+        <a class="tile"><span class="ico c-purple">🏥</span><span class="txt"><span class="t">Discharges (Post Operative)</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?status=relocated_gozo"><span class="ico c-slate">⇢</span><span class="txt"><span class="t">Discharged to Gozo</span></span><span class="badge" data-badge="gozo">—</span></a>
+        <a class="tile" href="ward.html?status=reversed"><span class="ico c-gold">↺</span><span class="txt"><span class="t">Reversed</span></span><span class="badge" data-badge="reversed">—</span></a>
+        <a class="tile"><span class="ico c-slate">⏸</span><span class="txt"><span class="t">Temporary Paused</span></span><span class="chev">›</span></a>
+        <a class="tile"><span class="ico c-red">⚠</span><span class="txt"><span class="t">DNTU</span></span><span class="chev">›</span></a>
+        <a class="tile" href="ward.html?status=deceased"><span class="ico c-navy">✝</span><span class="txt"><span class="t">Deceased</span></span><span class="badge" data-badge="deceased">—</span></a>
+        <a class="tile"><span class="ico c-slate">🗄</span><span class="txt"><span class="t">Deceased (Archived 2025)</span></span><span class="chev">›</span></a>
       </div>
     </section>
 
@@ -176,6 +176,72 @@
     <span>© MDH Nursing Stoma Care — internal clinical workspace</span>
     <span>Signed in as Jason Fenech</span>
   </footer>
+
+  <script>
+  /* ---------- Live counts (Supabase, read-only) ----------
+     Fulfils the "live counts" half of the dashboard: hero stats + outcome
+     badges are computed straight from the clinic database. Every count is
+     defensive — any failure (DB unreachable, table missing) leaves the "—"
+     placeholder in place, so the page never breaks. Definitions mirror the
+     former Django dashboard view exactly. */
+  (function(){
+    const SB_URL = 'https://jucunagrwqkzdfajmblg.supabase.co';
+    const SB_KEY = 'sb_publishable_oaTKxc-aLZB2J6aE-_unMw_wFI_WMIE';
+    const HEADERS = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    // Returns an exact row count for a filtered table, or null on any failure.
+    async function count(table, filter){
+      try{
+        const qs = filter ? '&' + filter : '';
+        const res = await fetch(
+          `${SB_URL}/rest/v1/${table}?select=id${qs}`,
+          { method: 'HEAD', headers: { ...HEADERS, Prefer: 'count=exact' } }
+        );
+        if(!res.ok) return null;
+        const range = res.headers.get('content-range'); // e.g. "*/152"
+        const total = range && range.split('/')[1];
+        return total && total !== '*' ? Number(total) : null;
+      }catch(e){ return null; }
+    }
+
+    function set(selector, value){
+      if(value === null || value === undefined) return; // keep the "—"
+      document.querySelectorAll(selector).forEach(el => { el.textContent = value; });
+    }
+
+    async function load(){
+      const [active, inpatient, reviewsToday, followupsDue, gozo, reversed, deceased] =
+        await Promise.all([
+          count('patients', 'followup_status=eq.active'),
+          count('patients', 'followup_status=eq.inpatient'),
+          count('appointments', `appt_date=eq.${today}`),
+          count('patients', `followup_status=eq.active&followup_due_month=eq.${now.getMonth() + 1}&followup_year=eq.${now.getFullYear()}`),
+          count('patients', 'followup_status=eq.relocated_gozo'),
+          count('patients', 'followup_status=eq.reversed'),
+          count('patients', 'followup_status=eq.deceased'),
+        ]);
+
+      // Hero stats
+      set('[data-stat="active"]', active);
+      set('[data-stat="inpatient"]', inpatient);
+      set('[data-stat="reviews_today"]', reviewsToday);
+      set('[data-stat="followups_due"]', followupsDue);
+
+      // Outcome-register badges
+      set('[data-badge="active"]', active);
+      set('[data-badge="inpatient"]', inpatient);
+      set('[data-badge="gozo"]', gozo);
+      set('[data-badge="reversed"]', reversed);
+      set('[data-badge="deceased"]', deceased);
+    }
+
+    load();
+  })();
+  </script>
 
 </body>
 </html>

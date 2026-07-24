@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MDH Stoma Care — Ward Workspace</title>
+<style>
+  :root{
+    --navy:#122036; --navy-2:#1b2f4d; --navy-3:#20496b; --teal:#0d7377; --teal-2:#14a2a8;
+    --gold:#e6a817; --ink:#1a2333; --muted:#6b7a8d; --line:#e4ebf0; --line-2:#eef2f6;
+    --bg:#eef2f6; --card:#ffffff; --red:#e5604d; --green:#2fae66; --purple:#8b5cf6;
+    --cyan:#2bb7d6; --slate:#64798f; --shadow:0 6px 22px rgba(18,32,54,.10); --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:'Segoe UI',-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);
+    color:var(--ink);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:54px;padding:0 16px;
+    background:linear-gradient(180deg,var(--navy),var(--navy-2));color:#fff;
+    box-shadow:0 2px 12px rgba(0,0,0,.22);z-index:40;}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;white-space:nowrap;padding-right:8px;}
+  .brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--teal-2),var(--teal));
+    display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  .brand span{color:var(--gold);}
+  .nav{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;margin-left:6px;}
+  .nav::-webkit-scrollbar{display:none;}
+  .nav a{padding:7px 11px;border-radius:8px;font-size:13px;font-weight:600;color:#cdd9e8;white-space:nowrap;
+    transition:background .14s,color .14s;}
+  .nav a:hover{background:rgba(255,255,255,.10);color:#fff;}
+  .nav a.active{background:var(--teal);color:#fff;box-shadow:0 2px 8px rgba(13,115,119,.4);}
+  .nav a .car{opacity:.7;font-size:10px;margin-left:3px;}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:8px;}
+  .top-search{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:6px 10px;color:#dbe6f0;}
+  .top-search input{background:none;border:none;outline:none;color:#fff;font-size:13px;width:150px;}
+  .top-search input::placeholder{color:#9fb2c9;}
+  .icon-btn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+    background:rgba(255,255,255,.10);font-size:15px;transition:background .14s;}
+  .icon-btn:hover{background:rgba(255,255,255,.2);}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#c8890a);
+    display:grid;place-items:center;font-weight:800;color:#3a2a00;font-size:13px;}
+
+  /* ---------- Workspace layout ---------- */
+  .workspace{flex:1 1 auto;display:grid;grid-template-columns:266px 1fr;min-height:0;}
+
+  /* ---------- Left: patients ---------- */
+  .ward{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .ward-head{padding:12px 14px 10px;border-bottom:1px solid var(--line);}
+  .ward-title{display:flex;align-items:center;gap:8px;}
+  .ward-title h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--navy);}
+  .ward-title .n{background:var(--teal);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px;}
+  .ward-title .tools{margin-left:auto;display:flex;gap:4px;}
+  .ward-title .tools .icon-btn{width:28px;height:28px;background:var(--line-2);color:var(--navy);font-size:13px;}
+  .ward-title .tools .icon-btn:hover{background:#dde6ee;}
+  .ward-search{margin-top:10px;display:flex;align-items:center;gap:7px;background:var(--line-2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--muted);}
+  .ward-search input{background:none;border:none;outline:none;font-size:13px;flex:1;color:var(--ink);}
+  .pager{display:flex;gap:5px;margin-top:10px;}
+  .pager button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;
+    font-size:12px;font-weight:700;color:var(--muted);}
+  .pager button.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  .plist{flex:1 1 auto;overflow-y:auto;padding:6px;}
+  .prow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;
+    border:1px solid transparent;transition:background .12s,border-color .12s;}
+  .prow:hover{background:var(--line-2);}
+  .prow.sel{background:#e8f5f4;border-color:#bfe3e1;box-shadow:inset 3px 0 0 var(--teal);}
+  .prow .pinit{width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+    font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,var(--navy-3),var(--navy-2));}
+  .prow.sel .pinit{background:linear-gradient(135deg,var(--teal-2),var(--teal));}
+  .prow .pmeta{min-width:0;flex:1;}
+  .prow .pname{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prow .psub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prow .warn{color:var(--red);font-size:14px;flex:0 0 auto;}
+  .prow .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .ward-foot{flex:0 0 auto;padding:10px;border-top:1px solid var(--line);}
+  .add-btn{width:100%;padding:10px;border:none;border-radius:9px;font-size:13px;font-weight:800;color:#fff;
+    background:linear-gradient(135deg,var(--green),#158048);box-shadow:0 3px 10px rgba(21,128,72,.3);
+    display:flex;align-items:center;justify-content:center;gap:7px;}
+  .add-btn:hover{filter:brightness(1.05);}
+
+  /* ---------- Right: patient record ---------- */
+  .record{display:flex;flex-direction:column;min-width:0;min-height:0;}
+  .phdr{background:linear-gradient(120deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;padding:12px 18px;}
+  .phdr-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .phdr-name{font-size:17px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;}
+  .phdr-name .info{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);
+    display:grid;place-items:center;font-size:11px;font-style:italic;font-weight:700;}
+  .phdr-id{font-size:12.5px;color:#d6f3f1;}
+  .phdr-ledger{margin-left:auto;font-size:12px;color:#d6f3f1;text-align:right;}
+  .phdr-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:8px;
+    padding:4px 10px;font-size:12px;white-space:nowrap;}
+  .chip b{font-weight:700;color:#fff;}
+  .chip .lab{color:#cdeeeb;font-weight:400;}
+  .chip.warnpill{background:#fff2f0;border-color:#f6c3bb;color:#a3271a;}
+  .adv-btn{margin-left:auto;background:#fff;color:var(--teal);border:none;border-radius:8px;padding:6px 14px;
+    font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;background:var(--card);border-bottom:1px solid var(--line);padding:0 12px;
+    overflow-x:auto;scrollbar-width:none;flex:0 0 auto;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{padding:12px 14px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer;
+    border-bottom:2.5px solid transparent;transition:color .12s,border-color .12s;display:flex;align-items:center;gap:7px;}
+  .tab:hover{color:var(--navy);}
+  .tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:800;}
+  .tab .tct{font-size:10.5px;font-weight:800;background:var(--line-2);color:var(--muted);border-radius:999px;padding:0 6px;}
+  .tab.active .tct{background:#d3ecea;color:var(--teal);}
+
+  /* record body (tab content mounts here) */
+  .rbody{flex:1 1 auto;min-height:0;background:var(--bg);display:flex;}
+
+  /* Documents split */
+  .docsplit{flex:1;display:grid;grid-template-columns:230px 1fr;min-height:0;}
+  .doctypes{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .doctypes .dt-search{margin:12px;display:flex;align-items:center;gap:7px;background:var(--line-2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--muted);}
+  .doctypes .dt-search input{background:none;border:none;outline:none;font-size:12.5px;flex:1;color:var(--ink);}
+  .dt-list{overflow-y:auto;padding:0 8px 10px;}
+  .dt-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;
+    color:var(--ink);transition:background .12s;}
+  .dt-item:hover{background:var(--line-2);}
+  .dt-item.sel{background:#e8f5f4;color:var(--teal);font-weight:800;}
+  .dt-item .dt-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .dt-item .dt-ct{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);background:var(--line-2);
+    border-radius:999px;padding:1px 7px;}
+  .dt-item.sel .dt-ct{background:#d3ecea;color:var(--teal);}
+
+  .pane{flex:1;overflow:auto;padding:16px;min-width:0;}
+  .pane-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .pane-head h4{font-size:14px;font-weight:800;color:var(--navy);}
+  .pane-head .sub{font-size:12px;color:var(--muted);}
+  .pane-head .spacer{margin-left:auto;}
+  .mini-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;
+    font-size:12px;font-weight:700;color:var(--navy);}
+  .mini-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .mini-btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+  thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+    font-weight:800;padding:11px 14px;background:var(--line-2);border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--line-2);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#f7fafb;}
+  .td-date{white-space:nowrap;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .td-date .t{display:block;font-size:11px;color:var(--muted);font-weight:500;}
+  .td-person{white-space:nowrap;}
+  .td-person .who{font-weight:600;}
+  .td-person .sys{display:block;font-size:11px;color:var(--muted);}
+  .doc-pill{display:inline-flex;align-items:flex-start;gap:8px;}
+  .doc-pill .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;margin-top:4px;}
+  .doc-pill .sysnote{font-size:11px;color:var(--muted);}
+  .td-action{white-space:nowrap;text-align:right;}
+  .act{width:30px;height:30px;border-radius:7px;display:inline-grid;place-items:center;border:1px solid var(--line);
+    background:#fff;font-size:14px;color:var(--slate);margin-left:5px;cursor:pointer;}
+  .act:hover{border-color:var(--teal);color:var(--teal);background:#f0fbfa;}
+  .empty{padding:44px;text-align:center;color:var(--muted);font-size:13px;background:#fff;border:1px dashed var(--line);border-radius:10px;}
+
+  /* status badges */
+  .sb{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;text-transform:capitalize;}
+  .sb-booked{background:#e7f0fb;color:#26456e;} .sb-seen{background:#e6f6ee;color:#158048;}
+  .sb-cancelled{background:#fdecea;color:#c33422;} .sb-did_not_attend{background:#fff3e0;color:#9a6100;}
+  .sb-open{background:#e6f6ee;color:#158048;} .sb-closed{background:#eef1f5;color:#4a5b70;}
+
+  /* summary cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+  .mc{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px;box-shadow:var(--shadow);}
+  .mc .mn{font-size:24px;font-weight:800;color:var(--navy);}
+  .mc .ml{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-top:3px;}
+  .mc .accent{width:26px;height:4px;border-radius:3px;margin-bottom:9px;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
+  .panel h5{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);font-weight:800;margin-bottom:12px;}
+  .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 20px;}
+  .kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+  .kv .v{font-size:14px;font-weight:600;color:var(--ink);margin-top:1px;}
+
+  /* timeline */
+  .tl{position:relative;padding-left:22px;}
+  .tl::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line);}
+  .tl-item{position:relative;padding:0 0 16px 0;}
+  .tl-item::before{content:"";position:absolute;left:-19px;top:3px;width:11px;height:11px;border-radius:50%;
+    border:2px solid #fff;box-shadow:0 0 0 1px var(--line);}
+  .tl-date{font-size:11px;color:var(--muted);font-weight:700;}
+  .tl-title{font-size:13.5px;font-weight:700;color:var(--ink);margin-top:1px;}
+  .tl-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+
+  /* episode step chips */
+  .steps{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+  .step{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--navy);
+    background:var(--line-2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;}
+  .step .snum{width:16px;height:16px;border-radius:50%;background:var(--teal);color:#fff;font-size:9px;
+    font-weight:800;display:grid;place-items:center;}
+
+  /* task list */
+  .task{display:flex;align-items:flex-start;gap:11px;background:#fff;border:1px solid var(--line);border-left-width:4px;
+    border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);}
+  .task .ti{font-size:18px;line-height:1;margin-top:1px;}
+  .task .tt{font-size:13.5px;font-weight:700;color:var(--ink);}
+  .task .ts{font-size:12px;color:var(--muted);margin-top:2px;}
+  .task .tgo{margin-left:auto;}
+
+  .banner{background:#fff8e6;border:1px solid #f0d79a;color:#7a5600;font-size:12px;padding:8px 14px;
+    display:none;align-items:center;gap:8px;}
+  .banner.show{display:flex;}
+
+  @media(max-width:900px){
+    .workspace{grid-template-columns:1fr;}
+    .ward{display:none;}
+    .docsplit{grid-template-columns:1fr;}
+    .doctypes{display:none;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="mark">✚</span>MDH<span>&nbsp;Stoma</span></a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a class="active">Ward</a>
+      <a href="ward.html">Patients</a>
+      <a>Calendar</a>
+      <a>Appointments</a>
+      <a>Tasks</a>
+      <a>Reports</a>
+      <a>Rosters</a>
+      <a>More<span class="car">▾</span></a>
+    </nav>
+    <div class="top-right">
+      <label class="top-search">🔍<input type="text" placeholder="Search patients…" /></label>
+      <div class="icon-btn" title="Messages">💬</div>
+      <div class="icon-btn" title="Notifications">🔔</div>
+      <div class="avatar" title="Jason Fenech">JF</div>
+    </div>
+  </header>
+
+  <div class="banner" id="banner">⚠ Showing demo data — the live clinic database isn't reachable from here.</div>
+
+  <div class="workspace">
+
+    <!-- LEFT: PATIENTS -->
+    <aside class="ward">
+      <div class="ward-head">
+        <div class="ward-title">
+          <h3 id="wardTitle">Patients at the ward</h3>
+          <span class="n" id="wardCount">0</span>
+          <div class="tools">
+            <div class="icon-btn" title="Refresh" onclick="loadPatients()">⟳</div>
+            <div class="icon-btn" title="Filter">▼</div>
+          </div>
+        </div>
+        <label class="ward-search">🔍<input type="text" id="wardSearch" placeholder="Search…" oninput="renderPatients()" /></label>
+        <div class="pager">
+          <button class="active">1</button><button>2</button><button>3</button><button>4</button><button>5</button>
+        </div>
+      </div>
+      <div class="plist" id="plist"></div>
+      <div class="ward-foot">
+        <button class="add-btn">＋ Add patient</button>
+      </div>
+    </aside>
+
+    <!-- RIGHT: PATIENT RECORD -->
+    <section class="record">
+      <div class="phdr" id="phdr"></div>
+      <div class="tabs" id="tabs"></div>
+      <div class="rbody" id="rbody"></div>
+    </section>
+
+  </div>
+
+<script>
+/* =====================================================================
+   MDH Stoma Care — Ward Workspace
+   Hospital-EMR style: patient list, patient header, document tabs, and
+   per-tab data views. Reads live data from Supabase in the browser and
+   falls back to demo data so the screen always renders.
+   URL params:  ?status=active|inpatient|reversed|deceased|relocated_gozo
+                ?owner=Jacqueline|Jason|Lorraine|Common
+   ===================================================================== */
+(function(){
+  const SB_URL = 'https://jucunagrwqkzdfajmblg.supabase.co';
+  const SB_KEY = 'sb_publishable_oaTKxc-aLZB2J6aE-_unMw_wFI_WMIE';
+  const HEADERS = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+  const params = new URLSearchParams(location.search);
+  const P_STATUS = params.get('status') || '';
+  const P_OWNER  = params.get('owner') || '';
+
+  /* ---- Encounter (document) type catalogue ---- */
+  const TYPES = {
+    daily_stoma_review:  { label: 'Daily Stoma Review',   color: '#0d7377' },
+    stoma_review:        { label: 'Stoma Review',          color: '#14a2a8' },
+    postop_daily_review: { label: 'Post-op Daily Review',  color: '#2bb7d6' },
+    wound_review:        { label: 'Wound Review',          color: '#e6a817' },
+    fistula_review:      { label: 'Fistula Review',        color: '#8b5cf6' },
+    followup_review:     { label: 'Follow-up Review',      color: '#2fae66' },
+    teaching_session:    { label: 'Teaching',              color: '#158048' },
+    phone_advice:        { label: 'Phone / Advice',        color: '#64798f' },
+    discharge_planning:  { label: 'Discharge Planning',    color: '#26456e' },
+    general_note:        { label: 'General Note',          color: '#8895a6' },
+  };
+  const typeInfo = t => TYPES[t] || { label: (t||'Document').replace(/_/g,' '), color: '#64798f' };
+  const stepLabel = k => String(k||'').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+
+  /* ---- Demo fallback data ---- */
+  const DEMO_PATIENTS = [
+    { id:'d1', first_name:'Monica',  surname:'Churchwell', id_card:'0142M', followup_status:'inpatient', followup_owner:'Jacqueline', locality:'Mosta',    phone_number:'7942 1180', due:true  },
+    { id:'d2', first_name:'John',    surname:'Harrison',   id_card:'0088H', followup_status:'inpatient', followup_owner:'Jason',      locality:'Birkirkara',phone_number:'9987 4410', due:true  },
+    { id:'d3', first_name:'Emma',    surname:'Isaac',      id_card:'0210I', followup_status:'active',    followup_owner:'Lorraine',   locality:'Sliema',   phone_number:'7788 0092', due:false },
+    { id:'d4', first_name:'John',    surname:'Novak',      id_card:'0173N', followup_status:'inpatient', followup_owner:'Common',     locality:'Qormi',    phone_number:'9911 2231', due:false },
+    { id:'d5', first_name:'David',   surname:'Swank',      id_card:'0301S', followup_status:'active',    followup_owner:'Jacqueline', locality:'Zejtun',   phone_number:'7942 8890', due:true  },
+    { id:'d6', first_name:'Joanna',  surname:'Cat',        id_card:'0119C', followup_status:'active',    followup_owner:'Jason',      locality:'Naxxar',   phone_number:'9988 1100', due:false },
+    { id:'d7', first_name:'Megan',   surname:'Pounds',     id_card:'0256P', followup_status:'inpatient', followup_owner:'Lorraine',   locality:'Rabat',    phone_number:'7700 5521', due:false },
+    { id:'d8', first_name:'William', surname:'Bell',       id_card:'0064B', followup_status:'active',    followup_owner:'Common',     locality:'Paola',    phone_number:'9944 3300', due:false },
+    { id:'d9', first_name:'Marilyn', surname:'Conklin',    id_card:'0288K', followup_status:'active',    followup_owner:'Jacqueline', locality:'Fgura',    phone_number:'7912 6654', due:false },
+    { id:'d10',first_name:'Jon',     surname:'Arndt',      id_card:'0150A', followup_status:'inpatient', followup_owner:'Jason',      locality:'Attard',   phone_number:'9922 7788', due:false },
+    { id:'d11',first_name:'William', surname:'Price',      id_card:'0197R', followup_status:'active',    followup_owner:'Lorraine',   locality:'Mellieha', phone_number:'7955 1234', due:false },
+  ];
+  const DEMO_ENC = {
+    d1: [
+      { encounter_date:'2021-03-23', encounter_time:'15:57', recorded_by:'J. Farrugia', encounter_type:'daily_stoma_review',  summary:'Stoma pink & functioning; peristomal skin intact.' },
+      { encounter_date:'2021-03-23', encounter_time:'15:57', recorded_by:'J. Farrugia', encounter_type:'general_note',         summary:'Entry into main record.' },
+      { encounter_date:'2020-10-06', encounter_time:'08:16', recorded_by:'L. Vella',    encounter_type:'wound_review',         summary:'Peristomal excoriation reviewed; barrier applied.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:43', recorded_by:'J. Fenech',   encounter_type:'postop_daily_review',  summary:'Vital parameters recorded.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:18', recorded_by:'L. Vella',    encounter_type:'fistula_review',       summary:'Output 320ml; effluent thick.' },
+      { encounter_date:'2020-02-07', encounter_time:'13:00', recorded_by:'J. Farrugia', encounter_type:'teaching_session',     summary:'Appliance change technique taught.' },
+      { encounter_date:'2020-02-04', encounter_time:'08:09', recorded_by:'J. Fenech',   encounter_type:'discharge_planning',   summary:'Discharge planning commenced.' },
+      { encounter_date:'2020-02-04', encounter_time:'08:04', recorded_by:'J. Farrugia', encounter_type:'followup_review',      summary:'Follow-up planned for next month.' },
+    ],
+  };
+  const demoEnc = id => DEMO_ENC[id] || [
+    { encounter_date:'2021-02-18', encounter_time:'10:12', recorded_by:'J. Fenech',   encounter_type:'daily_stoma_review', summary:'Routine stoma review — no concerns.' },
+    { encounter_date:'2021-01-30', encounter_time:'09:40', recorded_by:'L. Vella',    encounter_type:'phone_advice',       summary:'Telephone advice re appliance leakage.' },
+    { encounter_date:'2020-12-11', encounter_time:'14:05', recorded_by:'J. Farrugia', encounter_type:'followup_review',     summary:'Follow-up seen — stable.' },
+  ];
+  const demoAppts = id => ([
+    { appt_date:'2025-08-14', appt_slot:'09:00', status:'booked' },
+    { appt_date:'2025-07-02', appt_slot:'11:30', status:'seen' },
+    { appt_date:'2025-05-19', appt_slot:'10:00', status:'did_not_attend' },
+    { appt_date:'2025-03-08', appt_slot:'14:15', status:'seen' },
+  ]);
+  const demoEpisodes = id => ([
+    { pathway_type:'elective', episode_type:'stoma_formation', status:'open', episode_steps:[
+      {step_no:1,step_key:'pathway_selection'},{step_no:2,step_key:'siting_booking'},{step_no:3,step_key:'siting_session'},
+      {step_no:4,step_key:'clinical_operative'},{step_no:5,step_key:'post_op_review'},{step_no:6,step_key:'discharge_planning'},
+      {step_no:7,step_key:'teaching_education'} ] },
+    { pathway_type:'emergency', episode_type:'reversal', status:'closed', episode_steps:[
+      {step_no:1,step_key:'clinical_operative'},{step_no:2,step_key:'post_op_review'} ] },
+  ]);
+  const demoFollowups = id => ([
+    { review_date:'2025-06-20' }, { review_date:'2025-03-14' }, { review_date:'2024-11-08' },
+  ]);
+
+  /* ---- State ---- */
+  let patients = [], encounters = [], appts = [], episodes = [], followups = [];
+  let selected = null, typeFilter = 'all', activeTab = 'documents', live = false;
+  const cache = {};
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const initials = p => ((p.first_name||' ')[0] + (p.surname||' ')[0]).toUpperCase();
+  const fullName = p => `${(p.surname||'').toUpperCase()} ${(p.first_name||'')}`.trim();
+  const statusColor = s => ({inpatient:'#2bb7d6', active:'#2fae66', reversed:'#e6a817',
+    deceased:'#122036', relocated_gozo:'#64798f'}[s] || '#8895a6');
+  const fmtDate = d => { if(!d) return '—'; const p=String(d).split('T')[0].split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d; };
+  const cap = s => String(s||'').replace(/_/g,' ');
+
+  const TITLES = {
+    active:'Active patients', inpatient:'Inpatients', reversed:'Reversed patients',
+    deceased:'Deceased register', relocated_gozo:'Discharged to Gozo', relocated_overseas:'Relocated overseas',
+  };
+
+  /* ---- Data loading ---- */
+  async function loadPatients(){
+    try{
+      const cols = 'id,first_name,surname,id_card,followup_status,followup_owner,locality,phone_number,followup_due_month,followup_year';
+      let filter;
+      if(P_STATUS) filter = `followup_status=eq.${encodeURIComponent(P_STATUS)}`;
+      else filter = 'or=(followup_status.eq.inpatient,followup_status.eq.active)';
+      if(P_OWNER) filter += `&followup_owner=eq.${encodeURIComponent(P_OWNER)}`;
+      const res = await fetch(`${SB_URL}/rest/v1/patients?select=${cols}&${filter}&order=surname.asc&limit=200`, { headers: HEADERS });
+      if(!res.ok) throw new Error('http '+res.status);
+      const rows = await res.json();
+      if(!Array.isArray(rows) || !rows.length) throw new Error('empty');
+      const now = new Date();
+      rows.forEach(r => { r.due = r.followup_status==='active' && r.followup_year && r.followup_due_month
+        && (r.followup_year < now.getFullYear() || (r.followup_year === now.getFullYear() && r.followup_due_month <= now.getMonth()+1)); });
+      patients = rows; live = true;
+    }catch(e){
+      patients = DEMO_PATIENTS.filter(p => (!P_STATUS || p.followup_status===P_STATUS) && (!P_OWNER || p.followup_owner===P_OWNER));
+      if(!patients.length) patients = DEMO_PATIENTS;
+      live = false;
+    }
+    $('#banner').classList.toggle('show', !live);
+    $('#wardTitle').textContent = P_STATUS ? (TITLES[P_STATUS]||cap(P_STATUS))
+                                : P_OWNER ? `${P_OWNER} — patients` : 'Patients at the ward';
+    renderPatients();
+    if(patients.length) selectPatient(patients[0]);
+  }
+
+  async function fetchJSON(url){ const r = await fetch(url, { headers: HEADERS }); if(!r.ok) throw new Error('http '+r.status); return r.json(); }
+
+  async function loadPatientData(p){
+    const demo = !live || String(p.id).startsWith('d');
+    // Encounters
+    try{ if(demo) throw 0;
+      encounters = await fetchJSON(`${SB_URL}/rest/v1/encounters?select=encounter_date,encounter_time,recorded_by,encounter_type,summary&patient_id=eq.${p.id}&order=encounter_date.desc&limit=200`);
+    }catch(e){ encounters = demoEnc(p.id); }
+    // Appointments
+    try{ if(demo) throw 0;
+      appts = await fetchJSON(`${SB_URL}/rest/v1/appointments?select=appt_date,appt_slot,status&patient_id=eq.${p.id}&order=appt_date.desc&limit=200`);
+    }catch(e){ appts = demoAppts(p.id); }
+    // Episodes + steps
+    try{ if(demo) throw 0;
+      episodes = await fetchJSON(`${SB_URL}/rest/v1/episodes?select=pathway_type,episode_type,status,episode_steps(step_no,step_key)&patient_id=eq.${p.id}`);
+    }catch(e){ episodes = demoEpisodes(p.id); }
+    // Follow-ups seen
+    try{ if(demo) throw 0;
+      followups = await fetchJSON(`${SB_URL}/rest/v1/followup_seen_episodes?select=review_date&patient_id=eq.${p.id}&order=review_date.desc&limit=200`);
+    }catch(e){ followups = demoFollowups(p.id); }
+    typeFilter = 'all';
+    renderTabs();
+    renderTab();
+  }
+
+  /* ---- Left list ---- */
+  function renderPatients(){
+    const q = ($('#wardSearch').value||'').toLowerCase();
+    const list = patients.filter(p => !q || fullName(p).toLowerCase().includes(q) || (p.id_card||'').toLowerCase().includes(q));
+    $('#wardCount').textContent = list.length;
+    $('#plist').innerHTML = list.map(p => `
+      <div class="prow ${selected&&selected.id===p.id?'sel':''}" onclick='pick("${p.id}")'>
+        <div class="pinit">${esc(initials(p))}</div>
+        <div class="pmeta">
+          <div class="pname">${esc(fullName(p))}</div>
+          <div class="psub">${esc(p.followup_owner||'Unassigned')} · ${esc(cap(p.followup_status)||'—')}</div>
+        </div>
+        ${p.due ? '<span class="warn" title="Follow-up due">⚠</span>'
+                : `<span class="dot" style="background:${statusColor(p.followup_status)}"></span>`}
+      </div>`).join('') || '<div class="empty">No patients match.</div>';
+  }
+
+  /* ---- Header ---- */
+  function renderHeader(p){
+    if(!p){ $('#phdr').innerHTML=''; return; }
+    $('#phdr').innerHTML = `
+      <div class="phdr-top">
+        <div class="phdr-name">${esc(fullName(p))}<span class="info">i</span></div>
+        <div class="phdr-id">Patient ID: ${esc(p.id_card||'—')} · Age: —</div>
+        <div class="phdr-ledger">Main Ledger No. /${esc(p.id_card||'—')}/2025<br>Ward Ledger No. /${esc(p.id_card||'—')}/2025</div>
+      </div>
+      <div class="phdr-sub">
+        <span class="chip"><span class="lab">Nurse:</span> <b>${esc(p.followup_owner||'Unassigned')}</b></span>
+        <span class="chip"><span class="lab">Status:</span> <b>${esc(cap(p.followup_status)||'—')}</b></span>
+        <span class="chip"><span class="lab">Locality:</span> <b>${esc(p.locality||'—')}</b></span>
+        <span class="chip"><span class="lab">Phone:</span> <b>${esc(p.phone_number||'—')}</b></span>
+        ${p.due ? '<span class="chip warnpill"><b>⚠ Follow-up due</b></span>' : ''}
+        <button class="adv-btn">Advanced ⚙</button>
+      </div>`;
+  }
+
+  /* ---- Tabs ---- */
+  const TABS = [
+    { k:'documents',  label:'Documents',  count: () => encounters.length },
+    { k:'summary',    label:'Summary' },
+    { k:'appointments', label:'Appointments', count: () => appts.length },
+    { k:'episodes',   label:'Care Episodes', count: () => episodes.length },
+    { k:'followups',  label:'Follow-ups', count: () => followups.length },
+    { k:'events',     label:'Last events' },
+    { k:'tasks',      label:'Tasks', count: () => taskItems().length },
+  ];
+  function renderTabs(){
+    $('#tabs').innerHTML = TABS.map(t => {
+      const c = t.count ? t.count() : null;
+      return `<div class="tab ${activeTab===t.k?'active':''}" onclick="setTab('${t.k}')">
+        ${t.label}${c!=null?`<span class="tct">${c}</span>`:''}</div>`;
+    }).join('');
+  }
+
+  function renderTab(){
+    const body = $('#rbody');
+    if(activeTab==='documents') return renderDocuments(body);
+    body.style.display='block';
+    if(activeTab==='summary')      body.innerHTML = viewSummary();
+    else if(activeTab==='appointments') body.innerHTML = viewAppointments();
+    else if(activeTab==='episodes')     body.innerHTML = viewEpisodes();
+    else if(activeTab==='followups')    body.innerHTML = viewFollowups();
+    else if(activeTab==='events')       body.innerHTML = viewEvents();
+    else if(activeTab==='tasks')        body.innerHTML = viewTasks();
+  }
+
+  /* ---- Documents tab (split: type list + table) ---- */
+  function renderDocuments(body){
+    body.style.display='flex';
+    body.innerHTML = `
+      <div class="docsplit">
+        <div class="doctypes">
+          <label class="dt-search">🔍<input type="text" id="dtSearch" placeholder="Search document…" oninput="renderDocTypes()" /></label>
+          <div class="dt-list" id="dtList"></div>
+        </div>
+        <div class="pane">
+          <div class="pane-head">
+            <h4 id="recTitle">Documents</h4><span class="sub" id="recSub"></span>
+            <span class="spacer"></span><button class="mini-btn primary">＋ New document</button>
+          </div>
+          <div id="recTableWrap"></div>
+        </div>
+      </div>`;
+    renderDocTypes(); renderRecords();
+  }
+  function typeCounts(){ const c={}; encounters.forEach(e => c[e.encounter_type]=(c[e.encounter_type]||0)+1); return c; }
+  function renderDocTypes(){
+    if(!$('#dtList')) return;
+    const q = ($('#dtSearch')?.value||'').toLowerCase();
+    const counts = typeCounts();
+    const present = Object.keys(TYPES).filter(t => counts[t]);
+    let html = `<div class="dt-item ${typeFilter==='all'?'sel':''}" onclick="setType('all')">
+        <span class="dt-dot" style="background:#122036"></span>All documents<span class="dt-ct">${encounters.length}</span></div>`;
+    present.forEach(t => { const info=typeInfo(t); if(q && !info.label.toLowerCase().includes(q)) return;
+      html += `<div class="dt-item ${typeFilter===t?'sel':''}" onclick="setType('${t}')">
+        <span class="dt-dot" style="background:${info.color}"></span>${esc(info.label)}<span class="dt-ct">${counts[t]}</span></div>`; });
+    $('#dtList').innerHTML = html;
+  }
+  function renderRecords(){
+    if(!$('#recTableWrap')) return;
+    const rows = encounters.filter(e => typeFilter==='all' || e.encounter_type===typeFilter);
+    $('#recTitle').textContent = typeFilter==='all' ? 'Documents' : typeInfo(typeFilter).label;
+    $('#recSub').textContent = `${rows.length} record${rows.length===1?'':'s'}`;
+    $('#recTableWrap').innerHTML = rows.length ? `
+      <table><thead><tr><th>Date</th><th>Person</th><th>Document</th><th style="text-align:right">Action</th></tr></thead>
+      <tbody>${rows.map(e => { const info=typeInfo(e.encounter_type); return `<tr>
+        <td class="td-date">${fmtDate(e.encounter_date)}<span class="t">${esc(e.encounter_time||'')}</span></td>
+        <td class="td-person"><span class="who">${esc(e.recorded_by||'—')}</span><span class="sys">MDH Stoma Care</span></td>
+        <td><span class="doc-pill"><span class="dot" style="background:${info.color}"></span>
+            <span><b>${esc(info.label)}</b>${e.summary?`<div class="sysnote">${esc(e.summary)}</div>`:''}</span></span></td>
+        <td class="td-action"><span class="act" title="Open">🗀</span><span class="act" title="Print">🖨</span></td></tr>`;
+      }).join('')}</tbody></table>` : '<div class="empty">No documents for this patient yet.</div>';
+  }
+
+  /* ---- Summary tab ---- */
+  function viewSummary(){
+    const p = selected; const last = encounters[0];
+    const nextAppt = appts.filter(a => a.appt_date >= new Date().toISOString().slice(0,10) && a.status==='booked')
+                          .sort((a,b)=>a.appt_date<b.appt_date?-1:1)[0];
+    const openEp = episodes.filter(e => e.status==='open').length;
+    return `<div class="pane">
+      <div class="pane-head"><h4>Summary</h4><span class="sub">Patient overview</span></div>
+      <div class="cards">
+        <div class="mc"><div class="accent" style="background:var(--teal)"></div><div class="mn">${encounters.length}</div><div class="ml">Documents</div></div>
+        <div class="mc"><div class="accent" style="background:var(--cyan)"></div><div class="mn">${appts.length}</div><div class="ml">Appointments</div></div>
+        <div class="mc"><div class="accent" style="background:var(--green)"></div><div class="mn">${followups.length}</div><div class="ml">Follow-ups seen</div></div>
+        <div class="mc"><div class="accent" style="background:var(--gold)"></div><div class="mn">${openEp}</div><div class="ml">Open episodes</div></div>
+      </div>
+      <div class="panel"><h5>Demographics</h5><div class="kv">
+        <div><div class="k">Full name</div><div class="v">${esc(fullName(p))}</div></div>
+        <div><div class="k">Patient ID</div><div class="v">${esc(p.id_card||'—')}</div></div>
+        <div><div class="k">Follow-up nurse</div><div class="v">${esc(p.followup_owner||'Unassigned')}</div></div>
+        <div><div class="k">Status</div><div class="v">${esc(cap(p.followup_status)||'—')}</div></div>
+        <div><div class="k">Locality</div><div class="v">${esc(p.locality||'—')}</div></div>
+        <div><div class="k">Phone</div><div class="v">${esc(p.phone_number||'—')}</div></div>
+      </div></div>
+      <div class="panel"><h5>At a glance</h5><div class="kv">
+        <div><div class="k">Latest document</div><div class="v">${last?esc(typeInfo(last.encounter_type).label)+' · '+fmtDate(last.encounter_date):'—'}</div></div>
+        <div><div class="k">Next appointment</div><div class="v">${nextAppt?fmtDate(nextAppt.appt_date)+' · '+esc(nextAppt.appt_slot||''):'None booked'}</div></div>
+        <div><div class="k">Follow-up due</div><div class="v">${p.due?'⚠ Due now':'Not due'}</div></div>
+      </div></div>
+    </div>`;
+  }
+
+  /* ---- Appointments tab ---- */
+  function viewAppointments(){
+    if(!appts.length) return pane('Appointments', `${appts.length} scheduled`, '<div class="empty">No appointments recorded.</div>');
+    const rows = appts.map(a => `<tr>
+      <td class="td-date">${fmtDate(a.appt_date)}<span class="t">${esc(a.appt_slot||'')}</span></td>
+      <td>${esc(a.appt_slot||'—')}</td>
+      <td><span class="sb sb-${esc(a.status||'booked')}">${esc(cap(a.status)||'booked')}</span></td>
+      <td class="td-action"><span class="act" title="Open">🗀</span></td></tr>`).join('');
+    return pane('Appointments', `${appts.length} scheduled`,
+      `<table><thead><tr><th>Date</th><th>Time / slot</th><th>Status</th><th style="text-align:right">Action</th></tr></thead><tbody>${rows}</tbody></table>`);
+  }
+
+  /* ---- Care episodes tab ---- */
+  function viewEpisodes(){
+    if(!episodes.length) return pane('Care Episodes', '0 episodes', '<div class="empty">No care episodes recorded.</div>');
+    const cards = episodes.map(ep => {
+      const steps = (ep.episode_steps||[]).slice().sort((a,b)=>(a.step_no||0)-(b.step_no||0));
+      return `<div class="panel">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h5 style="margin:0">${esc(cap(ep.episode_type)||'Care episode')}</h5>
+          <span class="sb sb-${esc(ep.status||'open')}">${esc(cap(ep.status)||'open')}</span>
+          <span class="sub" style="margin-left:auto;font-size:12px;color:var(--muted)">${esc(cap(ep.pathway_type)||'')} pathway</span>
+        </div>
+        <div class="steps">${steps.map(s => `<span class="step"><span class="snum">${s.step_no||''}</span>${esc(stepLabel(s.step_key))}</span>`).join('') || '<span class="sub">No steps recorded.</span>'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="pane"><div class="pane-head"><h4>Care Episodes</h4><span class="sub">${episodes.length} episode${episodes.length===1?'':'s'}</span></div>${cards}</div>`;
+  }
+
+  /* ---- Follow-ups tab ---- */
+  function viewFollowups(){
+    if(!followups.length) return pane('Follow-ups', '0 seen', '<div class="empty">No follow-up reviews recorded.</div>');
+    const rows = followups.map(f => `<tr>
+      <td class="td-date">${fmtDate(f.review_date)}</td>
+      <td><span class="doc-pill"><span class="dot" style="background:var(--green)"></span><b>Follow-up seen</b></span></td>
+      <td class="td-person"><span class="sys">MDH Stoma Care</span></td>
+      <td class="td-action"><span class="act" title="Open">🗀</span></td></tr>`).join('');
+    return pane('Follow-ups', `${followups.length} seen`,
+      `<table><thead><tr><th>Review date</th><th>Type</th><th>Recorded in</th><th style="text-align:right">Action</th></tr></thead><tbody>${rows}</tbody></table>`);
+  }
+
+  /* ---- Last events tab (unified timeline) ---- */
+  function viewEvents(){
+    const items = [];
+    encounters.forEach(e => items.push({ d:e.encounter_date, t:e.encounter_time, color:typeInfo(e.encounter_type).color,
+      title:typeInfo(e.encounter_type).label, sub:e.summary||('Recorded by '+(e.recorded_by||'—')) }));
+    appts.forEach(a => items.push({ d:a.appt_date, t:a.appt_slot, color:'#2bb7d6',
+      title:'Appointment ('+cap(a.status)+')', sub:'Clinic appointment '+(a.appt_slot||'') }));
+    followups.forEach(f => items.push({ d:f.review_date, t:'', color:'#2fae66', title:'Follow-up seen', sub:'Follow-up review completed' }));
+    items.sort((a,b) => (b.d||'').localeCompare(a.d||''));
+    if(!items.length) return pane('Last events', '', '<div class="empty">No recent activity.</div>');
+    const tl = items.slice(0,40).map(i => `<div class="tl-item">
+      <span style="position:absolute;left:-19px;top:3px;width:11px;height:11px;border-radius:50%;background:${i.color};border:2px solid #fff;box-shadow:0 0 0 1px var(--line)"></span>
+      <div class="tl-date">${fmtDate(i.d)}${i.t?' · '+esc(i.t):''}</div>
+      <div class="tl-title">${esc(i.title)}</div>${i.sub?`<div class="tl-sub">${esc(i.sub)}</div>`:''}</div>`).join('');
+    return `<div class="pane"><div class="pane-head"><h4>Last events</h4><span class="sub">${items.length} across all record types</span></div><div class="tl">${tl}</div></div>`;
+  }
+
+  /* ---- Tasks tab (derived) ---- */
+  function taskItems(){
+    const t = [];
+    if(selected && selected.due) t.push({ ic:'⚠', c:'var(--red)', tt:'Follow-up review due', ts:'This patient is flagged as due for a follow-up review.' });
+    episodes.filter(e => e.status==='open').forEach(ep => {
+      const steps=(ep.episode_steps||[]).slice().sort((a,b)=>(a.step_no||0)-(b.step_no||0));
+      const next=steps[steps.length-1];
+      t.push({ ic:'◐', c:'var(--teal)', tt:`Care episode in progress — ${cap(ep.episode_type)||'episode'}`,
+        ts:next?`Latest step: ${stepLabel(next.step_key)}`:'Open elective/emergency pathway.' });
+    });
+    const today=new Date().toISOString().slice(0,10);
+    appts.filter(a => a.appt_date>=today && a.status==='booked').forEach(a =>
+      t.push({ ic:'📅', c:'var(--cyan)', tt:'Upcoming appointment', ts:`Booked for ${fmtDate(a.appt_date)} ${a.appt_slot||''}` }));
+    return t;
+  }
+  function viewTasks(){
+    const items = taskItems();
+    if(!items.length) return pane('Tasks', '0 open', '<div class="empty">No outstanding tasks for this patient. 🎉</div>');
+    const list = items.map(i => `<div class="task" style="border-left-color:${i.c}">
+      <span class="ti">${i.ic}</span><div><div class="tt">${esc(i.tt)}</div><div class="ts">${esc(i.ts)}</div></div>
+      <span class="tgo"><button class="mini-btn">Open</button></span></div>`).join('');
+    return `<div class="pane"><div class="pane-head"><h4>Tasks</h4><span class="sub">${items.length} open · derived from records</span></div>${list}</div>`;
+  }
+
+  function pane(title, sub, inner){
+    return `<div class="pane"><div class="pane-head"><h4>${esc(title)}</h4>${sub?`<span class="sub">${esc(sub)}</span>`:''}</div>${inner}</div>`;
+  }
+
+  /* ---- Interactions ---- */
+  function selectPatient(p){ selected=p; renderPatients(); renderHeader(p); loadPatientData(p); }
+  window.pick = id => { const p = patients.find(x => String(x.id)===String(id)); if(p) selectPatient(p); };
+  window.setTab = k => { activeTab=k; renderTabs(); renderTab(); };
+  window.setType = t => { typeFilter=t; renderDocTypes(); renderRecords(); };
+  window.loadPatients = loadPatients;
+  window.renderPatients = renderPatients;
+  window.renderDocTypes = renderDocTypes;
+
+  loadPatients();
+})();
+</script>
+</body>
+</html>
