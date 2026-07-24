@@ -1,0 +1,153 @@
+{% extends "clinic/base.html" %}
+{% block title %}Ward — MDH Stoma Care Clinic{% endblock %}
+
+{% block content %}
+<style>
+  /* Ward shell — break out of the centered .wrap for a full-width app layout */
+  .ward{
+    display:grid;grid-template-columns:300px 1fr;gap:16px;
+    align-items:start;
+  }
+  @media (max-width:820px){.ward{grid-template-columns:1fr;}}
+
+  /* -------- left panel: patients at the ward -------- */
+  .ward-list{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .ward-list .search{display:flex;gap:6px;padding:12px;border-bottom:1px solid var(--border);}
+  .ward-list .search input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;}
+  .ward-list .search .icon-btn{border:1.5px solid var(--border);background:#f4fbfa;border-radius:8px;padding:0 10px;cursor:pointer;font-size:13px;}
+  .ward-list .list-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:12px;font-weight:800;color:var(--navy);border-bottom:1px solid var(--border);}
+  .ward-list .list-head .count{color:var(--teal);}
+  .ward-list ul{list-style:none;margin:0;padding:0;max-height:60vh;overflow:auto;}
+  .ward-list li a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;border-bottom:1px solid #eef4f3;}
+  .ward-list li a:hover{background:#f8fdfc;}
+  .ward-list li a.active{background:#e8f5f4;box-shadow:inset 3px 0 0 var(--teal);}
+  .ward-list .warn{color:#d13b3b;font-weight:800;}
+  .ward-list .add{display:block;text-align:center;background:var(--teal);color:#fff;padding:12px;font-weight:800;font-size:13px;text-decoration:none;}
+  .ward-list .empty{padding:20px 14px;color:var(--muted);font-size:13px;}
+
+  /* -------- right: patient chart -------- */
+  .chart-head{background:var(--teal);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;}
+  .chart-head .name{font-size:17px;font-weight:800;}
+  .chart-head .ledger{font-size:12px;opacity:.9;margin-left:6px;font-weight:600;}
+  .chart-sub{background:#fff;border:1px solid var(--border);border-top:none;padding:10px 18px;display:flex;flex-wrap:wrap;gap:18px;font-size:12px;}
+  .chart-sub .k{color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-size:10px;}
+  .chart-sub .v{font-weight:700;font-size:13px;}
+  .chart-sub .missing{color:#d13b3b;}
+
+  .tabs{display:flex;gap:2px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-top:none;padding:0 10px;}
+  .tabs a{padding:11px 14px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;}
+  .tabs a.active{color:var(--teal);border-bottom-color:var(--teal);}
+  .tabs a:hover{color:var(--navy);}
+
+  .doc-body{display:grid;grid-template-columns:230px 1fr;gap:0;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+  @media (max-width:820px){.doc-body{grid-template-columns:1fr;}}
+  .doc-picker{border-right:1px solid var(--border);padding:12px;}
+  .doc-picker input,.doc-picker select{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;margin-bottom:8px;}
+  .doc-picker ul{list-style:none;margin:0;padding:0;}
+  .doc-picker li{padding:9px 6px;font-size:12px;border-bottom:1px solid #eef4f3;color:var(--navy);cursor:default;}
+  .doc-picker li:hover{background:#f8fdfc;}
+  .records{padding:0;}
+  .records table{border:none;border-radius:0;}
+  .records th{position:sticky;top:0;}
+  .records .action-cell{white-space:nowrap;color:var(--muted);}
+</style>
+
+<div class="ward" style="margin-top:4px;">
+
+  <!-- LEFT: patients at the ward -->
+  <aside class="ward-list">
+    <form class="search" method="get">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search patient…"/>
+      <button class="icon-btn" type="submit" title="Search">⟳</button>
+    </form>
+    <div class="list-head">
+      <span>Patients at the ward</span>
+      <span class="count">({{ ward_count }})</span>
+    </div>
+    <ul>
+      {% for p in patients %}
+        <li>
+          <a href="?patient={{ p.id }}{% if q %}&q={{ q }}{% endif %}"
+             class="{% if selected and p.id == selected.id %}active{% endif %}">
+            <span>{{ p.surname|default:"" }} {{ p.first_name|default:"" }}</span>
+            {% if p.followup_status == "inpatient" %}<span class="warn" title="Inpatient">⚠</span>{% endif %}
+          </a>
+        </li>
+      {% empty %}
+        <li class="empty">No patients to show. Connect the database or adjust your search.</li>
+      {% endfor %}
+    </ul>
+    <a class="add" href="/admin/clinic/patient/add/">+ Add patient</a>
+  </aside>
+
+  <!-- RIGHT: patient chart -->
+  <section>
+    {% if selected %}
+      <div class="chart-head">
+        <span class="name">{{ selected.surname|default:"" }} {{ selected.first_name|default:"—" }}</span>
+        <span class="ledger">(ID: {{ selected.id_card|default:"—" }}{% if selected.dob %}, DOB {{ selected.dob }}{% endif %})</span>
+      </div>
+      <div class="chart-sub">
+        <div><div class="k">Consultant</div><div class="v">{{ selected.consultant|default:"—" }}</div></div>
+        <div><div class="k">Diagnosis</div><div class="v">{{ selected.stoma_type_summary|default:"—"|truncatechars:40 }}</div></div>
+        <div><div class="k">Locality</div><div class="v">{{ selected.locality|default:"—" }}</div></div>
+        <div><div class="k">Status</div>
+          <div class="v {% if not selected.followup_status %}missing{% endif %}">
+            {{ selected.followup_status|default:"No data" }}
+          </div>
+        </div>
+        <div><div class="k">Follow-up owner</div><div class="v">{{ selected.followup_owner|default:"—" }}</div></div>
+        <div style="margin-left:auto;">
+          <a class="btn" href="{% url 'clinic:patient_detail' selected.id %}">Full record</a>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <a class="active" href="#">Documents</a>
+        <a href="{% url 'clinic:patient_detail' selected.id %}">Summary</a>
+        <a href="{% url 'clinic:patient_detail' selected.id %}">Last events</a>
+        <a href="{% url 'clinic:patient_detail' selected.id %}">Results</a>
+        <a href="{% url 'clinic:patient_detail' selected.id %}">Requests</a>
+        <a href="{% url 'clinic:patient_detail' selected.id %}">Tasks</a>
+      </nav>
+
+      <div class="doc-body">
+        <div class="doc-picker">
+          <input type="text" placeholder="Search document…" disabled/>
+          <select disabled><option>All categories</option></select>
+          <ul>
+            <li>Entry into main record</li>
+            <li>Admission confirmation</li>
+            <li>Completion of medical history</li>
+            <li>Treatment plan</li>
+            <li>Condition upon admission</li>
+            <li>Follow-up review</li>
+            <li>Daily stoma review</li>
+          </ul>
+        </div>
+        <div class="records">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Person</th><th>Document</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for r in records %}
+                <tr>
+                  <td>{{ r.encounter_date }}{% if r.encounter_time %} {{ r.encounter_time }}{% endif %}</td>
+                  <td>{{ r.recorded_by|default:"—" }}</td>
+                  <td>{{ r.encounter_type }}{% if r.summary %}<br><span class="muted" style="font-size:11px;">{{ r.summary|truncatechars:60 }}</span>{% endif %}</td>
+                  <td class="action-cell">📁 🖨</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="muted" style="padding:20px;">No documents recorded for this patient.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="card"><p class="muted">Select a patient from the ward list to view their chart.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
