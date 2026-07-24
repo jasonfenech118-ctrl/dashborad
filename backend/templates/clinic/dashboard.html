@@ -110,9 +110,9 @@
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Clinical Workspace</h2><span class="count">8 tools</span></div>
       <div class="grid">
-        <a class="tile" href="#"><span class="ico c-teal">＋</span><span class="txt"><span class="t">Add New Patient</span><span class="s">Start a new admission</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}"><span class="ico c-navy">☷</span><span class="txt"><span class="t">Patients (Master List)</span><span class="s">Full register</span></span><span class="chev">›</span></a>
-        <a class="tile" href="#"><span class="ico c-cyan">⇄</span><span class="txt"><span class="t">Inpatients Handover</span><span class="s">Ward handover</span></span><span class="chev">›</span></a>
+        <a class="tile" href="/admin/clinic/patient/add/"><span class="ico c-teal">＋</span><span class="txt"><span class="t">Add New Patient</span><span class="s">Start a new admission</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}"><span class="ico c-navy">☷</span><span class="txt"><span class="t">Patients (Master List)</span><span class="s">Full register</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=inpatient"><span class="ico c-cyan">⇄</span><span class="txt"><span class="t">Inpatients Handover</span><span class="s">Ward handover</span></span><span class="chev">›</span></a>
         <a class="tile" href="#"><span class="ico c-purple">✉</span><span class="txt"><span class="t">Discharge Letter Form</span><span class="s">Generate letter</span></span><span class="chev">›</span></a>
         <a class="tile" href="#"><span class="ico c-slate">◷</span><span class="txt"><span class="t">Surgical Rotation</span><span class="s">Theatre schedule</span></span><span class="chev">›</span></a>
         <a class="tile" href="/admin/clinic/roster/"><span class="ico c-gold">▥</span><span class="txt"><span class="t">Rosters</span><span class="s">Nurse scheduling</span></span><span class="chev">›</span></a>
@@ -124,25 +124,25 @@
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Nurse Workloads</h2><span class="count">4 lists</span></div>
       <div class="grid">
-        <a class="tile" href="{% url 'clinic:patient_list' %}?owner=Jacqueline"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jacqueline — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?owner=Lorraine"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Lorraine — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?owner=Jason"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jason — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?owner=Common"><span class="ico c-gold">👨‍👩‍👧</span><span class="txt"><span class="t">Common — Our Patients</span><span class="s">Shared caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?owner=Jacqueline"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jacqueline — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?owner=Lorraine"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Lorraine — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?owner=Jason"><span class="ico c-teal">👥</span><span class="txt"><span class="t">Jason — My Patients</span><span class="s">Personal caseload</span></span><span class="chev">›</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?owner=Common"><span class="ico c-gold">👨‍👩‍👧</span><span class="txt"><span class="t">Common — Our Patients</span><span class="s">Shared caseload</span></span><span class="chev">›</span></a>
       </div>
     </section>
 
     <section class="group">
       <div class="group-head"><span class="bar"></span><h2>Patient Outcomes</h2><span class="count">10 registers</span></div>
       <div class="grid">
-        <a class="tile" href="{% url 'clinic:patient_list' %}?status=active"><span class="ico c-green">✓</span><span class="txt"><span class="t">Active Patients</span></span><span class="badge">{{ stats.active }}</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?status=inpatient"><span class="ico c-cyan">▣</span><span class="txt"><span class="t">Inpatients</span></span><span class="badge">{{ stats.inpatient }}</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=active"><span class="ico c-green">✓</span><span class="txt"><span class="t">Active Patients</span></span><span class="badge">{{ stats.active }}</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=inpatient"><span class="ico c-cyan">▣</span><span class="txt"><span class="t">Inpatients</span></span><span class="badge">{{ stats.inpatient }}</span></a>
         <a class="tile" href="#"><span class="ico c-teal">◐</span><span class="txt"><span class="t">Ileo-Anal Pouch</span></span><span class="chev">›</span></a>
         <a class="tile" href="#"><span class="ico c-purple">🏥</span><span class="txt"><span class="t">Discharges (Post Operative)</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?status=relocated_gozo"><span class="ico c-slate">⇢</span><span class="txt"><span class="t">Discharged to Gozo</span></span><span class="badge">{{ stats.gozo }}</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?status=reversed"><span class="ico c-gold">↺</span><span class="txt"><span class="t">Reversed</span></span><span class="badge">{{ stats.reversed }}</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=relocated_gozo"><span class="ico c-slate">⇢</span><span class="txt"><span class="t">Discharged to Gozo</span></span><span class="badge">{{ stats.gozo }}</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=reversed"><span class="ico c-gold">↺</span><span class="txt"><span class="t">Reversed</span></span><span class="badge">{{ stats.reversed }}</span></a>
         <a class="tile" href="#"><span class="ico c-slate">⏸</span><span class="txt"><span class="t">Temporary Paused</span></span><span class="chev">›</span></a>
         <a class="tile" href="#"><span class="ico c-red">⚠</span><span class="txt"><span class="t">DNTU</span></span><span class="chev">›</span></a>
-        <a class="tile" href="{% url 'clinic:patient_list' %}?status=deceased"><span class="ico c-navy">✝</span><span class="txt"><span class="t">Deceased</span></span><span class="badge">{{ stats.deceased }}</span></a>
+        <a class="tile" href="{% url 'clinic:ward' %}?status=deceased"><span class="ico c-navy">✝</span><span class="txt"><span class="t">Deceased</span></span><span class="badge">{{ stats.deceased }}</span></a>
         <a class="tile" href="#"><span class="ico c-slate">🗄</span><span class="txt"><span class="t">Deceased (Archived 2025)</span></span><span class="chev">›</span></a>
       </div>
     </section>

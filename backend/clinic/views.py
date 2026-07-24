@@ -17,6 +17,12 @@ def _safe_count(qs):
 
 
 @login_required
+def ward(request):
+    """The clinical ward workspace. Data is loaded client-side from /api/."""
+    return render(request, "clinic/ward.html")
+
+
+@login_required
 def dashboard(request):
     today = datetime.date.today()
     P = models.Patient.objects
