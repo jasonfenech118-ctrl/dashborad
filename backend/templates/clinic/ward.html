@@ -50,6 +50,11 @@
   .records table{border:none;border-radius:0;}
   .records th{position:sticky;top:0;}
   .records .action-cell{white-space:nowrap;color:var(--muted);}
+
+  /* -------- summary / events panels -------- */
+  .panel{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:18px;}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
+  .panel-h{font-size:13px;color:var(--teal);margin:20px 0 8px;}
 </style>
 
 <div class="ward" style="margin-top:4px;">
@@ -103,14 +108,67 @@
       </div>
 
       <nav class="tabs">
-        <a class="active" href="#">Documents</a>
-        <a href="{% url 'clinic:patient_detail' selected.id %}">Summary</a>
-        <a href="{% url 'clinic:patient_detail' selected.id %}">Last events</a>
+        <a class="{% if tab == 'documents' %}active{% endif %}" href="?patient={{ selected.id }}&tab=documents">Documents</a>
+        <a class="{% if tab == 'summary' %}active{% endif %}" href="?patient={{ selected.id }}&tab=summary">Summary</a>
+        <a class="{% if tab == 'events' %}active{% endif %}" href="?patient={{ selected.id }}&tab=events">Last events</a>
         <a href="{% url 'clinic:patient_detail' selected.id %}">Results</a>
         <a href="{% url 'clinic:patient_detail' selected.id %}">Requests</a>
         <a href="{% url 'clinic:patient_detail' selected.id %}">Tasks</a>
       </nav>
 
+      {% if tab == "summary" %}
+      <div class="panel">
+        <div class="summary-grid">
+          <div class="kv"><div class="k">First name</div><div class="v">{{ selected.first_name|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Surname</div><div class="v">{{ selected.surname|default:"—" }}</div></div>
+          <div class="kv"><div class="k">ID card</div><div class="v">{{ selected.id_card|default:"—" }}</div></div>
+          <div class="kv"><div class="k">DOB</div><div class="v">{{ selected.dob|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Sex</div><div class="v">{{ selected.sex|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Phone</div><div class="v">{{ selected.phone_number|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Locality</div><div class="v">{{ selected.locality|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Consultant</div><div class="v">{{ selected.consultant|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Surgery date</div><div class="v">{{ selected.surgery_date|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Surgery type</div><div class="v">{{ selected.surgery_type|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Stoma type</div><div class="v">{{ selected.stoma_type_summary|default:"—"|truncatechars:60 }}</div></div>
+          <div class="kv"><div class="k">Follow-up status</div><div class="v">{{ selected.followup_status|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Follow-up owner</div><div class="v">{{ selected.followup_owner|default:"—" }}</div></div>
+          <div class="kv"><div class="k">Stoma days</div><div class="v">{{ selected.stoma_days|default:"—" }}</div></div>
+        </div>
+        {% if selected.past_medical_history %}
+          <h3 class="panel-h">Past medical history</h3>
+          <pre>{{ selected.past_medical_history }}</pre>
+        {% endif %}
+      </div>
+
+      {% elif tab == "events" %}
+      <div class="panel">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>Person</th><th>Detail</th></tr></thead>
+          <tbody>
+            {% for a in appointments %}
+              <tr>
+                <td>{{ a.appt_date|default:"—" }} {{ a.appt_slot|default:"" }}</td>
+                <td><span class="pill">Appointment</span></td>
+                <td>{{ a.outcome_recorded_by_name|default:"—" }}</td>
+                <td>{{ a.status|default:"—" }}{% if a.notes %} · {{ a.notes|truncatechars:50 }}{% endif %}</td>
+              </tr>
+            {% endfor %}
+            {% for f in followups %}
+              <tr>
+                <td>{{ f.review_date|default:"—" }}</td>
+                <td><span class="pill">Follow-up</span></td>
+                <td>{{ f.recorded_by_name|default:"—" }}</td>
+                <td>{{ f.full_episode_code|default:f.episode_code|default:"—" }}{% if f.stoma_function %} · {{ f.stoma_function }}{% endif %}</td>
+              </tr>
+            {% endfor %}
+            {% if not appointments and not followups %}
+              <tr><td colspan="4" class="muted" style="padding:20px;">No events recorded for this patient.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
       <div class="doc-body">
         <div class="doc-picker">
           <input type="text" placeholder="Search document…" disabled/>
@@ -145,6 +203,7 @@
           </table>
         </div>
       </div>
+      {% endif %}
     {% else %}
       <div class="card"><p class="muted">Select a patient from the ward list to view their chart.</p></div>
     {% endif %}

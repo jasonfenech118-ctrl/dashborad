@@ -85,7 +85,11 @@ def ward(request):
     if selected is None and patients:
         selected = patients[0]
 
-    records = []
+    tab = (request.GET.get("tab") or "documents").strip()
+    if tab not in {"documents", "summary", "events"}:
+        tab = "documents"
+
+    records, appointments, followups = [], [], []
     if selected is not None:
         try:
             records = list(
@@ -94,12 +98,30 @@ def ward(request):
             )
         except Exception:
             records = []
+        if tab in {"summary", "events"}:
+            try:
+                appointments = list(
+                    models.Appointment.objects.filter(patient_id=selected.id)
+                    .order_by("-appt_date")[:20]
+                )
+            except Exception:
+                appointments = []
+            try:
+                followups = list(
+                    models.FollowupSeenEpisode.objects.filter(patient_id=selected.id)
+                    .order_by("-review_date")[:20]
+                )
+            except Exception:
+                followups = []
 
     return render(request, "clinic/ward.html", {
         "patients": patients,
         "ward_count": len(patients),
         "selected": selected,
         "records": records,
+        "appointments": appointments,
+        "followups": followups,
+        "tab": tab,
         "q": q,
     })
 
