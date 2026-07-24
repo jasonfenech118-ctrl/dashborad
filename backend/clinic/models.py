@@ -1,10 +1,9 @@
 """
 Django models for the MDH Stoma Care Clinic.
 
-These map onto the EXISTING Supabase Postgres tables (managed = False), so
-Django reads and writes the live data with no migration and no data loss.
-When the app is fully migrated off Supabase, flip `managed = True` in the
-Meta classes and let Django own the schema.
+Django owns the schema (managed = True): these models are the single source
+of truth, and `manage.py migrate` creates and maintains every table. The
+explicit db_table names are kept so the table names stay stable and readable.
 """
 
 import uuid
@@ -28,7 +27,7 @@ class Staff(UUIDModel):
     role = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "staff"
         verbose_name_plural = "Staff"
 
@@ -41,7 +40,7 @@ class BankStaff(UUIDModel):
     role = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "bank_staff"
         verbose_name_plural = "Bank staff"
 
@@ -54,7 +53,7 @@ class PublicHoliday(UUIDModel):
     name = models.CharField(max_length=200)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "public_holidays"
 
     def __str__(self):
@@ -115,7 +114,7 @@ class Patient(UUIDModel):
     age_at_death = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "patients"
 
     def __str__(self):
@@ -151,7 +150,7 @@ class Appointment(UUIDModel):
     cancelled_by_name = models.CharField(max_length=200, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "appointments"
 
     def __str__(self):
@@ -174,7 +173,7 @@ class Episode(UUIDModel):
     post_op_start = models.DateField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "episodes"
 
     def __str__(self):
@@ -194,7 +193,7 @@ class EpisodeStep(UUIDModel):
     completed_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "episode_steps"
         ordering = ["step_no"]
 
@@ -246,7 +245,7 @@ class FollowupSeenEpisode(UUIDModel):
     created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "followup_seen_episodes"
 
     def __str__(self):
@@ -274,7 +273,7 @@ class Encounter(UUIDModel):
     created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "encounters"
         ordering = ["-encounter_date"]
 
@@ -295,7 +294,7 @@ class Roster(UUIDModel):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "roster"
 
     def __str__(self):
@@ -314,7 +313,7 @@ class LeaveRecord(UUIDModel):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "leave_records"
 
     def __str__(self):
@@ -332,7 +331,7 @@ class BankStaffAssignment(UUIDModel):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "bank_staff_assignments"
 
     def __str__(self):

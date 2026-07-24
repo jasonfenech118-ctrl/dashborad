@@ -73,9 +73,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # --- Database -------------------------------------------------------------
-# If DATABASE_URL / PG* env vars are set, use Postgres (your Supabase DB).
-# Otherwise fall back to a local sqlite file so the project runs out of the box.
-if env("PGHOST"):
+# Django owns the schema (models are managed=True). Pick the backend from
+# whichever env vars are set:
+#   MYSQL_HOST  -> MySQL   (e.g. PythonAnywhere's bundled database)
+#   PGHOST      -> Postgres (e.g. a Supabase / external Postgres)
+#   neither     -> local sqlite file, so the project runs out of the box.
+if env("MYSQL_HOST"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": env("MYSQL_DATABASE", ""),
+            "USER": env("MYSQL_USER", ""),
+            "PASSWORD": env("MYSQL_PASSWORD", ""),
+            "HOST": env("MYSQL_HOST"),
+            "PORT": env("MYSQL_PORT", "3306"),
+            "OPTIONS": {"charset": "utf8mb4"},
+        }
+    }
+elif env("PGHOST"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",

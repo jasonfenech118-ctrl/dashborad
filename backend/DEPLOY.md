@@ -1,54 +1,44 @@
-# Deploying to PythonAnywhere
+# Deploying to PythonAnywhere (Django-managed MySQL)
 
-This guide puts the Django backend live on **PythonAnywhere**, connected to your
-existing **Supabase** Postgres database.
+This puts the Django backend live on **PythonAnywhere**, using PythonAnywhere's
+own **MySQL** database. Django owns the schema — `migrate` creates every table
+for you — so this works on the **free** PythonAnywhere plan (no external
+database, no paid plan needed).
 
----
-
-## 0. Which PythonAnywhere plan?
-
-Your data lives in Supabase (an external Postgres host reached over the internet).
-
-| Plan | Outbound access | Works with Supabase? |
-|------|-----------------|----------------------|
-| **Free ($0)** | Whitelisted HTTP/HTTPS sites only. Raw database connections to external hosts are blocked. | ❌ No — Django will fail to connect. |
-| **Hacker (~$5/mo)** | Unrestricted outbound. | ✅ Yes — recommended. |
-
-**Use the Hacker plan** (or higher) so Django can reach Supabase. The free plan
-only works if you abandon Supabase and use PythonAnywhere's bundled database,
-which would mean migrating your data — not recommended.
+> Prefer to use an external Postgres (e.g. Supabase) instead? See
+> "Alternative: Postgres" at the bottom.
 
 ---
 
-## 1. Get your Supabase connection details
+## 1. On PythonAnywhere: clone and install
 
-Supabase dashboard → **Project Settings → Database → Connection info**.
-
-Prefer the **Connection Pooler** (Session mode) values for a web app:
-- Host: `aws-0-<region>.pooler.supabase.com` (or your project's pooler host)
-- Port: `6543`
-- Database: `postgres`
-- User: `postgres.<your-project-ref>`
-- Password: your database password
-
-(The direct connection on port `5432` also works on the Hacker plan; the pooler
-just handles many short web requests better.)
-
----
-
-## 2. On PythonAnywhere: clone and install
-
-Open a **Bash console** on PythonAnywhere:
+Open a **Bash console** (Consoles → Bash):
 
 ```bash
 git clone https://github.com/jasonfenech118-ctrl/dashborad.git
 cd dashborad/backend
 
-# Create a virtualenv (match the Python version you'll select in the Web tab)
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+---
+
+## 2. Create a MySQL database
+
+PythonAnywhere **Databases** tab:
+
+1. If you haven't already, **set a MySQL password** (top of the page) and note it.
+2. Under "Create a database", the default database is named
+   **`YOURUSERNAME$default`** — you can use that, or create a new one, e.g.
+   `YOURUSERNAME$clinic`.
+
+Your connection details will be:
+- Host: `YOURUSERNAME.mysql.pythonanywhere-services.com`
+- User: `YOURUSERNAME`
+- Database: `YOURUSERNAME$default` (or the name you created)
+- Password: the MySQL password you just set
 
 ---
 
@@ -67,12 +57,11 @@ DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=YOURUSERNAME.pythonanywhere.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://YOURUSERNAME.pythonanywhere.com
 
-PGHOST=aws-0-<region>.pooler.supabase.com
-PGPORT=6543
-PGDATABASE=postgres
-PGUSER=postgres.<your-project-ref>
-PGPASSWORD=<your database password>
-PGSSLMODE=require
+MYSQL_HOST=YOURUSERNAME.mysql.pythonanywhere-services.com
+MYSQL_PORT=3306
+MYSQL_DATABASE=YOURUSERNAME$default
+MYSQL_USER=YOURUSERNAME
+MYSQL_PASSWORD=<your MySQL password>
 ```
 
 Generate a secret key:
@@ -80,19 +69,21 @@ Generate a secret key:
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
+Save in nano with **Ctrl+O**, **Enter**, then **Ctrl+X**.
+
 ---
 
-## 4. Verify the connection, migrate, create admin
+## 4. Create the schema, verify, create admin
 
 ```bash
-python manage.py check_db          # should list row counts for all 12 tables
-python manage.py migrate           # creates only Django auth/session tables
+python manage.py migrate           # creates ALL tables (Django auth + clinic)
+python manage.py check_db          # should list all 12 clinic tables at 0 rows
 python manage.py createsuperuser   # your admin login
 python manage.py collectstatic --noinput
 ```
 
-If `check_db` reports a connection error, re-check the Supabase host/password
-and that you're on the Hacker plan.
+`check_db` showing all 12 tables at `0 rows` is exactly right — the schema is
+built and empty, ready for you to start entering patients.
 
 ---
 
@@ -111,8 +102,8 @@ PythonAnywhere **Web** tab → **Add a new web app**:
    - Directory: `/home/YOURUSERNAME/dashborad/backend/staticfiles`
 5. Click the big green **Reload** button.
 
-Visit **https://YOURUSERNAME.pythonanywhere.com/admin/** — you should be able to
-log in and see all your live clinic data.
+Visit **https://YOURUSERNAME.pythonanywhere.com/admin/** — log in with the
+superuser and start adding data. The dashboard and patient screens are at `/`.
 
 ---
 
@@ -133,10 +124,23 @@ Then hit **Reload** on the Web tab.
 
 ## Troubleshooting
 
-- **500 error / DisallowedHost** → check `DJANGO_ALLOWED_HOSTS` in `.env` matches
-  your PythonAnywhere domain exactly, and reload.
-- **Static files missing (unstyled admin)** → run `collectstatic` and confirm the
-  `/static/` mapping path is correct.
-- **Database connection timeout** → you're likely on the free plan, or the
-  Supabase host/port/password is wrong. Confirm with `python manage.py check_db`.
-- **CSRF errors on login** → set `DJANGO_CSRF_TRUSTED_ORIGINS=https://YOURUSERNAME.pythonanywhere.com`.
+- **500 error / DisallowedHost** → `DJANGO_ALLOWED_HOSTS` must match your
+  PythonAnywhere domain exactly; reload after editing `.env`.
+- **Static files missing (unstyled admin)** → run `collectstatic` and confirm
+  the `/static/` mapping path.
+- **`check_db` shows missing tables** → run `python manage.py migrate`.
+- **Access denied for MySQL** → re-check `MYSQL_PASSWORD` and that
+  `MYSQL_DATABASE` matches a database you created on the Databases tab (names
+  include the `YOURUSERNAME$` prefix).
+- **CSRF errors on login** → set
+  `DJANGO_CSRF_TRUSTED_ORIGINS=https://YOURUSERNAME.pythonanywhere.com`.
+
+---
+
+## Alternative: Postgres (e.g. Supabase)
+
+To use an external Postgres instead of PythonAnywhere MySQL, leave the `MYSQL_*`
+vars blank and set `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`,
+`PGSSLMODE` in `.env` instead. Note this requires the PythonAnywhere **Hacker**
+plan (~$5/mo) for outbound access to an external database host; the free plan
+blocks it. Everything else (migrate, createsuperuser, Web tab) is identical.

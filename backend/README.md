@@ -1,34 +1,28 @@
 # MDH Stoma Care Clinic — Django backend
 
-A Python/Django rewrite of the clinic system. Phase 1 gives you a working
-**admin panel and REST API over your existing Supabase database** — no data
-migration, both the old app and Django share one Postgres database.
+A Python/Django clinic system: an **admin panel, REST API, and patient screens**
+backed by a database that **Django owns**. Django manages the schema, so
+`migrate` creates every table — it runs on the free PythonAnywhere plan with
+PythonAnywhere's bundled MySQL, and on local sqlite out of the box.
 
-## Why `managed = False`
+## Django owns the schema (`managed = True`)
 
-Every model in `clinic/models.py` maps onto a table that already exists in
-Supabase (`managed = False`, `db_table = "..."`). Django therefore **reads and
-writes your live data directly** and never tries to create or drop those
-tables. Only Django's own auth/session tables are created (see below).
+Every model in `clinic/models.py` is Django-managed (`managed = True`) with an
+explicit, readable `db_table`. `manage.py migrate` creates and maintains all 12
+clinic tables plus Django's own auth/session tables — the models are the single
+source of truth.
 
-When the rewrite is complete and you no longer use Supabase's client, flip
-`managed = True` to let Django own the schema.
+## Database backends
+
+The backend is chosen automatically from `.env` (see `.env.example`):
+
+- **MySQL** — set `MYSQL_HOST`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`
+  (this is the PythonAnywhere path; uses the pure-Python PyMySQL driver).
+- **Postgres** — set `PGHOST` etc. instead (e.g. an external Supabase/Postgres;
+  needs the PythonAnywhere Hacker plan for outbound access).
+- **sqlite** — set neither; Django uses a local `db.sqlite3` file.
 
 ## Setup
-
-### Quick (one command)
-
-```bash
-cd backend
-./setup.sh
-```
-
-`setup.sh` creates a virtual environment, installs dependencies, writes a
-`.env` with a freshly generated `DJANGO_SECRET_KEY`, and runs the Django
-auth migrations. It then tells you the remaining steps. You only need to
-paste your Supabase database password into `.env`.
-
-### Manual
 
 ```bash
 cd backend
@@ -36,65 +30,50 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# edit .env — set DJANGO_SECRET_KEY and the Supabase Postgres credentials
-# (Supabase dashboard -> Project Settings -> Database -> Connection info)
+# edit .env — set DJANGO_SECRET_KEY and the MySQL vars (or leave blank for sqlite)
 ```
 
-### Verify the connection
-
-After filling in `.env`, confirm Django can reach your Supabase database and
-that every table is present:
+Then build the schema and create an admin login:
 
 ```bash
-python manage.py check_db
-```
-
-It prints row counts for all 12 tables, or tells you exactly what's missing.
-
-### Run against Supabase (real data)
-
-Set `PGHOST` etc. in `.env`, then:
-
-```bash
-python manage.py migrate          # creates ONLY Django auth/session tables
-python manage.py createsuperuser  # your admin login
+python manage.py migrate           # creates ALL tables (Django auth + clinic)
+python manage.py check_db          # lists the 12 clinic tables and their row counts
+python manage.py createsuperuser   # your admin login
 python manage.py runserver
 ```
 
-Open http://127.0.0.1:8000/admin/ and you can browse and edit every patient,
-appointment, episode, follow-up review and encounter.
+Open http://127.0.0.1:8000/admin/ to add and edit patients, appointments,
+episodes, follow-up reviews and encounters. The dashboard and patient screens
+are at http://127.0.0.1:8000/.
 
-### Run locally without Supabase (quick look)
-
-Leave `PGHOST` blank in `.env` — Django falls back to a local `db.sqlite3`.
-The clinic tables won't exist there (they live in Supabase), but the project,
-admin login and dashboard all boot so you can develop the UI.
+To deploy on PythonAnywhere, follow **`DEPLOY.md`**.
 
 ## Layout
 
 ```
 backend/
-  config/          project settings, urls, wsgi
+  config/          project settings, urls, wsgi (+ PyMySQL shim in __init__)
   clinic/
-    models.py      12 models mapped to the existing Supabase tables
+    models.py      12 Django-managed models (the schema)
+    migrations/    0001_initial builds every clinic table
     admin.py       admin panel: list views, search, filters, inlines
-    api_urls.py    DRF router (viewsets added as endpoints come online)
+    api.py         DRF viewsets
+    api_urls.py    DRF router
     urls.py        site URLs
-    views.py       landing dashboard
+    views.py       dashboard + patient list/detail
+    management/commands/check_db.py   DB connection + row-count tester
   templates/
   requirements.txt
   .env.example
+  DEPLOY.md
 ```
 
-## Roadmap (full rewrite)
+## Roadmap
 
-1. **Admin + API over existing DB** ✅ (this phase)
-2. REST endpoints (DRF viewsets/serializers) for patients, appointments, encounters
-3. Server-side forms & validation for the clinical pathways (elective, emergency,
-   stoma sitting session, daily reviews, follow-up seen review)
-4. Port the front-end screens to Django templates (or point the existing
-   `index.html` at the Django API instead of Supabase)
-5. Move business rules (episode step transitions, follow-up scheduling) into the
+1. **Django-managed schema + admin + API + patient screens** ✅ (done)
+2. Server-side forms for the clinical pathways (elective, emergency, stoma
+   sitting session, daily reviews, follow-up seen review)
+3. Port the tile dashboard / ward workspace screens to Django templates
+4. Move business rules (episode step transitions, follow-up scheduling) into the
    server so they can't be bypassed
-6. Reports / PDF exports
-7. Flip `managed = True` and retire the Supabase client
+5. Reports / PDF exports

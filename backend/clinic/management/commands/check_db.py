@@ -39,11 +39,10 @@ class Command(BaseCommand):
 
         if "sqlite" in engine:
             self.stdout.write(self.style.WARNING(
-                "Using the local sqlite fallback — PGHOST is not set in .env, so the "
-                "clinic tables (which live in Supabase) are not available here.\n"
-                "Fill in the Supabase credentials in .env to connect to real data."
+                "Using the local sqlite fallback — no MYSQL_HOST or PGHOST is set in "
+                ".env. This is fine for local testing; set the MySQL vars to point at "
+                "your PythonAnywhere database."
             ))
-            return
 
         try:
             connection.ensure_connection()
@@ -53,20 +52,21 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Connection OK. Table row counts:"))
         ok = 0
+        missing = 0
         for table, model in TABLES:
             try:
                 count = model.objects.count()
                 self.stdout.write(f"  {table:<24} {count:>7} rows")
                 ok += 1
             except Exception as exc:  # noqa: BLE001
+                missing += 1
                 self.stdout.write(self.style.ERROR(f"  {table:<24} ERROR: {exc}"))
 
         self.stdout.write("")
         if ok == len(TABLES):
-            self.stdout.write(self.style.SUCCESS(f"All {ok} tables reachable. You're ready to run the server."))
+            self.stdout.write(self.style.SUCCESS(f"All {ok} tables present. You're ready to run the server."))
         else:
             self.stdout.write(self.style.WARNING(
-                f"{ok}/{len(TABLES)} tables reachable. Any errors above usually mean that "
-                "table hasn't been created in Supabase yet (e.g. run supabase-encounters.sql "
-                "for the encounters table)."
+                f"{ok}/{len(TABLES)} tables present. Missing tables usually just mean the "
+                "schema hasn't been created yet — run:  python manage.py migrate"
             ))
