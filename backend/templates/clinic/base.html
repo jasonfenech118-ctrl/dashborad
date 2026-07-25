@@ -76,16 +76,13 @@
   <div class="topbar">
     <span class="logo">MDH <span>Stoma</span></span>
     <nav>
-      <a class="dis" href="#" title="Coming soon">Intensive Ward <span class="car">▾</span></a>
-      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Ward</a>
-      <a class="dis" href="#" title="Coming soon">Calendar</a>
+      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
+      <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
-      <a class="dis" href="#" title="Coming soon">Treatment rooms <span class="car">▾</span></a>
-      <a class="dis" href="#" title="Coming soon">Tasks</a>
-      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Aggregate</a>
+      <a class="dis" href="#" title="Coming soon">Appointments</a>
+      <a href="{% url 'clinic:discharge_letter' %}" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
       <a class="dis" href="#" title="Coming soon">Reports</a>
-      <a class="dis" href="#" title="Coming soon">Settlements <span class="car">▾</span></a>
-      <a class="dis" href="#" title="Coming soon">Accounts <span class="car">▾</span></a>
       <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
     </nav>
     <span class="spacer"></span>
