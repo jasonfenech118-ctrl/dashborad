@@ -122,4 +122,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-LOGIN_URL = "/admin/login/"
+LOGIN_URL = "/login/"
+# After a successful login, land on the home dashboard (not the admin site).
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"
