@@ -127,6 +127,16 @@ def ward(request):
 
 
 @login_required
+def discharge_letter(request):
+    """Standalone Stoma discharge-letter generator.
+
+    The template is a fully self-contained client-side tool (its own layout,
+    print styles and localStorage state), so it does not extend base.html.
+    """
+    return render(request, "clinic/discharge_letter.html")
+
+
+@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()

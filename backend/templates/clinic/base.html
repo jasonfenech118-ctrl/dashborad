@@ -5,15 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
-    :root{--teal:#0d7377;--navy:#1a2e4a;--navy2:#24406b;--gold:#e6a817;--border:#dbe7e6;--muted:#6b7a86;}
+    :root{
+      /* Modern slate + indigo. Legacy names kept so child pages cascade:
+         --teal is now the indigo primary, --navy the slate nav/ink. */
+      --teal:#4f46e5;        /* indigo-600  primary accent   */
+      --teal-600:#4338ca;    /* indigo-700  hover            */
+      --teal-50:#eef2ff;     /* indigo-50   tint             */
+      --navy:#1e293b;        /* slate-800   nav / headings   */
+      --navy2:#334155;       /* slate-700   nav hover/active */
+      --gold:#6366f1;        /* indigo-500  logo highlight   */
+      --ink:#0f172a;         /* slate-900   body text        */
+      --border:#e2e8f0;      /* slate-200                    */
+      --muted:#64748b;       /* slate-500                    */
+      --bg:#f8fafc;          /* slate-50    page background  */
+      --surface:#ffffff;
+    }
     *{box-sizing:border-box;}
-    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f4fbfa;color:var(--navy);margin:0;}
+    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);margin:0;}
     /* App-shell top navigation (reference: Comarch-style ward EHR) */
     .topbar{
       background:var(--navy);
-      background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.03) 0 2px,transparent 2px 7px);
       color:#fff;padding:0 14px;display:flex;align-items:stretch;gap:2px;
-      min-height:42px;box-shadow:0 1px 0 rgba(0,0,0,.25);
+      min-height:46px;box-shadow:0 1px 3px rgba(15,23,42,.12);
+      border-bottom:1px solid rgba(255,255,255,.06);
     }
     .topbar .logo{font-weight:800;display:flex;align-items:center;padding:0 14px 0 4px;white-space:nowrap;font-size:14px;}
     .topbar .logo span{color:var(--gold);}
@@ -39,13 +53,15 @@
     a{color:var(--teal);}
     table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
     th,td{text-align:left;padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);}
-    th{background:#eef6f5;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+    th{background:var(--teal-50);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
     tr:last-child td{border-bottom:none;}
-    tr:hover td{background:#f8fdfc;}
+    tr:hover td{background:#f8fafc;}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-    .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;}
+    .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
+    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.15);}
     .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
-    .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#eef6f5;color:var(--teal);}
+    .btn:hover{background:var(--teal-600);}
+    .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
     .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
     .kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
@@ -60,16 +76,13 @@
   <div class="topbar">
     <span class="logo">MDH <span>Stoma</span></span>
     <nav>
-      <a class="dis" href="#" title="Coming soon">Intensive Ward <span class="car">▾</span></a>
-      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Ward</a>
-      <a class="dis" href="#" title="Coming soon">Calendar</a>
+      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
+      <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
-      <a class="dis" href="#" title="Coming soon">Treatment rooms <span class="car">▾</span></a>
-      <a class="dis" href="#" title="Coming soon">Tasks</a>
-      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Aggregate</a>
+      <a class="dis" href="#" title="Coming soon">Appointments</a>
+      <a href="{% url 'clinic:discharge_letter' %}" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
       <a class="dis" href="#" title="Coming soon">Reports</a>
-      <a class="dis" href="#" title="Coming soon">Settlements <span class="car">▾</span></a>
-      <a class="dis" href="#" title="Coming soon">Accounts <span class="car">▾</span></a>
       <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
     </nav>
     <span class="spacer"></span>
