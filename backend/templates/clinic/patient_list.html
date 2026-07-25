@@ -1,45 +1,119 @@
 {% extends "clinic/base.html" %}
 {% block title %}Patients — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
-<h1>Patients <span class="muted" style="font-size:14px;">({{ page.paginator.count }})</span></h1>
+<style>
+  /* Patients directory — matches the ward view's teal/card language */
+  .pt{margin-top:4px;}
+  @media (min-width:1160px){
+    .pt{width:min(1400px,94vw);margin-left:calc(50% - min(1400px,94vw)/2);}
+  }
 
-<form method="get" class="controls">
-  <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID card, phone, locality…" style="min-width:280px;"/>
-  <select name="status">
-    <option value="">All statuses</option>
-    {% for s in statuses %}
-      <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
-    {% endfor %}
-  </select>
-  <button class="btn" type="submit">Search</button>
-</form>
+  .pt-head{
+    background:var(--teal);color:#fff;border-radius:12px 12px 0 0;
+    padding:14px 18px;display:flex;align-items:center;gap:10px;
+  }
+  .pt-head .title{font-size:17px;font-weight:800;}
+  .pt-head .count{background:rgba(255,255,255,.18);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;}
+  .pt-head .add{margin-left:auto;background:#fff;color:var(--teal);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-decoration:none;}
+  .pt-head .add:hover{background:#eafaf9;}
 
-<table>
-  <thead>
-    <tr><th>Surname</th><th>Name</th><th>ID Card</th><th>Status</th><th>Owner</th><th>Route</th><th>Surgery</th></tr>
-  </thead>
-  <tbody>
-    {% for p in page %}
-    <tr>
-      <td><a href="{% url 'clinic:patient_detail' p.id %}"><strong>{{ p.surname|default:"—" }}</strong></a></td>
-      <td>{{ p.first_name|default:"—" }}</td>
-      <td>{{ p.id_card|default:"—" }}</td>
-      <td>{% if p.followup_status %}<span class="pill">{{ p.followup_status }}</span>{% else %}—{% endif %}</td>
-      <td>{{ p.followup_owner|default:"—" }}</td>
-      <td>{{ p.admission_route|default:"—" }}</td>
-      <td>{{ p.surgery_date|default:"—" }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="7" class="muted" style="text-align:center;padding:24px;">No patients found.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+  .pt-tools{
+    background:#fff;border:1px solid var(--border);border-top:none;
+    padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  }
+  .pt-tools input,.pt-tools select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;}
+  .pt-tools input[type=text]{min-width:280px;flex:1;}
+  .pt-tools .reset{font-size:12px;color:var(--muted);text-decoration:none;padding:4px 6px;}
+  .pt-tools .reset:hover{color:var(--teal);}
 
-{% if page.has_other_pages %}
-<div class="pager">
-  {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
-  <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
-  {% if page.has_next %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+  .pt-table{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+  .pt-table table{border:none;border-radius:0;}
+  .pt-table th{position:sticky;top:0;}
+  .pt-name{display:flex;align-items:center;gap:10px;}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;flex:none;
+    background:#e8f5f4;color:var(--teal);font-weight:800;font-size:12px;
+    display:flex;align-items:center;justify-content:center;text-transform:uppercase;
+  }
+  .pt-name .sub{font-size:11px;color:var(--muted);font-weight:600;}
+  a.rowlink{color:var(--navy);text-decoration:none;}
+  a.rowlink:hover .lname{color:var(--teal);text-decoration:underline;}
+  .lname{font-weight:700;}
+
+  /* status pills — colour by state */
+  .st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;text-transform:capitalize;}
+  .st-default{background:#eef2f7;color:var(--navy);}
+  .st-inpatient{background:#fdecec;color:#d13b3b;}
+  .st-discharged{background:#eef6f5;color:var(--teal);}
+
+  .pt-empty{padding:34px;text-align:center;color:var(--muted);font-size:13px;}
+  .pager{margin:14px 2px 0;display:flex;gap:8px;align-items:center;font-size:13px;}
+</style>
+
+<div class="pt">
+  <form method="get">
+    <div class="pt-head">
+      <span class="title">Patients</span>
+      <span class="count">{{ page.paginator.count }}</span>
+      <a class="add" href="/admin/clinic/patient/add/">+ Add patient</a>
+    </div>
+
+    <div class="pt-tools">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID card, phone, locality…"/>
+      <select name="status">
+        <option value="">All statuses</option>
+        {% for s in statuses %}
+          <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" type="submit">Search</button>
+      {% if q or status %}<a class="reset" href="{% url 'clinic:patient_list' %}">Clear</a>{% endif %}
+    </div>
+  </form>
+
+  <div class="pt-table">
+    <table>
+      <thead>
+        <tr><th>Patient</th><th>ID Card</th><th>Status</th><th>Owner</th><th>Route</th><th>Surgery</th></tr>
+      </thead>
+      <tbody>
+        {% for p in page %}
+        <tr>
+          <td>
+            <a class="rowlink" href="{% url 'clinic:patient_detail' p.id %}">
+              <span class="pt-name">
+                <span class="avatar">{{ p.surname|slice:":1" }}{{ p.first_name|slice:":1" }}</span>
+                <span>
+                  <span class="lname">{{ p.surname|default:"—" }}</span>
+                  {% if p.first_name %}<span class="lname" style="font-weight:600;">, {{ p.first_name }}</span>{% endif %}
+                  {% if p.locality %}<br><span class="sub">{{ p.locality }}</span>{% endif %}
+                </span>
+              </span>
+            </a>
+          </td>
+          <td>{{ p.id_card|default:"—" }}</td>
+          <td>
+            {% if p.followup_status %}
+              <span class="st st-{{ p.followup_status|lower }} st-default">{{ p.followup_status }}</span>
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td>{{ p.followup_owner|default:"—" }}</td>
+          <td>{{ p.admission_route|default:"—" }}</td>
+          <td>{{ p.surgery_date|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="pt-empty">No patients found. Try clearing the search, or connect the database.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page.has_other_pages %}
+  <div class="pager">
+    {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+    <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 {% endblock %}
