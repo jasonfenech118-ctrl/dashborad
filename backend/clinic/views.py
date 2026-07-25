@@ -50,6 +50,83 @@ def dashboard(request):
 
 
 @login_required
+def ward(request):
+    """Ward view — three-column shell mirroring the reference UI:
+
+    left = patients at the ward, right = selected patient chart with a
+    Documents records table (backed by Encounters). Defensive throughout so
+    the page still renders when the DB isn't reachable.
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    patients = models.Patient.objects.all().order_by("surname", "first_name")
+    if q:
+        patients = patients.filter(
+            Q(first_name__icontains=q)
+            | Q(surname__icontains=q)
+            | Q(id_card__icontains=q)
+        )
+
+    try:
+        patients = list(patients[:200])
+    except Exception:
+        patients = []
+
+    # Selected patient: ?patient=<uuid>, else the first in the list.
+    selected = None
+    sel_id = (request.GET.get("patient") or "").strip()
+    if sel_id:
+        selected = next((p for p in patients if str(p.id) == sel_id), None)
+        if selected is None:
+            try:
+                selected = models.Patient.objects.filter(pk=sel_id).first()
+            except Exception:
+                selected = None
+    if selected is None and patients:
+        selected = patients[0]
+
+    tab = (request.GET.get("tab") or "documents").strip()
+    if tab not in {"documents", "summary", "events"}:
+        tab = "documents"
+
+    records, appointments, followups = [], [], []
+    if selected is not None:
+        try:
+            records = list(
+                models.Encounter.objects.filter(patient_id=selected.id)
+                .order_by("-encounter_date")[:50]
+            )
+        except Exception:
+            records = []
+        if tab in {"summary", "events"}:
+            try:
+                appointments = list(
+                    models.Appointment.objects.filter(patient_id=selected.id)
+                    .order_by("-appt_date")[:20]
+                )
+            except Exception:
+                appointments = []
+            try:
+                followups = list(
+                    models.FollowupSeenEpisode.objects.filter(patient_id=selected.id)
+                    .order_by("-review_date")[:20]
+                )
+            except Exception:
+                followups = []
+
+    return render(request, "clinic/ward.html", {
+        "patients": patients,
+        "ward_count": len(patients),
+        "selected": selected,
+        "records": records,
+        "appointments": appointments,
+        "followups": followups,
+        "tab": tab,
+        "q": q,
+    })
+
+
+@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()
