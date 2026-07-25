@@ -5,14 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
-    :root{--teal:#0d7377;--navy:#1a2e4a;--gold:#e6a817;--border:#dbe7e6;--muted:#6b7a86;}
+    :root{--teal:#0d7377;--navy:#1a2e4a;--navy2:#24406b;--gold:#e6a817;--border:#dbe7e6;--muted:#6b7a86;}
     *{box-sizing:border-box;}
     body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f4fbfa;color:var(--navy);margin:0;}
-    .topbar{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;}
-    .topbar .logo{font-weight:800;}.topbar .logo span{color:var(--gold);}
-    .topbar a{color:#fff;text-decoration:none;font-size:13px;font-weight:600;opacity:.85;}
-    .topbar a:hover{opacity:1;}
+    /* App-shell top navigation (reference: Comarch-style ward EHR) */
+    .topbar{
+      background:var(--navy);
+      background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.03) 0 2px,transparent 2px 7px);
+      color:#fff;padding:0 14px;display:flex;align-items:stretch;gap:2px;
+      min-height:42px;box-shadow:0 1px 0 rgba(0,0,0,.25);
+    }
+    .topbar .logo{font-weight:800;display:flex;align-items:center;padding:0 14px 0 4px;white-space:nowrap;font-size:14px;}
+    .topbar .logo span{color:var(--gold);}
+    .topbar nav{display:flex;align-items:stretch;flex-wrap:wrap;}
+    .topbar nav a{
+      color:#fff;text-decoration:none;font-size:12.5px;font-weight:600;opacity:.82;
+      display:flex;align-items:center;padding:0 11px;white-space:nowrap;
+      border-bottom:3px solid transparent;
+    }
+    .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
+    .topbar nav a:hover{opacity:1;background:var(--navy2);}
+    .topbar nav a.active{opacity:1;border-bottom-color:var(--teal);background:var(--navy2);}
+    .topbar nav a.dis{cursor:default;}
+    .topbar nav a.dis:hover{background:transparent;opacity:.82;}
     .topbar .spacer{flex:1;}
+    .topbar .util{display:flex;align-items:center;gap:6px;padding-left:8px;}
+    .topbar .util .ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.85;text-decoration:none;color:#fff;}
+    .topbar .util .ic:hover{background:var(--navy2);opacity:1;}
+    .topbar .util .who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:4px;}
     .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
     h1{font-size:22px;margin:0 0 16px;}
     h2{font-size:16px;margin:24px 0 10px;color:var(--teal);}
@@ -36,16 +56,34 @@
   </style>
 </head>
 <body>
+  {% with vn=request.resolver_match.url_name %}
   <div class="topbar">
-    <span class="logo">MDH <span>Stoma Care</span> Clinic</span>
-    <a href="{% url 'clinic:dashboard' %}">Home</a>
-    <a href="{% url 'clinic:ward' %}">Ward</a>
-    <a href="{% url 'clinic:patient_list' %}">Patients</a>
-    <a href="/admin/">Admin</a>
+    <span class="logo">MDH <span>Stoma</span></span>
+    <nav>
+      <a class="dis" href="#" title="Coming soon">Intensive Ward <span class="car">▾</span></a>
+      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Ward</a>
+      <a class="dis" href="#" title="Coming soon">Calendar</a>
+      <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
+      <a class="dis" href="#" title="Coming soon">Treatment rooms <span class="car">▾</span></a>
+      <a class="dis" href="#" title="Coming soon">Tasks</a>
+      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Aggregate</a>
+      <a class="dis" href="#" title="Coming soon">Reports</a>
+      <a class="dis" href="#" title="Coming soon">Settlements <span class="car">▾</span></a>
+      <a class="dis" href="#" title="Coming soon">Accounts <span class="car">▾</span></a>
+      <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
+    </nav>
     <span class="spacer"></span>
-    {% if user.is_authenticated %}<span style="font-size:12px;opacity:.8;">{{ user.username }}</span>
-    <a href="/admin/logout/">Sign out</a>{% endif %}
+    <div class="util">
+      <a class="ic" href="#" title="Messages">✉</a>
+      {% if user.is_authenticated %}
+        <span class="who">{{ user.username }} <span class="car">▾</span></span>
+        <a class="ic" href="/admin/logout/" title="Sign out">⏻</a>
+      {% else %}
+        <a class="ic" href="/admin/login/" title="Sign in">⏻</a>
+      {% endif %}
+    </div>
   </div>
+  {% endwith %}
   <div class="wrap">
     {% block content %}{% endblock %}
   </div>
