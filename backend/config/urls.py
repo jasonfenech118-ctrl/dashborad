@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path, include
+from django.views.generic import RedirectView
 
 admin.site.site_header = "MDH Stoma Care Clinic — Administration"
 admin.site.site_title = "MDH Stoma Care Clinic"
@@ -14,6 +15,13 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    # Funnel the admin's own login through the app login so signing in always
+    # lands on the home dashboard (LOGIN_REDIRECT_URL="/"), not the admin index.
+    # The admin itself stays reachable once authenticated.
+    path(
+        "admin/login/",
+        RedirectView.as_view(url="/login/?next=/", query_string=False),
+    ),
     path("admin/", admin.site.urls),
     path("api/", include("clinic.api_urls")),
     path("", include("clinic.urls")),
