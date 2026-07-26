@@ -139,9 +139,6 @@ def discharge_letter(request):
 @login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
-    status = (request.GET.get("status") or "").strip()
-    owner = (request.GET.get("owner") or "").strip()
-
     patients = models.Patient.objects.all().order_by("surname", "first_name")
     if q:
         patients = patients.filter(
@@ -151,26 +148,13 @@ def patient_list(request):
             | Q(phone_number__icontains=q)
             | Q(locality__icontains=q)
         )
-    if status:
-        patients = patients.filter(followup_status=status)
-    if owner:
-        patients = patients.filter(followup_owner=owner)
 
     paginator = Paginator(patients, 40)
     page = paginator.get_page(request.GET.get("page"))
 
-    statuses = (
-        models.Patient.objects.exclude(followup_status__isnull=True)
-        .exclude(followup_status="")
-        .values_list("followup_status", flat=True)
-        .distinct()
-        .order_by("followup_status")
-    )
     return render(request, "clinic/patient_list.html", {
         "page": page,
         "q": q,
-        "status": status,
-        "statuses": statuses,
     })
 
 
