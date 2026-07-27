@@ -159,6 +159,46 @@ def patient_list(request):
 
 
 @login_required
+def deceased_list(request):
+    """Register of deceased patients — read-only table.
+
+    Defensive throughout so the page still renders (empty) when the DB
+    isn't reachable or the table is missing.
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    patients = models.Patient.objects.filter(
+        followup_status="deceased"
+    ).order_by("-rip_date", "surname", "first_name")
+    if q:
+        patients = patients.filter(
+            Q(first_name__icontains=q)
+            | Q(surname__icontains=q)
+            | Q(id_card__icontains=q)
+        )
+
+    try:
+        patients = list(patients)
+    except Exception:
+        patients = []
+
+    # Compute days from surgery to death for each row.
+    for p in patients:
+        p.surgery_days_till_rip = None
+        if p.surgery_date and p.rip_date:
+            try:
+                p.surgery_days_till_rip = (p.rip_date - p.surgery_date).days
+            except Exception:
+                p.surgery_days_till_rip = None
+
+    return render(request, "clinic/deceased_list.html", {
+        "patients": patients,
+        "count": len(patients),
+        "q": q,
+    })
+
+
+@login_required
 def patient_detail(request, patient_id):
     patient = get_object_or_404(models.Patient, pk=patient_id)
     appointments = (

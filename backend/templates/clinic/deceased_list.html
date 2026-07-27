@@ -1,0 +1,87 @@
+{% extends "clinic/base.html" %}
+{% block title %}Deceased — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  /* Deceased register — matches the patients directory card language */
+  .dc{margin-top:4px;}
+  @media (min-width:1160px){
+    .dc{width:min(1500px,95vw);margin-left:calc(50% - min(1500px,95vw)/2);}
+  }
+
+  .dc-head{
+    background:var(--navy);color:#fff;border-radius:12px 12px 0 0;
+    padding:14px 18px;display:flex;align-items:center;gap:10px;
+  }
+  .dc-head .title{font-size:17px;font-weight:800;}
+  .dc-head .count{background:rgba(255,255,255,.18);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;}
+
+  .dc-tools{
+    background:#fff;border:1px solid var(--border);border-top:none;
+    padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  }
+  .dc-tools input{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;min-width:280px;flex:1;}
+  .dc-tools .reset{font-size:12px;color:var(--muted);text-decoration:none;padding:4px 6px;}
+  .dc-tools .reset:hover{color:var(--teal);}
+
+  .dc-table{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow-x:auto;}
+  .dc-table table{border:none;border-radius:0;min-width:1100px;}
+  .dc-table th{position:sticky;top:0;white-space:nowrap;}
+  .dc-table td{vertical-align:top;}
+  .dc-name{font-weight:700;color:var(--navy);}
+  .dc-num{white-space:nowrap;}
+  .dc-comp{min-width:220px;max-width:340px;color:var(--ink);font-size:12px;}
+  .dc-empty{padding:34px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+
+<div class="dc">
+  <form method="get">
+    <div class="dc-head">
+      <span class="title">Deceased register</span>
+      <span class="count">{{ count }}</span>
+    </div>
+
+    <div class="dc-tools">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search name or hospital number…"/>
+      <button class="btn" type="submit">Search</button>
+      {% if q %}<a class="reset" href="{% url 'clinic:deceased_list' %}">Clear</a>{% endif %}
+    </div>
+  </form>
+
+  <div class="dc-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Hospital No.</th>
+          <th>Name</th>
+          <th>Surname</th>
+          <th>Sex</th>
+          <th>DOB</th>
+          <th>Age at death</th>
+          <th>Surgery date</th>
+          <th>Days surgery→RIP</th>
+          <th>Stoma type</th>
+          <th>Complications</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td class="dc-num">{{ p.id_card|default:"—" }}</td>
+          <td class="dc-name">{{ p.first_name|default:"—" }}</td>
+          <td class="dc-name">{{ p.surname|default:"—" }}</td>
+          <td>{{ p.sex|default:"—" }}</td>
+          <td class="dc-num">{{ p.dob|default:"—" }}</td>
+          <td>{{ p.age_at_death|default:"—" }}</td>
+          <td class="dc-num">{{ p.surgery_date|default:"—" }}</td>
+          <td>{{ p.surgery_days_till_rip|default:"—" }}</td>
+          <td>{{ p.stoma_type_summary|default:"—" }}</td>
+          <td class="dc-comp">{{ p.clinical_complications|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="dc-empty">No deceased patients recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

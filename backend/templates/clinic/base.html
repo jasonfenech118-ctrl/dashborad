@@ -80,6 +80,7 @@
       <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
       <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
+      <a href="{% url 'clinic:deceased_list' %}" class="{% if vn == 'deceased_list' %}active{% endif %}">Deceased</a>
       <a class="dis" href="#" title="Coming soon">Appointments</a>
       <a href="{% url 'clinic:discharge_letter' %}" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
       <a class="dis" href="#" title="Coming soon">Reports</a>
