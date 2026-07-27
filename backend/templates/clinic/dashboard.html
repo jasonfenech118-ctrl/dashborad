@@ -308,7 +308,7 @@
               {{ user.get_username|slice:":2"|upper|default:"JA" }}
             </button>
             <div class="acct-menu" id="acct-menu" role="menu" aria-label="Account">
-              <div class="who">Signed in as {{ user.get_username }}</div>
+              <div class="who">Signed in as {{ user.get_username|default:"Guest" }}</div>
               <a href="/admin/" role="menuitem">
                 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                 Admin site</a>
@@ -492,7 +492,7 @@
 
       <footer>
         <span>© MDH Nursing Stoma Care — internal clinical workspace</span>
-        <span>Signed in as {{ user.get_username }}</span>
+        <span>Signed in as {{ user.get_username|default:"Guest" }}</span>
       </footer>
     </div>
   </div>

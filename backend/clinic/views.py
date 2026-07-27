@@ -1,6 +1,5 @@
 import datetime
 
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
@@ -16,7 +15,6 @@ def _safe_count(qs):
         return None
 
 
-@login_required
 def dashboard(request):
     today = datetime.date.today()
     P = models.Patient.objects
@@ -49,7 +47,6 @@ def dashboard(request):
     return render(request, "clinic/dashboard.html", {"stats": stats})
 
 
-@login_required
 def ward(request):
     """Ward view — three-column shell mirroring the reference UI:
 
@@ -126,7 +123,6 @@ def ward(request):
     })
 
 
-@login_required
 def discharge_letter(request):
     """Standalone Stoma discharge-letter generator.
 
@@ -136,7 +132,6 @@ def discharge_letter(request):
     return render(request, "clinic/discharge_letter.html")
 
 
-@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     patients = models.Patient.objects.all().order_by("surname", "first_name")
@@ -158,7 +153,6 @@ def patient_list(request):
     })
 
 
-@login_required
 def deceased_list(request):
     """Register of deceased patients — read-only table.
 
@@ -198,7 +192,6 @@ def deceased_list(request):
     })
 
 
-@login_required
 def patient_detail(request, patient_id):
     patient = get_object_or_404(models.Patient, pk=patient_id)
     appointments = (
