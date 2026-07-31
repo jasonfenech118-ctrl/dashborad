@@ -137,6 +137,39 @@ def discharge_letter(request):
 
 
 @login_required
+def ordering_forms(request):
+    """Ordering Forms landing page.
+
+    Lists the appliance/supply ordering forms the stoma team uses. The
+    destinations are wired up as they come online; the page renders from
+    base.html so navigation and auth stay consistent with the rest of the app.
+    """
+    forms = [
+        {
+            "title": "Stoma Appliances",
+            "desc": "Pouches, baseplates and one-piece / two-piece systems.",
+            "url": "",
+        },
+        {
+            "title": "Accessories & Supplies",
+            "desc": "Barrier rings, pastes, powders, adhesive removers and belts.",
+            "url": "",
+        },
+        {
+            "title": "Prescription Request",
+            "desc": "Request or renew a patient's appliance prescription.",
+            "url": "",
+        },
+        {
+            "title": "Ward / Stock Order",
+            "desc": "Replenish ward stock and clinic consumables.",
+            "url": "",
+        },
+    ]
+    return render(request, "clinic/ordering_forms.html", {"forms": forms})
+
+
+@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()
