@@ -170,6 +170,55 @@ def ordering_forms(request):
 
 
 @login_required
+def more_tools(request):
+    """Landing page collecting the remaining dashboard tools.
+
+    Gathers the buttons that don't yet have their own destination so none of
+    them are dead links. Items with a `url` become live cards; the rest render
+    as 'Coming soon'. Renders from base.html for consistent nav and auth.
+    """
+    tools = [
+        {
+            "title": "Add New Patient",
+            "desc": "Start a new admission.",
+            "url": "/admin/clinic/patient/add/",
+            "icon": "add-patient",
+        },
+        {
+            "title": "Surgical Rotation",
+            "desc": "Theatre schedule and surgical rotation.",
+            "url": "",
+            "icon": "clock",
+        },
+        {
+            "title": "Outpatient Clinic",
+            "desc": "Clinic lists and reviews.",
+            "url": "",
+            "icon": "clinic",
+        },
+        {
+            "title": "Appointments",
+            "desc": "Scheduling and calendar.",
+            "url": "",
+            "icon": "calendar",
+        },
+        {
+            "title": "Discharges (Post Operative)",
+            "desc": "Post-operative discharge register.",
+            "url": "",
+            "icon": "doc",
+        },
+        {
+            "title": "Temporary Paused",
+            "desc": "Temporarily paused follow-ups.",
+            "url": "",
+            "icon": "pause",
+        },
+    ]
+    return render(request, "clinic/more_tools.html", {"tools": tools})
+
+
+@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()

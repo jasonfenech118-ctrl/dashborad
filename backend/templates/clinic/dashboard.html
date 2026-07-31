@@ -236,13 +236,13 @@
         <a href="{% url 'clinic:ward' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>
           <span>Inpatient Visits</span></a>
-        <a href="#" title="Coming soon">
+        <a href="{% url 'clinic:more_tools' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.56 3.69a9 9 0 0 0-2.92 1.95"/><path d="M3.69 8.56A9 9 0 0 0 3 12"/><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92"/><path d="M8.56 20.31A9 9 0 0 0 12 21"/><path d="M15.44 20.31a9 9 0 0 0 2.92-1.95"/><path d="M20.31 15.44A9 9 0 0 0 21 12"/><path d="M20.31 8.56a9 9 0 0 0-1.95-2.92"/><path d="M15.44 3.69A9 9 0 0 0 12 3"/><circle cx="12" cy="12" r="2"/></svg>
           <span>Outpatient Clinic</span></a>
         <a href="{% url 'clinic:patient_list' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Patients</span></a>
-        <a href="#" title="Coming soon">
+        <a href="{% url 'clinic:more_tools' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
           <span>Appointments</span></a>
         <a href="{% url 'clinic:discharge_letter' %}">
@@ -361,12 +361,12 @@
           <section class="panel" id="region-actions" aria-label="Quick clinical actions">
             <div class="panel-head"><h2>Quick clinical actions</h2></div>
             <div class="actions">
-              <a class="action" href="#">
+              <a class="action" href="{% url 'clinic:more_tools' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg></span>
                 <span class="a-tx"><span class="a-t">Add New Patient</span><span class="a-s">Start a new admission</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
               </a>
-              <a class="action" href="#">
+              <a class="action" href="{% url 'clinic:more_tools' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="a-tx"><span class="a-t">Surgical Rotation</span><span class="a-s">Theatre schedule</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
@@ -461,11 +461,11 @@
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
               <span class="r-t">Inpatients</span><span class="r-n">{{ stats.inpatient }}</span></a>
-            <a class="cell" href="#">
+            <a class="cell" href="{% url 'clinic:more_tools' %}">
               <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
               <span class="r-t">Discharges (Post Operative)</span>
               <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
-            <a class="cell" href="#">
+            <a class="cell" href="{% url 'clinic:more_tools' %}">
               <span class="r-ic ic-amber"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg></span>
               <span class="r-t">Temporary Paused</span>
               <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
