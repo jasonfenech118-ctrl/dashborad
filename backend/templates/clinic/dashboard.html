@@ -153,8 +153,6 @@
 
   /* outcomes register */
   .outcomes{margin-top:20px;}
-  .outcomes .panel-head + .reg{border-top:none;}
-  .panel-head.sub{border-top:1px solid var(--border);}
   .reg{display:flex;overflow-x:auto;}
   .reg .cell{flex:1 0 auto;display:flex;align-items:center;gap:12px;padding:16px 18px;
     border-left:1px solid var(--border);min-height:44px;}
@@ -173,8 +171,10 @@
   /* section visibility driven by active tab */
   .main[data-view="clinical"] #region-workloads,
   .main[data-view="clinical"] #region-outcomes,
+  .main[data-view="clinical"] #region-registers,
   .main[data-view="workloads"] #region-actions,
   .main[data-view="workloads"] #region-outcomes,
+  .main[data-view="workloads"] #region-registers,
   .main[data-view="outcomes"] #region-actions,
   .main[data-view="outcomes"] #region-workloads{display:none;}
   .main[data-view="workloads"] .cols,
@@ -452,8 +452,11 @@
               <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg></span>
               <span class="r-t">Deceased</span><span class="r-n">{{ stats.deceased }}</span></a>
           </div>
+        </section>
 
-          <div class="panel-head sub"><h2>Registers</h2><span class="meta">3 registers</span></div>
+        <!-- REGISTERS -->
+        <section class="panel outcomes" id="region-registers" aria-label="Registers">
+          <div class="panel-head"><h2>Registers</h2><span class="meta">3 registers</span></div>
           <div class="reg">
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
