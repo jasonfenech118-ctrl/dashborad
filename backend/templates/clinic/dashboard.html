@@ -434,8 +434,11 @@
 
         <!-- PATIENT OUTCOMES -->
         <section class="panel outcomes" id="region-outcomes" aria-label="Patient outcomes">
-          <div class="panel-head"><h2>Patient outcomes</h2><span class="meta">4 outcomes</span></div>
+          <div class="panel-head"><h2>Patient outcomes</h2><span class="meta">5 outcomes</span></div>
           <div class="reg">
+            <a class="cell" href="{% url 'clinic:patient_list' %}?status=active">
+              <span class="r-ic ic-green"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
+              <span class="r-t">Active Patients</span><span class="r-n">{{ stats.active }}</span></a>
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=relocated_gozo">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg></span>
               <span class="r-t">Discharged to Gozo</span><span class="r-n">{{ stats.gozo }}</span></a>
@@ -450,11 +453,8 @@
               <span class="r-t">Deceased</span><span class="r-n">{{ stats.deceased }}</span></a>
           </div>
 
-          <div class="panel-head sub"><h2>Registers</h2><span class="meta">5 registers</span></div>
+          <div class="panel-head sub"><h2>Registers</h2><span class="meta">4 registers</span></div>
           <div class="reg">
-            <a class="cell" href="{% url 'clinic:patient_list' %}?status=active">
-              <span class="r-ic ic-green"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
-              <span class="r-t">Active Patients</span><span class="r-n">{{ stats.active }}</span></a>
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
               <span class="r-t">Inpatients</span><span class="r-n">{{ stats.inpatient }}</span></a>
