@@ -153,14 +153,13 @@
 
   /* outcomes register */
   .outcomes{margin-top:20px;}
-  .reg{display:grid;grid-template-columns:repeat(5,1fr);}
-  .reg .cell{display:flex;align-items:center;gap:12px;padding:16px 18px;
-    border-top:1px solid var(--border);border-left:1px solid var(--border);min-height:44px;}
-  .reg .cell:nth-child(-n+5){border-top:none;}
-  .reg .cell:nth-child(5n+1){border-left:none;}
+  .reg{display:flex;overflow-x:auto;}
+  .reg .cell{flex:1 0 auto;display:flex;align-items:center;gap:12px;padding:16px 18px;
+    border-left:1px solid var(--border);min-height:44px;}
+  .reg .cell:first-child{border-left:none;}
   .reg .cell:hover{background:var(--canvas);}
   .reg .r-ic{display:grid;place-items:center;color:var(--navy-900);}
-  .reg .r-t{flex:1;font-size:13.5px;font-weight:500;color:var(--navy-900);}
+  .reg .r-t{flex:1;font-size:13.5px;font-weight:500;color:var(--navy-900);white-space:nowrap;}
   .reg .r-n{font-weight:800;font-size:15px;color:var(--navy-900);}
   .reg .chev{color:#94a3b8;}
   .reg .cell:hover .chev{color:var(--blue-600);}
@@ -191,11 +190,6 @@
     .actions{grid-template-columns:1fr;}
     .actions .action{border-left:none;border-top:1px solid var(--border);}
     .actions .action:first-child{border-top:none;}
-    .reg{grid-template-columns:repeat(3,1fr);}
-    .reg .cell:nth-child(-n+5){border-top:1px solid var(--border);}
-    .reg .cell:nth-child(-n+3){border-top:none;}
-    .reg .cell:nth-child(5n+1){border-left:1px solid var(--border);}
-    .reg .cell:nth-child(3n+1){border-left:none;}
   }
   @media(max-width:900px){
     .cols{grid-template-columns:1fr;}
@@ -210,11 +204,6 @@
     .menu-toggle{display:inline-flex;}
     .crumb{display:none;}
     .top-search{margin:0;}
-    .reg{grid-template-columns:repeat(2,1fr);}
-    .reg .cell:nth-child(-n+3){border-top:1px solid var(--border);}
-    .reg .cell:nth-child(-n+2){border-top:none;}
-    .reg .cell:nth-child(3n+1){border-left:1px solid var(--border);}
-    .reg .cell:nth-child(2n+1){border-left:none;}
     .stats{flex-wrap:wrap;}
     .stat{flex:1 1 50%;border-top:1px solid var(--border);}
     .stat:nth-child(-n+2){border-top:none;}
@@ -222,9 +211,6 @@
   }
   @media(max-width:560px){
     .page{padding:20px 16px 30px;}
-    .reg{grid-template-columns:1fr;}
-    .reg .cell{border-left:none !important;border-top:1px solid var(--border) !important;}
-    .reg .cell:first-child{border-top:none !important;}
     .tbtn span.lbl{display:none;}
   }
 </style>
