@@ -153,6 +153,8 @@
 
   /* outcomes register */
   .outcomes{margin-top:20px;}
+  .outcomes .panel-head + .reg{border-top:none;}
+  .panel-head.sub{border-top:1px solid var(--border);}
   .reg{display:flex;overflow-x:auto;}
   .reg .cell{flex:1 0 auto;display:flex;align-items:center;gap:12px;padding:16px 18px;
     border-left:1px solid var(--border);min-height:44px;}
@@ -432,18 +434,8 @@
 
         <!-- PATIENT OUTCOMES -->
         <section class="panel outcomes" id="region-outcomes" aria-label="Patient outcomes">
-          <div class="panel-head"><h2>Patient outcomes</h2><span class="meta">11 registers</span></div>
+          <div class="panel-head"><h2>Patient outcomes</h2><span class="meta">4 outcomes</span></div>
           <div class="reg">
-            <!-- Data-backed registers, aligned as one group -->
-            <a class="cell" href="{% url 'clinic:patient_list' %}?status=active">
-              <span class="r-ic ic-green"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
-              <span class="r-t">Active Patients</span><span class="r-n">{{ stats.active }}</span></a>
-            <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
-              <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
-              <span class="r-t">Inpatients</span><span class="r-n">{{ stats.inpatient }}</span></a>
-            <a class="cell" href="{% url 'clinic:patient_list' %}?status=deceased">
-              <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg></span>
-              <span class="r-t">Deceased</span><span class="r-n">{{ stats.deceased }}</span></a>
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=relocated_gozo">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg></span>
               <span class="r-t">Discharged to Gozo</span><span class="r-n">{{ stats.gozo }}</span></a>
@@ -453,7 +445,19 @@
             <a class="cell" href="{% url 'clinic:patient_list' %}?status=relocated_overseas">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
               <span class="r-t">Relocated Overseas</span><span class="r-n">{{ stats.overseas }}</span></a>
-            <!-- Placeholder registers -->
+            <a class="cell" href="{% url 'clinic:patient_list' %}?status=deceased">
+              <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg></span>
+              <span class="r-t">Deceased</span><span class="r-n">{{ stats.deceased }}</span></a>
+          </div>
+
+          <div class="panel-head sub"><h2>Registers</h2><span class="meta">5 registers</span></div>
+          <div class="reg">
+            <a class="cell" href="{% url 'clinic:patient_list' %}?status=active">
+              <span class="r-ic ic-green"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
+              <span class="r-t">Active Patients</span><span class="r-n">{{ stats.active }}</span></a>
+            <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
+              <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
+              <span class="r-t">Inpatients</span><span class="r-n">{{ stats.inpatient }}</span></a>
             <a class="cell" href="#">
               <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span>
               <span class="r-t">Ileo-Anal Pouch</span>
@@ -465,14 +469,6 @@
             <a class="cell" href="#">
               <span class="r-ic ic-amber"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg></span>
               <span class="r-t">Temporary Paused</span>
-              <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
-            <a class="cell" href="#">
-              <span class="r-ic ic-red"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
-              <span class="r-t">DNTU</span>
-              <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
-            <a class="cell" href="#">
-              <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></span>
-              <span class="r-t">Deceased (Archived 2025)</span>
               <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
           </div>
         </section>
