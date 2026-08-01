@@ -98,6 +98,9 @@
   .page{padding:26px 30px 40px;max-width:1360px;width:100%;}
   .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;flex-wrap:wrap;}
   .page-head h1{font-size:27px;font-weight:800;color:var(--navy-900);letter-spacing:-.3px;}
+  /* touch of red — accent underline under the page title */
+  .page-head h1::after{content:"";display:block;width:54px;height:4px;border-radius:2px;
+    background:var(--danger);margin-top:10px;}
   .page-head p{margin-top:8px;color:var(--text-secondary);font-size:14px;max-width:560px;}
 
   /* care pathway */
@@ -105,6 +108,8 @@
   .pw-node{display:flex;flex-direction:column;align-items:center;width:78px;text-align:center;}
   .pw-dot{width:52px;height:52px;border-radius:50%;border:1.75px solid var(--teal-600);color:var(--teal-600);
     background:var(--surface);display:grid;place-items:center;}
+  /* touch of red — the discharge (endpoint) node */
+  .pw-dot.end{border-color:var(--danger);color:var(--danger);}
   .pw-node span{margin-top:8px;font-size:12px;font-weight:600;color:var(--navy-900);}
   .pw-line{flex:none;width:34px;height:52px;display:flex;align-items:center;}
   .pw-line::before{content:"";flex:1;border-top:1.75px dashed var(--border);}
@@ -343,7 +348,7 @@
             </div>
             <div class="pw-line" aria-hidden="true"></div>
             <div class="pw-node">
-              <span class="pw-dot"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg></span>
+              <span class="pw-dot end"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg></span>
               <span>Discharge</span>
             </div>
           </div>
