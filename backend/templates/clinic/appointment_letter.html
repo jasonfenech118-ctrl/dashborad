@@ -1,0 +1,113 @@
+{% extends "clinic/base.html" %}
+{% block title %}Appointment Letter — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .al{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start;}
+  @media(max-width:960px){.al{grid-template-columns:1fr;}}
+
+  .al-form{background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:12px;padding:18px;}
+  .al-form h2{margin:0 0 12px;font-size:15px;color:var(--navy);}
+  .al-form .f{margin-bottom:11px;}
+  .al-form label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;}
+  .al-form input,.al-form textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;
+    padding:8px 11px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;box-sizing:border-box;}
+  .al-form input:focus,.al-form textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+  .al-form .print{width:100%;margin-top:6px;}
+
+  .al-letter{background:#fff;border:1px solid var(--border);border-radius:12px;padding:34px 40px;font-size:13.5px;line-height:1.65;}
+  .al-brand{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    border-bottom:3px solid var(--navy);padding-bottom:12px;margin-bottom:20px;}
+  .al-brand .b1{font-size:19px;font-weight:800;color:var(--navy);}
+  .al-brand .b2{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;}
+  .al-letter .addr{white-space:pre-wrap;margin-bottom:18px;}
+  .al-box{border:1.5px solid var(--navy);border-radius:10px;padding:14px 18px;margin:18px 0;background:var(--teal-50);}
+  .al-box .row{display:flex;gap:10px;margin:3px 0;}
+  .al-box .k{width:90px;flex:none;font-weight:700;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.3px;padding-top:1px;}
+  .al-box .v{font-weight:800;color:var(--navy);}
+  .al-letter ul{margin:8px 0 0 20px;padding:0;}
+  .al-letter .sig{margin-top:40px;font-weight:700;}
+  .al-letter .sig .role{font-weight:600;color:var(--muted);font-size:12.5px;}
+
+  @media print{
+    body::before{display:none;}
+    .topbar,.al-form,.no-print{display:none !important;}
+    .wrap{padding:0;max-width:none;}
+    .al{display:block;}
+    .al-letter{border:none;border-radius:0;padding:0;}
+    .al-box{background:none;}
+  }
+</style>
+
+<h1>Appointment Letter</h1>
+
+<div class="al">
+  <div class="al-form">
+    <h2>Appointment details</h2>
+    <div class="f"><label>Patient name</label><input id="f-name" type="text" placeholder="Maria Vella"/></div>
+    <div class="f"><label>Address (optional)</label><textarea id="f-addr" rows="3" placeholder="21, Triq il-Kbira&#10;Mosta"></textarea></div>
+    <div class="f"><label>Appointment date</label><input id="f-date" type="date"/></div>
+    <div class="f"><label>Time</label><input id="f-time" type="text" placeholder="10:30"/></div>
+    <div class="f"><label>Location</label><input id="f-loc" type="text" value="Stoma Care Clinic, Outpatients Department, Mater Dei Hospital"/></div>
+    <div class="f"><label>With (nurse / clinic)</label><input id="f-with" type="text" value="Stoma Care Nursing Team"/></div>
+    <div class="f"><label>Contact phone</label><input id="f-phone" type="text" placeholder="2545 0000"/></div>
+    <button class="btn print" type="button" onclick="window.print()">🖨 Print letter</button>
+  </div>
+
+  <div class="al-letter">
+    <div class="al-brand">
+      <span class="b1">MDH Stoma Care</span>
+      <span class="b2">Nursing Stoma Care Service<br>Mater Dei Hospital, Msida, Malta</span>
+    </div>
+    <div>{% now "j F Y" %}</div>
+    <div class="addr" style="margin-top:14px;"><strong id="p-name">____________________</strong><span id="p-addr"></span></div>
+    <p>Dear <span id="p-name2">Patient</span>,</p>
+    <p>An appointment has been arranged for you at the <strong>Stoma Care Clinic</strong> as detailed below:</p>
+    <div class="al-box">
+      <div class="row"><span class="k">Date</span><span class="v" id="p-date">____________________</span></div>
+      <div class="row"><span class="k">Time</span><span class="v" id="p-time">________</span></div>
+      <div class="row"><span class="k">Location</span><span class="v" id="p-loc"></span></div>
+      <div class="row"><span class="k">With</span><span class="v" id="p-with"></span></div>
+    </div>
+    <p>Please bring with you:</p>
+    <ul>
+      <li>Your identity card and appointment card</li>
+      <li>Your current stoma appliances and any accessories you use</li>
+      <li>An updated list of your medications</li>
+    </ul>
+    <p style="margin-top:14px;">If you are unable to attend, kindly telephone us
+      <span id="p-phone-wrap"> on <strong id="p-phone"></strong></span> as early as possible so the
+      appointment can be offered to another patient.</p>
+    <div class="sig">Stoma Care Nursing Service<br>
+      <span class="role">Mater Dei Hospital</span></div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    function el(id){ return document.getElementById(id); }
+    function up(){
+      var name = el('f-name').value;
+      el('p-name').textContent = name || '____________________';
+      el('p-name2').textContent = name || 'Patient';
+      el('p-addr').textContent = el('f-addr').value ? '\n' + el('f-addr').value : '';
+      var d = el('f-date').value;
+      if(d){
+        var dt = new Date(d + 'T00:00:00');
+        el('p-date').textContent = dt.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      } else {
+        el('p-date').textContent = '____________________';
+      }
+      el('p-time').textContent = el('f-time').value || '________';
+      el('p-loc').textContent = el('f-loc').value;
+      el('p-with').textContent = el('f-with').value;
+      var ph = el('f-phone').value;
+      el('p-phone').textContent = ph;
+      el('p-phone-wrap').style.display = ph ? '' : 'none';
+    }
+    ['f-name','f-addr','f-date','f-time','f-loc','f-with','f-phone'].forEach(function(id){
+      el(id).addEventListener('input', up);
+    });
+    up();
+  })();
+</script>
+{% endblock %}

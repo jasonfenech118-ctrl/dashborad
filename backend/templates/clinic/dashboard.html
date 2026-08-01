@@ -242,14 +242,14 @@
       <nav class="side-nav" aria-label="Sections">
         <a href="{% url 'clinic:dashboard' %}" class="active" aria-current="page">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-          <span>Overview</span></a>
+          <span>Dashboard</span></a>
         <a href="{% url 'clinic:ward' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>
           <span>Inpatient Visits</span></a>
         <a href="{% url 'clinic:patient_list' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Patients</span></a>
-        <a href="{% url 'clinic:more_tools' %}">
+        <a href="{% url 'clinic:appointments' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
           <span>Appointments</span></a>
         <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer">
@@ -344,7 +344,7 @@
           <div class="stat"><div class="n">{{ stats.active }}</div><div class="l">Active Patients</div></div>
           <div class="stat"><div class="n">{{ stats.inpatient }}</div><div class="l">Inpatients</div></div>
           <a class="stat stat-link" href="{% url 'clinic:todays_clinic' %}"><div class="n">{{ stats.reviews_today }}</div><div class="l">Today's Reviews</div></a>
-          <div class="stat"><div class="n">{{ stats.followups_due }}</div><div class="l">Follow-ups Due</div></div>
+          <a class="stat stat-link" href="{% url 'clinic:reminders' %}"><div class="n">{{ stats.followups_due }}</div><div class="l">Follow-ups Due</div></a>
         </section>
 
         <!-- contextual tabs -->
@@ -371,7 +371,7 @@
                 <span class="a-tx"><span class="a-t">Today's Clinic</span><span class="a-s">Appointment list &amp; outcomes</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
               </a>
-              <a class="action" href="{% url 'clinic:more_tools' %}">
+              <a class="action" href="{% url 'clinic:surgical_rotation' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="a-tx"><span class="a-t">Surgical Rotation</span><span class="a-s">Theatre schedule</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>

@@ -1,0 +1,105 @@
+{% extends "clinic/base.html" %}
+{% block title %}GP / Referral Letter — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .gl{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start;}
+  @media(max-width:960px){.gl{grid-template-columns:1fr;}}
+
+  .gl-form{background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:12px;padding:18px;}
+  .gl-form h2{margin:0 0 12px;font-size:15px;color:var(--navy);}
+  .gl-form .f{margin-bottom:11px;}
+  .gl-form label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;}
+  .gl-form input,.gl-form textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;
+    padding:8px 11px;font-size:13px;font-family:inherit;color:var(--ink);outline:none;box-sizing:border-box;}
+  .gl-form input:focus,.gl-form textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+  .gl-form textarea{min-height:150px;resize:vertical;}
+  .gl-form .print{width:100%;margin-top:6px;}
+
+  .gl-letter{background:#fff;border:1px solid var(--border);border-radius:12px;padding:34px 40px;font-size:13.5px;line-height:1.65;}
+  .gl-brand{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    border-bottom:3px solid var(--navy);padding-bottom:12px;margin-bottom:20px;}
+  .gl-brand .b1{font-size:19px;font-weight:800;color:var(--navy);}
+  .gl-brand .b2{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;}
+  .gl-letter .date{margin-bottom:18px;}
+  .gl-letter .re{font-weight:800;color:var(--navy);margin:16px 0;}
+  .gl-letter .body{white-space:pre-wrap;}
+  .gl-letter .close{margin-top:26px;}
+  .gl-letter .sig{margin-top:44px;font-weight:700;}
+  .gl-letter .sig .role{font-weight:600;color:var(--muted);font-size:12.5px;}
+
+  @media print{
+    body::before{display:none;}
+    .topbar,.gl-form,.no-print{display:none !important;}
+    .wrap{padding:0;max-width:none;}
+    .gl{display:block;}
+    .gl-letter{border:none;border-radius:0;padding:0;}
+  }
+</style>
+
+<h1>GP / Referral Letter</h1>
+
+<div class="gl">
+  <div class="gl-form">
+    <h2>Letter details</h2>
+    <div class="f"><label>Addressed to (Dr / clinic)</label><input id="f-gp" type="text" placeholder="Dr Borg"/></div>
+    <div class="f"><label>Practice / Health Centre</label><input id="f-practice" type="text" placeholder="Mosta Health Centre"/></div>
+    <div class="f"><label>Patient name</label><input id="f-patient" type="text" placeholder="Maria Vella"/></div>
+    <div class="f"><label>Patient ID card</label><input id="f-id" type="text" placeholder="0123456M"/></div>
+    <div class="f"><label>Patient DOB</label><input id="f-dob" type="text" placeholder="12/03/1958"/></div>
+    <div class="f"><label>Subject</label><input id="f-subject" type="text" placeholder="Stoma care update"/></div>
+    <div class="f"><label>Letter body</label>
+      <textarea id="f-body">The above patient is known to the Stoma Care Nursing Service at Mater Dei Hospital.
+
+[Clinical summary / reason for writing]
+
+We would be grateful for your continued support in this patient's community care. Please do not hesitate to contact the Stoma Care team should you require any further information.</textarea>
+    </div>
+    <div class="f"><label>Signed by</label><input id="f-signed" type="text" value="{{ user.get_full_name|default:user.username }}"/></div>
+    <button class="btn print" type="button" onclick="window.print()">🖨 Print letter</button>
+  </div>
+
+  <div class="gl-letter">
+    <div class="gl-brand">
+      <span class="b1">MDH Stoma Care</span>
+      <span class="b2">Nursing Stoma Care Service<br>Mater Dei Hospital, Msida, Malta</span>
+    </div>
+    <div class="date">{% now "j F Y" %}</div>
+    <div><span id="p-gp">Dr ____________________</span><br><span id="p-practice" class="muted"></span></div>
+    <p style="margin-top:18px;">Dear <span id="p-gp2">Doctor</span>,</p>
+    <div class="re">Re: <span id="p-patient">____________________</span>
+      <span id="p-meta" class="muted" style="font-weight:600;"></span><br>
+      <span id="p-subject" style="font-weight:700;"></span></div>
+    <div class="body" id="p-body"></div>
+    <div class="close">Yours sincerely,</div>
+    <div class="sig"><span id="p-signed">____________________</span><br>
+      <span class="role">Stoma Care Nursing Service — Mater Dei Hospital</span></div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    function bind(src, dst, fmt){
+      var i = document.getElementById(src), o = document.getElementById(dst);
+      function up(){ o.textContent = fmt ? fmt(i.value) : i.value; }
+      i.addEventListener('input', up); up();
+    }
+    bind('f-gp','p-gp', function(v){ return v || 'Dr ____________________'; });
+    bind('f-gp','p-gp2', function(v){ return v || 'Doctor'; });
+    bind('f-practice','p-practice');
+    bind('f-patient','p-patient', function(v){ return v || '____________________'; });
+    bind('f-body','p-body');
+    bind('f-subject','p-subject');
+    bind('f-signed','p-signed', function(v){ return v || '____________________'; });
+    function meta(){
+      var id = document.getElementById('f-id').value, dob = document.getElementById('f-dob').value;
+      var parts = [];
+      if(id) parts.push('ID: ' + id);
+      if(dob) parts.push('DOB: ' + dob);
+      document.getElementById('p-meta').textContent = parts.length ? ' (' + parts.join(', ') + ')' : '';
+    }
+    document.getElementById('f-id').addEventListener('input', meta);
+    document.getElementById('f-dob').addEventListener('input', meta);
+    meta();
+  })();
+</script>
+{% endblock %}
