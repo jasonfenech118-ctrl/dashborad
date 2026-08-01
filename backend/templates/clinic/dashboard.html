@@ -184,8 +184,11 @@
   .ic-red{color:var(--danger);}
   .ic-teal{color:var(--teal-600);}
 
-  /* section visibility driven by active tab */
+  /* section visibility driven by active tab. Each tab shows a single region;
+     Overview shows only Clinical Actions (+ the stats strip). */
   .main[data-view="overview"] #region-workloads,
+  .main[data-view="overview"] #region-outcomes,
+  .main[data-view="overview"] #region-registers,
   .main[data-view="clinical"] #region-workloads,
   .main[data-view="clinical"] #region-outcomes,
   .main[data-view="clinical"] #region-registers,
@@ -193,12 +196,16 @@
   .main[data-view="workloads"] #region-outcomes,
   .main[data-view="workloads"] #region-registers,
   .main[data-view="outcomes"] #region-actions,
-  .main[data-view="outcomes"] #region-workloads{display:none;}
-  /* Nurse workloads is hidden on the Overview home screen (still available via
-     its tab), so Quick clinical actions spans the full width there. */
+  .main[data-view="outcomes"] #region-workloads,
+  .main[data-view="outcomes"] #region-registers,
+  .main[data-view="registers"] #region-actions,
+  .main[data-view="registers"] #region-workloads,
+  .main[data-view="registers"] #region-outcomes{display:none;}
   .main[data-view="overview"] .cols,
+  .main[data-view="clinical"] .cols,
   .main[data-view="workloads"] .cols,
-  .main[data-view="outcomes"] .cols{grid-template-columns:1fr;}
+  .main[data-view="outcomes"] .cols,
+  .main[data-view="registers"] .cols{grid-template-columns:1fr;}
 
   footer{border-top:1px solid var(--border);padding:16px 30px;margin-top:14px;
     color:var(--text-secondary);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
@@ -360,12 +367,13 @@
           <button role="tab" id="tab-clinical"  aria-selected="false" aria-controls="main" data-view="clinical"  tabindex="-1">Clinical Workspace</button>
           <button role="tab" id="tab-workloads" aria-selected="false" aria-controls="main" data-view="workloads" tabindex="-1">Nurse Workloads</button>
           <button role="tab" id="tab-outcomes"  aria-selected="false" aria-controls="main" data-view="outcomes"  tabindex="-1">Patient Outcomes</button>
+          <button role="tab" id="tab-registers" aria-selected="false" aria-controls="main" data-view="registers" tabindex="-1">Registers</button>
         </div>
 
         <div class="cols">
           <!-- QUICK CLINICAL ACTIONS -->
-          <section class="panel" id="region-actions" aria-label="Quick clinical actions">
-            <div class="panel-head"><h2>Quick clinical actions</h2></div>
+          <section class="panel" id="region-actions" aria-label="Clinical Actions">
+            <div class="panel-head"><h2>Clinical Actions</h2></div>
             <div class="actions">
               <a class="action" href="{% url 'clinic:add_patient' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg></span>
