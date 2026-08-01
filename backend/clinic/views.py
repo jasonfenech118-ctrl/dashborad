@@ -248,6 +248,41 @@ def todays_clinic(request):
 
 
 @login_required
+def patient_outcomes(request):
+    today = datetime.date.today()
+    P = models.Patient.objects
+
+    counts = {
+        "active": _safe_count(P.filter(followup_status="active")),
+        "gozo": _safe_count(P.filter(followup_status="relocated_gozo")),
+        "reversed": _safe_count(P.filter(followup_status="reversed")),
+        "overseas": _safe_count(P.filter(followup_status="relocated_overseas")),
+        "deceased": _safe_count(P.filter(followup_status="deceased")),
+    }
+
+    def fmt(v):
+        return "—" if v is None else v
+
+    stats = {k: fmt(v) for k, v in counts.items()}
+    return render(request, "clinic/patient_outcomes.html", {"stats": stats})
+
+
+@login_required
+def registers(request):
+    P = models.Patient.objects
+
+    counts = {
+        "inpatient": _safe_count(P.filter(followup_status="inpatient")),
+    }
+
+    def fmt(v):
+        return "—" if v is None else v
+
+    stats = {k: fmt(v) for k, v in counts.items()}
+    return render(request, "clinic/registers.html", {"stats": stats})
+
+
+@login_required
 def discharge_letter(request):
     """Standalone Stoma discharge-letter generator.
 

@@ -352,8 +352,8 @@
           <button role="tab" id="tab-overview"  aria-selected="true"  aria-controls="main" data-view="overview"  tabindex="0">Dashboard</button>
           <button role="tab" id="tab-clinical"  aria-selected="false" aria-controls="main" data-view="clinical"  tabindex="-1">Clinical Workspace</button>
           <button role="tab" id="tab-workloads" aria-selected="false" aria-controls="main" data-view="workloads" tabindex="-1">Nurse Workloads</button>
-          <a class="tab-link" href="{% url 'clinic:patient_list' %}?view=outcomes">Patient Outcomes</a>
-          <a class="tab-link" href="{% url 'clinic:patient_list' %}?view=registers">Registers</a>
+          <a class="tab-link" href="{% url 'clinic:patient_outcomes' %}">Patient Outcomes</a>
+          <a class="tab-link" href="{% url 'clinic:registers' %}">Registers</a>
         </div>
 
         <div class="cols">

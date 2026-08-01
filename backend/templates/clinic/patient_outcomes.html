@@ -1,0 +1,88 @@
+{% extends "clinic/base.html" %}
+{% block title %}Patient Outcomes — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .po-head p{margin:6px 0 0;color:var(--muted);font-size:13.5px;max-width:560px;}
+  .po-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:22px;}
+  .po-card{
+    background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:12px;padding:20px 18px;
+    display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+    transition:border-color .12s ease,box-shadow .12s ease;min-height:72px;
+  }
+  .po-card:hover{border-color:var(--teal);box-shadow:0 4px 14px rgba(29,78,216,.12);}
+  .po-ic{width:42px;height:42px;border-radius:10px;flex:none;display:grid;place-items:center;}
+  .po-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+  .po-ic.green{background:#ecfdf5;color:#059669;}
+  .po-ic.teal{background:var(--teal-50);color:var(--teal);}
+  .po-ic.amber{background:#fffbeb;color:#d97706;}
+  .po-ic.muted{background:#f1f5f9;color:var(--navy);}
+  .po-tx{flex:1;min-width:0;}
+  .po-t{font-weight:700;font-size:14px;color:var(--navy);}
+  .po-n{font-weight:800;font-size:22px;color:var(--navy);margin-top:2px;}
+  .po-chev{color:#94a3b8;flex:none;}
+  .po-card:hover .po-chev{color:var(--teal);}
+</style>
+
+<div class="po-head">
+  <h1 style="margin-bottom:0;">Patient Outcomes</h1>
+  <p>View patients grouped by their current clinical outcome status.</p>
+</div>
+
+<div class="po-grid">
+  <a class="po-card" href="{% url 'clinic:patient_list' %}?status=active">
+    <span class="po-ic green">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    </span>
+    <span class="po-tx">
+      <span class="po-t">Active Patients</span>
+      <span class="po-n">{{ stats.active }}</span>
+    </span>
+    <span class="po-chev"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+  </a>
+
+  <a class="po-card" href="{% url 'clinic:patient_list' %}?status=relocated_gozo">
+    <span class="po-ic teal">
+      <svg viewBox="0 0 24 24"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg>
+    </span>
+    <span class="po-tx">
+      <span class="po-t">Discharged to Gozo</span>
+      <span class="po-n">{{ stats.gozo }}</span>
+    </span>
+    <span class="po-chev"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+  </a>
+
+  <a class="po-card" href="{% url 'clinic:patient_list' %}?status=reversed">
+    <span class="po-ic amber">
+      <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+    </span>
+    <span class="po-tx">
+      <span class="po-t">Reversed</span>
+      <span class="po-n">{{ stats.reversed }}</span>
+    </span>
+    <span class="po-chev"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+  </a>
+
+  <a class="po-card" href="{% url 'clinic:patient_list' %}?status=relocated_overseas">
+    <span class="po-ic teal">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </span>
+    <span class="po-tx">
+      <span class="po-t">Relocated Overseas</span>
+      <span class="po-n">{{ stats.overseas }}</span>
+    </span>
+    <span class="po-chev"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+  </a>
+
+  <a class="po-card" href="{% url 'clinic:patient_list' %}?status=deceased">
+    <span class="po-ic muted">
+      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg>
+    </span>
+    <span class="po-tx">
+      <span class="po-t">Deceased</span>
+      <span class="po-n">{{ stats.deceased }}</span>
+    </span>
+    <span class="po-chev"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+  </a>
+</div>
+{% endblock %}
