@@ -1,0 +1,118 @@
+{% extends "clinic/base.html" %}
+{% block title %}Add Patient — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .pf{max-width:960px;margin:0 auto;}
+  .pf-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .pf-head h1{margin:0;}
+  .pf-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px;}
+  .pf-sec{
+    background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;
+  }
+  .pf-sec > h2{margin:0 0 14px;font-size:14px;font-weight:800;color:var(--teal);
+    text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);padding-bottom:9px;}
+  .pf-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;}
+  .pf-field{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .pf-field.full{grid-column:1 / -1;}
+  .pf-field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+  .pf-field label .req{color:var(--red,#dc2626);margin-left:2px;}
+  .f-input{
+    width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;
+    font-size:14px;color:var(--ink);background:#fff;font-family:inherit;
+  }
+  .f-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
+  textarea.f-input{resize:vertical;min-height:56px;}
+  .pf-err{color:#dc2626;font-size:12px;}
+  .pf-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:4px;}
+  .pf-cancel{color:var(--muted);text-decoration:none;font-size:13.5px;padding:9px 14px;}
+  .pf-cancel:hover{color:var(--teal);}
+  .form-banner{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px;}
+  @media(max-width:640px){ .pf-grid{grid-template-columns:1fr;} }
+</style>
+
+<div class="pf">
+  <div class="pf-head">
+    <div>
+      <h1>Add New Patient</h1>
+      <p>Create a new patient record. First name and surname are required; everything else is optional.</p>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'clinic:add_patient' %}" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-banner">{{ form.non_field_errors }}</div>{% endif %}
+
+    <section class="pf-sec">
+      <h2>Patient demographics</h2>
+      <div class="pf-grid">
+        <div class="pf-field"><label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}<span class="req">*</span></label>{{ form.first_name }}{% if form.first_name.errors %}<span class="pf-err">{{ form.first_name.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field"><label for="{{ form.surname.id_for_label }}">{{ form.surname.label }}<span class="req">*</span></label>{{ form.surname }}{% if form.surname.errors %}<span class="pf-err">{{ form.surname.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field"><label for="{{ form.id_card.id_for_label }}">{{ form.id_card.label }}</label>{{ form.id_card }}{% if form.id_card.errors %}<span class="pf-err">{{ form.id_card.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field"><label for="{{ form.dob.id_for_label }}">{{ form.dob.label }}</label>{{ form.dob }}{% if form.dob.errors %}<span class="pf-err">{{ form.dob.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field"><label for="{{ form.sex.id_for_label }}">{{ form.sex.label }}</label>{{ form.sex }}{% if form.sex.errors %}<span class="pf-err">{{ form.sex.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field"><label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>{{ form.phone_number }}{% if form.phone_number.errors %}<span class="pf-err">{{ form.phone_number.errors|striptags }}</span>{% endif %}</div>
+        <div class="pf-field full"><label for="{{ form.locality.id_for_label }}">{{ form.locality.label }}</label>{{ form.locality }}{% if form.locality.errors %}<span class="pf-err">{{ form.locality.errors|striptags }}</span>{% endif %}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Surgery &amp; admission</h2>
+      <div class="pf-grid">
+        <div class="pf-field"><label for="{{ form.surgery_date.id_for_label }}">{{ form.surgery_date.label }}</label>{{ form.surgery_date }}</div>
+        <div class="pf-field"><label for="{{ form.planned_surgery_date.id_for_label }}">{{ form.planned_surgery_date.label }}</label>{{ form.planned_surgery_date }}</div>
+        <div class="pf-field"><label for="{{ form.surgery_type.id_for_label }}">{{ form.surgery_type.label }}</label>{{ form.surgery_type }}</div>
+        <div class="pf-field"><label for="{{ form.consultant.id_for_label }}">{{ form.consultant.label }}</label>{{ form.consultant }}</div>
+        <div class="pf-field"><label for="{{ form.admission_route.id_for_label }}">{{ form.admission_route.label }}</label>{{ form.admission_route }}</div>
+        <div class="pf-field"><label for="{{ form.inpatient_type.id_for_label }}">{{ form.inpatient_type.label }}</label>{{ form.inpatient_type }}</div>
+        <div class="pf-field full"><label for="{{ form.operation_performed.id_for_label }}">{{ form.operation_performed.label }}</label>{{ form.operation_performed }}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Clinical findings</h2>
+      <div class="pf-grid">
+        <div class="pf-field full"><label for="{{ form.findings.id_for_label }}">{{ form.findings.label }}</label>{{ form.findings }}</div>
+        <div class="pf-field full"><label for="{{ form.stoma_type_summary.id_for_label }}">{{ form.stoma_type_summary.label }}</label>{{ form.stoma_type_summary }}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Medical history</h2>
+      <div class="pf-grid">
+        <div class="pf-field full"><label for="{{ form.past_medical_history.id_for_label }}">{{ form.past_medical_history.label }}</label>{{ form.past_medical_history }}</div>
+        <div class="pf-field full"><label for="{{ form.past_surgical_history.id_for_label }}">{{ form.past_surgical_history.label }}</label>{{ form.past_surgical_history }}</div>
+        <div class="pf-field full"><label for="{{ form.drug_history.id_for_label }}">{{ form.drug_history.label }}</label>{{ form.drug_history }}</div>
+        <div class="pf-field full"><label for="{{ form.medication_additional_notes.id_for_label }}">{{ form.medication_additional_notes.label }}</label>{{ form.medication_additional_notes }}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Social history</h2>
+      <div class="pf-grid">
+        <div class="pf-field full"><label for="{{ form.social_history.id_for_label }}">{{ form.social_history.label }}</label>{{ form.social_history }}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Data protection</h2>
+      <div class="pf-grid">
+        <div class="pf-field"><label for="{{ form.dpa_status.id_for_label }}">{{ form.dpa_status.label }}</label>{{ form.dpa_status }}</div>
+      </div>
+    </section>
+
+    <section class="pf-sec">
+      <h2>Follow-up</h2>
+      <div class="pf-grid">
+        <div class="pf-field"><label for="{{ form.followup_owner.id_for_label }}">{{ form.followup_owner.label }}</label>{{ form.followup_owner }}</div>
+        <div class="pf-field"><label for="{{ form.followup_status.id_for_label }}">{{ form.followup_status.label }}</label>{{ form.followup_status }}</div>
+      </div>
+    </section>
+
+    <div class="pf-actions">
+      <a class="pf-cancel" href="{% url 'clinic:patient_list' %}">Cancel</a>
+      <button class="btn" type="submit">Save patient</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
