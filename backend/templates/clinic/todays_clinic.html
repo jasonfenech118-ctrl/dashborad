@@ -1,0 +1,182 @@
+{% extends "clinic/base.html" %}
+{% block title %}Today's Clinic — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .tc{margin-top:4px;}
+  @media (min-width:1160px){
+    .tc{width:min(1400px,94vw);margin-left:calc(50% - min(1400px,94vw)/2);}
+  }
+
+  .tc-head{
+    background:var(--teal);color:#fff;border-radius:12px 12px 0 0;
+    padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .tc-head .title{font-size:17px;font-weight:800;}
+  .tc-head .date{background:rgba(255,255,255,.18);border-radius:999px;padding:3px 12px;font-size:12.5px;font-weight:700;}
+  .tc-nav{margin-left:auto;display:flex;align-items:center;gap:6px;}
+  .tc-nav a,.tc-nav button{
+    background:rgba(255,255,255,.16);color:#fff;border:none;text-decoration:none;
+    padding:7px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .tc-nav a:hover,.tc-nav button:hover{background:rgba(255,255,255,.30);}
+  .tc-nav input[type=date]{
+    border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--ink);
+  }
+
+  /* summary strip */
+  .tc-sum{
+    background:#fff;border:1px solid var(--border);border-top:none;
+    display:flex;flex-wrap:wrap;
+  }
+  .tc-sum .cell{flex:1;min-width:110px;padding:14px 18px;border-left:1px solid var(--border);}
+  .tc-sum .cell:first-child{border-left:none;}
+  .tc-sum .n{font-size:24px;font-weight:800;color:var(--navy);line-height:1;}
+  .tc-sum .l{margin-top:5px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+  .tc-sum .cell.seen .n{color:#059669;}
+  .tc-sum .cell.dna .n{color:#d97706;}
+  .tc-sum .cell.cancelled .n{color:#dc2626;}
+
+  .tc-table{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+  .tc-table table{border:none;border-radius:0;}
+  .tc-table th{position:sticky;top:0;}
+  .tc-slot{font-weight:800;color:var(--navy);white-space:nowrap;}
+  a.rowlink{color:var(--navy);text-decoration:none;font-weight:700;}
+  a.rowlink:hover{color:var(--teal);text-decoration:underline;}
+  .sub{font-size:11px;color:var(--muted);font-weight:600;}
+
+  .st{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;text-transform:capitalize;}
+  .st-wait{background:#f1f5f9;color:var(--navy);}
+  .st-seen{background:#ecfdf5;color:#059669;}
+  .st-dna{background:#fffbeb;color:#d97706;}
+  .st-cancelled{background:#fef2f2;color:#dc2626;}
+
+  .acts{display:flex;gap:6px;flex-wrap:wrap;}
+  .acts form{margin:0;}
+  .abtn{border:1.5px solid var(--border);background:#fff;color:var(--navy);
+    padding:6px 11px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .abtn:hover{border-color:var(--teal);color:var(--teal);}
+  .abtn.seen:hover{border-color:#059669;color:#059669;background:#ecfdf5;}
+  .abtn.dna:hover{border-color:#d97706;color:#d97706;background:#fffbeb;}
+  .abtn.cancel:hover{border-color:#dc2626;color:#dc2626;background:#fef2f2;}
+  .done{font-size:11px;color:var(--muted);}
+  .done b{color:var(--navy);}
+
+  .tc-empty{padding:40px;text-align:center;color:var(--muted);font-size:13.5px;}
+  .msg{padding:10px 14px;border-radius:9px;margin:0 0 12px;font-size:13px;font-weight:600;}
+  .msg.success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;}
+  .msg.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+</style>
+
+{% if messages %}
+  {% for m in messages %}
+    <div class="msg {{ m.tags }}">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="tc">
+  <div class="tc-head">
+    <span class="title">Today's Clinic</span>
+    <span class="date">
+      {% if is_today %}Today — {% endif %}{{ day|date:"D, j M Y" }}
+    </span>
+    <div class="tc-nav">
+      <a href="?date={{ prev_day|date:'Y-m-d' }}" title="Previous day">← Prev</a>
+      {% if not is_today %}<a href="{% url 'clinic:todays_clinic' %}" title="Jump to today">Today</a>{% endif %}
+      <a href="?date={{ next_day|date:'Y-m-d' }}" title="Next day">Next →</a>
+      <form method="get" style="margin:0;display:inline-flex;gap:6px;">
+        <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()"/>
+      </form>
+    </div>
+  </div>
+
+  <div class="tc-sum">
+    <div class="cell"><div class="n">{{ summary.total }}</div><div class="l">Booked</div></div>
+    <div class="cell"><div class="n">{{ summary.waiting }}</div><div class="l">Waiting</div></div>
+    <div class="cell seen"><div class="n">{{ summary.seen }}</div><div class="l">Seen</div></div>
+    <div class="cell dna"><div class="n">{{ summary.dna }}</div><div class="l">Did not attend</div></div>
+    <div class="cell cancelled"><div class="n">{{ summary.cancelled }}</div><div class="l">Cancelled</div></div>
+  </div>
+
+  <div class="tc-table">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Patient</th><th>Nurse</th><th>Status</th><th>Notes</th><th style="width:1%;">Outcome</th></tr>
+      </thead>
+      <tbody>
+        {% for a in appts %}
+          {% with s=a.status|lower %}
+          <tr>
+            <td class="tc-slot">{{ a.appt_slot|default:"—" }}</td>
+            <td>
+              {% if a.patient %}
+                <a class="rowlink" href="{% url 'clinic:patient_detail' a.patient.id %}">{{ a.patient }}</a>
+                {% if a.patient.id_card %}<br><span class="sub">{{ a.patient.id_card }}</span>{% endif %}
+              {% else %}<span class="muted">—</span>{% endif %}
+            </td>
+            <td>
+              {% if a.assigned_to %}{{ a.assigned_to.full_name }}
+              {% elif a.bank_staff %}{{ a.bank_staff.full_name }} <span class="sub">(bank)</span>
+              {% else %}<span class="muted">—</span>{% endif %}
+            </td>
+            <td>
+              {% if s == 'seen' or s == 'completed' %}<span class="st st-seen">Seen</span>
+              {% elif s == 'dna' %}<span class="st st-dna">Did not attend</span>
+              {% elif s == 'cancelled' %}<span class="st st-cancelled">Cancelled</span>
+              {% else %}<span class="st st-wait">{{ a.status|default:"Waiting" }}</span>{% endif %}
+            </td>
+            <td>{% if a.notes %}{{ a.notes }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>
+              {% if s == 'seen' or s == 'completed' or s == 'dna' or s == 'cancelled' %}
+                <div class="acts">
+                  <div>
+                    {% if a.outcome_recorded_by_name and s != 'cancelled' %}
+                      <div class="done">by <b>{{ a.outcome_recorded_by_name }}</b>{% if a.outcome_recorded_at %}<br>{{ a.outcome_recorded_at|date:"j M, H:i" }}{% endif %}</div>
+                    {% elif a.cancelled_by_name %}
+                      <div class="done">by <b>{{ a.cancelled_by_name }}</b>{% if a.cancelled_at %}<br>{{ a.cancelled_at|date:"j M, H:i" }}{% endif %}</div>
+                    {% endif %}
+                  </div>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="appt_id" value="{{ a.id }}"/>
+                    <input type="hidden" name="action" value="reopen"/>
+                    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}"/>
+                    <button class="abtn" type="submit" title="Undo — set back to waiting">↺ Reopen</button>
+                  </form>
+                </div>
+              {% else %}
+                <div class="acts">
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="appt_id" value="{{ a.id }}"/>
+                    <input type="hidden" name="action" value="seen"/>
+                    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}"/>
+                    <button class="abtn seen" type="submit">✓ Seen</button>
+                  </form>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="appt_id" value="{{ a.id }}"/>
+                    <input type="hidden" name="action" value="dna"/>
+                    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}"/>
+                    <button class="abtn dna" type="submit">DNA</button>
+                  </form>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="appt_id" value="{{ a.id }}"/>
+                    <input type="hidden" name="action" value="cancel"/>
+                    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}"/>
+                    <button class="abtn cancel" type="submit">✕ Cancel</button>
+                  </form>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+        {% empty %}
+          <tr><td colspan="6" class="tc-empty">No appointments booked for this day.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

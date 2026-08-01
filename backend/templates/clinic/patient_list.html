@@ -53,12 +53,13 @@
 <div class="pt">
   <form method="get">
     <div class="pt-head">
-      <span class="title">Patients</span>
+      <span class="title">{% if register_label %}{{ register_label }}{% else %}Patients{% endif %}</span>
       <span class="count">{{ page.paginator.count }}</span>
       <a class="add" href="{% url 'clinic:add_patient' %}">+ Add patient</a>
     </div>
 
     <div class="pt-tools">
+      {% if register %}<input type="hidden" name="register" value="{{ register }}"/>{% endif %}
       <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID card, phone, locality…"/>
       <select name="status">
         <option value="">All statuses</option>
@@ -110,9 +111,9 @@
 
   {% if page.has_other_pages %}
   <div class="pager">
-    {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
+    {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&register={{ register }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
     <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
-    {% if page.has_next %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
+    {% if page.has_next %}<a class="btn" href="?q={{ q }}&status={{ status }}&register={{ register }}&page={{ page.next_page_number }}">Next →</a>{% endif %}
   </div>
   {% endif %}
 </div>

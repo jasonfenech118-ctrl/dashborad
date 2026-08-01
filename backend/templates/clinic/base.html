@@ -90,13 +90,13 @@
     <nav>
       <a href="{% url 'clinic:dashboard' %}" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
       <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
-      <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
-      <a class="dis" href="#" title="Coming soon">Appointments</a>
+      <a href="{% url 'clinic:todays_clinic' %}" class="{% if vn == 'todays_clinic' %}active{% endif %}">Today's Clinic</a>
       <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
+      <a href="{% url 'clinic:correspondence' %}" class="{% if vn == 'correspondence' %}active{% endif %}">Correspondence</a>
+      <a href="{% url 'clinic:reminders' %}" class="{% if vn == 'reminders' %}active{% endif %}">Reminders</a>
       <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' %}active{% endif %}">Ordering Forms</a>
       <a href="{% url 'clinic:more_tools' %}" class="{% if vn == 'more_tools' %}active{% endif %}">More Tools</a>
-      <a class="dis" href="#" title="Coming soon">Reports</a>
       <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
     </nav>
     <span class="spacer"></span>

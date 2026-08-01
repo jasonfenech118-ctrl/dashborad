@@ -1,0 +1,56 @@
+{% extends "clinic/base.html" %}
+{% block title %}{{ page_title }} — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .cs-head p{margin:6px 0 0;color:var(--muted);font-size:13.5px;max-width:560px;}
+  .cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px;}
+  .cs-card{
+    background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:12px;padding:18px;
+    display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;
+    transition:border-color .12s ease,box-shadow .12s ease;
+  }
+  .cs-card:hover{border-color:var(--teal);box-shadow:0 4px 14px rgba(29,78,216,.12);}
+  .cs-card .cs-t{font-weight:800;font-size:15px;color:var(--navy);}
+  .cs-card .cs-d{font-size:12.5px;color:var(--muted);line-height:1.45;}
+  .cs-card .cs-cta{margin-top:auto;font-size:12px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:6px;}
+  .cs-soon{margin-top:22px;}
+  .cs-soon h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+  .cs-soon ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+  .cs-soon li{
+    background:rgba(255,255,255,.7);border:1px dashed var(--border);border-radius:10px;
+    padding:12px 14px;font-size:13px;color:var(--navy);display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .cs-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:#f1f5f9;color:var(--muted);}
+</style>
+
+<div class="cs-head">
+  <h1 style="margin-bottom:0;">{{ page_title }}</h1>
+  <p>{{ lead }}</p>
+</div>
+
+{% if links %}
+<div class="cs-grid">
+  {% for l in links %}
+    <a class="cs-card" href="{% url l.url %}{{ l.query }}"{% if l.new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>
+      <span class="cs-t">{{ l.title }}</span>
+      <span class="cs-d">{{ l.desc }}</span>
+      <span class="cs-cta">Open
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if soon %}
+<div class="cs-soon">
+  <h2>Coming soon</h2>
+  <ul>
+    {% for s in soon %}
+      <li>{{ s }} <span class="cs-badge">Soon</span></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

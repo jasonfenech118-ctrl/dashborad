@@ -1,0 +1,78 @@
+{% extends "clinic/base.html" %}
+{% block title %}Surgical Rotation — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .sr-head p{margin:6px 0 0;color:var(--muted);font-size:13.5px;max-width:560px;}
+  .sr-sec{margin-top:22px;}
+  .sr-sec .bar{
+    background:var(--teal);color:#fff;border-radius:12px 12px 0 0;
+    padding:12px 18px;display:flex;align-items:center;gap:10px;
+  }
+  .sr-sec.past .bar{background:var(--navy);}
+  .sr-sec .bar .t{font-size:15px;font-weight:800;}
+  .sr-sec .bar .count{background:rgba(255,255,255,.18);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;}
+  .sr-table{background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+  .sr-table table{border:none;border-radius:0;}
+  .sr-date{font-weight:800;color:var(--navy);white-space:nowrap;}
+  .sr-date .in{display:block;font-size:11px;font-weight:600;color:var(--muted);}
+  a.rowlink{color:var(--navy);text-decoration:none;font-weight:700;}
+  a.rowlink:hover{color:var(--teal);text-decoration:underline;}
+  .sub{font-size:11px;color:var(--muted);font-weight:600;}
+  .sr-empty{padding:30px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+
+<div class="sr-head">
+  <h1 style="margin-bottom:0;">Surgical Rotation</h1>
+  <p>Theatre schedule — upcoming planned surgeries and operations performed in the last 60 days.</p>
+</div>
+
+<div class="sr-sec">
+  <div class="bar"><span class="t">Upcoming planned surgeries</span><span class="count">{{ upcoming|length }}</span></div>
+  <div class="sr-table">
+    <table>
+      <thead><tr><th>Planned date</th><th>Patient</th><th>Operation</th><th>Consultant</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for p in upcoming %}
+        <tr>
+          <td class="sr-date">{{ p.planned_surgery_date|date:"D, j M Y" }}</td>
+          <td>
+            <a class="rowlink" href="{% url 'clinic:patient_detail' p.id %}">{{ p }}</a>
+            {% if p.id_card %}<br><span class="sub">{{ p.id_card }}</span>{% endif %}
+          </td>
+          <td>{{ p.operation_performed|default:p.surgery_type|default:"—" }}</td>
+          <td>{{ p.consultant|default:"—" }}</td>
+          <td>{{ p.inpatient_type|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="sr-empty">No planned surgeries on record.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sr-sec past">
+  <div class="bar"><span class="t">Recent surgeries (last 60 days)</span><span class="count">{{ recent|length }}</span></div>
+  <div class="sr-table">
+    <table>
+      <thead><tr><th>Surgery date</th><th>Patient</th><th>Operation</th><th>Consultant</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for p in recent %}
+        <tr>
+          <td class="sr-date">{{ p.surgery_date|date:"D, j M Y" }}</td>
+          <td>
+            <a class="rowlink" href="{% url 'clinic:patient_detail' p.id %}">{{ p }}</a>
+            {% if p.id_card %}<br><span class="sub">{{ p.id_card }}</span>{% endif %}
+          </td>
+          <td>{{ p.operation_performed|default:p.surgery_type|default:"—" }}</td>
+          <td>{{ p.consultant|default:"—" }}</td>
+          <td>{{ p.inpatient_type|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="sr-empty">No surgeries recorded in the last 60 days.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
