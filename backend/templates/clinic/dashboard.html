@@ -278,7 +278,7 @@
           <svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
         <nav class="crumb" aria-label="Breadcrumb">
-          <span>Stoma Care</span><span class="sl">/</span><span class="cur">Overview</span>
+          <span>Stoma Care</span><span class="sl">/</span><span class="cur">Dashboard</span>
         </nav>
         <div class="top-search">
           <form action="{% url 'clinic:patient_list' %}" method="get" role="search">
@@ -343,7 +343,7 @@
 
         <!-- contextual tabs -->
         <div class="tabs" role="tablist" aria-label="Dashboard views">
-          <button role="tab" id="tab-overview"  aria-selected="true"  aria-controls="main" data-view="overview"  tabindex="0">Overview</button>
+          <button role="tab" id="tab-overview"  aria-selected="true"  aria-controls="main" data-view="overview"  tabindex="0">Dashboard</button>
           <button role="tab" id="tab-clinical"  aria-selected="false" aria-controls="main" data-view="clinical"  tabindex="-1">Clinical Workspace</button>
           <button role="tab" id="tab-workloads" aria-selected="false" aria-controls="main" data-view="workloads" tabindex="-1">Nurse Workloads</button>
           <a class="tab-link" href="{% url 'clinic:patient_list' %}?view=outcomes">Patient Outcomes</a>
