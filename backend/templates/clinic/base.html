@@ -28,7 +28,7 @@
        Lives entirely in this pseudo-element — no opacity on body/content. */
     body::before{
       content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-      background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),
+      background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
         url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
     }
     /* App-shell top navigation (reference: Comarch-style ward EHR) */
