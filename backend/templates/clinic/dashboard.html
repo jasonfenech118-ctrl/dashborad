@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -17,7 +17,14 @@
   html,body{height:100%;}
   body{
     font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
-    background:var(--canvas);color:var(--text-primary);font-size:14px;line-height:1.45;
+    color:var(--text-primary);font-size:14px;line-height:1.45;
+    min-height:100vh;position:relative;isolation:isolate;
+  }
+  /* Fixed Malta harbour background with a soft white overlay for legibility. */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),
+      url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
   }
   a{text-decoration:none;color:inherit;}
   button{font-family:inherit;}
@@ -103,7 +110,8 @@
   .pw-line::before{content:"";flex:1;border-top:1.75px dashed var(--border);}
 
   /* stats strip */
-  .stats{display:flex;align-items:stretch;background:var(--surface);border:1px solid var(--border);
+  .stats{display:flex;align-items:stretch;background:rgba(255,255,255,.88);
+    backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid var(--border);
     border-radius:var(--radius);margin-top:22px;overflow:hidden;}
   .stat{flex:1;padding:18px 22px;text-align:center;border-left:1px solid var(--border);}
   .stat:first-child{border-left:none;}
@@ -119,7 +127,8 @@
 
   /* content regions */
   .cols{display:grid;grid-template-columns:68% 32%;gap:20px;margin-top:22px;align-items:start;}
-  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .panel{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
   .panel-head h2{font-size:16px;font-weight:700;color:var(--navy-900);}
   .panel-head .meta{font-size:13px;color:var(--text-secondary);}
