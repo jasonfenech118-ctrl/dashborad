@@ -167,10 +167,10 @@
 
   /* outcomes register */
   .outcomes{margin-top:20px;}
-  .reg{display:flex;overflow-x:auto;}
-  .reg .cell{flex:1 0 auto;display:flex;align-items:center;gap:12px;padding:16px 18px;
-    border-left:1px solid var(--border);min-height:44px;}
-  .reg .cell:first-child{border-left:none;}
+  .reg{display:flex;flex-wrap:wrap;gap:10px;padding:14px;}
+  .reg .cell{flex:1 1 180px;min-width:180px;display:flex;align-items:center;gap:12px;padding:14px 16px;
+    border:1px solid var(--border);border-radius:10px;min-height:44px;background:rgba(255,255,255,.5);}
+  .reg .cell:hover{background:var(--canvas);border-color:var(--blue-600);}
   .reg .cell:hover{background:var(--canvas);}
   .reg .r-ic{display:grid;place-items:center;color:var(--navy-900);}
   .reg .r-t{flex:1;font-size:13.5px;font-weight:500;color:var(--navy-900);white-space:nowrap;}
@@ -183,6 +183,7 @@
   .ic-teal{color:var(--teal-600);}
 
   /* section visibility driven by active tab */
+  .main[data-view="overview"] #region-workloads,
   .main[data-view="clinical"] #region-workloads,
   .main[data-view="clinical"] #region-outcomes,
   .main[data-view="clinical"] #region-registers,
@@ -191,6 +192,9 @@
   .main[data-view="workloads"] #region-registers,
   .main[data-view="outcomes"] #region-actions,
   .main[data-view="outcomes"] #region-workloads{display:none;}
+  /* Nurse workloads is hidden on the Overview home screen (still available via
+     its tab), so Quick clinical actions spans the full width there. */
+  .main[data-view="overview"] .cols,
   .main[data-view="workloads"] .cols,
   .main[data-view="outcomes"] .cols{grid-template-columns:1fr;}
 
