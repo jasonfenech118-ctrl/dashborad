@@ -6,14 +6,15 @@
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
     :root{
-      /* Modern slate + indigo. Legacy names kept so child pages cascade:
-         --teal is now the indigo primary, --navy the slate nav/ink. */
-      --teal:#4f46e5;        /* indigo-600  primary accent   */
-      --teal-600:#4338ca;    /* indigo-700  hover            */
-      --teal-50:#eef2ff;     /* indigo-50   tint             */
-      --navy:#1e293b;        /* slate-800   nav / headings   */
-      --navy2:#334155;       /* slate-700   nav hover/active */
-      --gold:#6366f1;        /* indigo-500  logo highlight   */
+      /* Brand palette: blue + light blue + red. Legacy names kept so child
+         pages cascade: --teal is the blue primary, --navy the navy-blue nav. */
+      --teal:#1d4ed8;        /* blue-700    primary accent   */
+      --teal-600:#1e40af;    /* blue-800    hover            */
+      --teal-50:#eff6ff;     /* blue-50     tint             */
+      --navy:#13294b;        /* deep navy   nav / headings   */
+      --navy2:#1e3a8a;       /* blue-900    nav hover/active */
+      --gold:#38bdf8;        /* light blue  logo highlight   */
+      --red:#dc2626;         /* red         accent           */
       --ink:#0f172a;         /* slate-900   body text        */
       --border:#e2e8f0;      /* slate-200                    */
       --muted:#64748b;       /* slate-500                    */
@@ -39,13 +40,14 @@
     }
     .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
     .topbar nav a:hover{opacity:1;background:var(--navy2);}
-    .topbar nav a.active{opacity:1;border-bottom-color:var(--teal);background:var(--navy2);}
+    .topbar nav a.active{opacity:1;border-bottom-color:var(--red);background:var(--navy2);}
     .topbar nav a.dis{cursor:default;}
     .topbar nav a.dis:hover{background:transparent;opacity:.82;}
     .topbar .spacer{flex:1;}
     .topbar .util{display:flex;align-items:center;gap:6px;padding-left:8px;}
-    .topbar .util .ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.85;text-decoration:none;color:#fff;}
+    .topbar .util .ic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;opacity:.85;text-decoration:none;color:#fff;border:none;background:none;cursor:pointer;padding:0;}
     .topbar .util .ic:hover{background:var(--navy2);opacity:1;}
+    .topbar .util .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
     .topbar .util .who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:4px;}
     .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
     h1{font-size:22px;margin:0 0 16px;}
@@ -58,7 +60,7 @@
     tr:hover td{background:#f8fafc;}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
-    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.15);}
+    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
     .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
     .btn:hover{background:var(--teal-600);}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
@@ -82,20 +84,28 @@
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
       <a class="dis" href="#" title="Coming soon">Appointments</a>
       <a href="{% url 'clinic:discharge_letter' %}" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
+      <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' %}active{% endif %}">Ordering Forms</a>
+      <a href="{% url 'clinic:more_tools' %}" class="{% if vn == 'more_tools' %}active{% endif %}">More Tools</a>
       <a class="dis" href="#" title="Coming soon">Reports</a>
       <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
     </nav>
     <span class="spacer"></span>
     <div class="util">
-      <a class="ic" href="#" title="Messages">✉</a>
+      <a class="ic" href="#" title="Messages" aria-label="Messages">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </a>
       {% if user.is_authenticated %}
         <span class="who">{{ user.username }} <span class="car">▾</span></span>
         <form method="post" action="{% url 'logout' %}" style="margin:0;display:inline;">
           {% csrf_token %}
-          <button class="ic" type="submit" title="Sign out" style="background:none;border:none;cursor:pointer;">⏻</button>
+          <button class="ic" type="submit" title="Sign out" aria-label="Sign out">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          </button>
         </form>
       {% else %}
-        <a class="ic" href="{% url 'login' %}" title="Sign in">⏻</a>
+        <a class="ic" href="{% url 'login' %}" title="Sign in" aria-label="Sign in">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+        </a>
       {% endif %}
     </div>
   </div>

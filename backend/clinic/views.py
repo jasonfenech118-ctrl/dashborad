@@ -137,6 +137,88 @@ def discharge_letter(request):
 
 
 @login_required
+def ordering_forms(request):
+    """Ordering Forms landing page.
+
+    Lists the appliance/supply ordering forms the stoma team uses. The
+    destinations are wired up as they come online; the page renders from
+    base.html so navigation and auth stay consistent with the rest of the app.
+    """
+    forms = [
+        {
+            "title": "Stoma Appliances",
+            "desc": "Pouches, baseplates and one-piece / two-piece systems.",
+            "url": "",
+        },
+        {
+            "title": "Accessories & Supplies",
+            "desc": "Barrier rings, pastes, powders, adhesive removers and belts.",
+            "url": "",
+        },
+        {
+            "title": "Prescription Request",
+            "desc": "Request or renew a patient's appliance prescription.",
+            "url": "",
+        },
+        {
+            "title": "Ward / Stock Order",
+            "desc": "Replenish ward stock and clinic consumables.",
+            "url": "",
+        },
+    ]
+    return render(request, "clinic/ordering_forms.html", {"forms": forms})
+
+
+@login_required
+def more_tools(request):
+    """Landing page collecting the remaining dashboard tools.
+
+    Gathers the buttons that don't yet have their own destination so none of
+    them are dead links. Items with a `url` become live cards; the rest render
+    as 'Coming soon'. Renders from base.html for consistent nav and auth.
+    """
+    tools = [
+        {
+            "title": "Add New Patient",
+            "desc": "Start a new admission.",
+            "url": "/admin/clinic/patient/add/",
+            "icon": "add-patient",
+        },
+        {
+            "title": "Surgical Rotation",
+            "desc": "Theatre schedule and surgical rotation.",
+            "url": "",
+            "icon": "clock",
+        },
+        {
+            "title": "Outpatient Clinic",
+            "desc": "Clinic lists and reviews.",
+            "url": "",
+            "icon": "clinic",
+        },
+        {
+            "title": "Appointments",
+            "desc": "Scheduling and calendar.",
+            "url": "",
+            "icon": "calendar",
+        },
+        {
+            "title": "Discharges (Post Operative)",
+            "desc": "Post-operative discharge register.",
+            "url": "",
+            "icon": "doc",
+        },
+        {
+            "title": "Temporary Paused",
+            "desc": "Temporarily paused follow-ups.",
+            "url": "",
+            "icon": "pause",
+        },
+    ]
+    return render(request, "clinic/more_tools.html", {"tools": tools})
+
+
+@login_required
 def patient_list(request):
     q = (request.GET.get("q") or "").strip()
     status = (request.GET.get("status") or "").strip()

@@ -1,0 +1,56 @@
+{% extends "clinic/base.html" %}
+{% block title %}More Tools — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .mt-head p{margin:6px 0 0;color:var(--muted);font-size:13.5px;max-width:560px;}
+  .mt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px;}
+  .mt-card{
+    background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;
+    display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;
+    transition:border-color .12s ease,box-shadow .12s ease;
+  }
+  .mt-card:hover{border-color:var(--teal);box-shadow:0 4px 14px rgba(29,78,216,.12);}
+  .mt-card .mt-ic{
+    width:40px;height:40px;border-radius:9px;flex:none;
+    background:var(--teal-50);color:var(--teal);display:grid;place-items:center;
+  }
+  .mt-card .mt-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+  .mt-card .mt-t{font-weight:800;font-size:15px;color:var(--navy);}
+  .mt-card .mt-d{font-size:12.5px;color:var(--muted);line-height:1.45;}
+  .mt-card .mt-cta{margin-top:auto;font-size:12px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:6px;}
+  .mt-card.soon{cursor:default;}
+  .mt-card.soon:hover{border-color:var(--border);box-shadow:none;}
+  .mt-card.soon .mt-cta{color:var(--muted);}
+  .mt-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:#f1f5f9;color:var(--muted);}
+</style>
+
+<div class="mt-head">
+  <h1 style="margin-bottom:0;">More Tools</h1>
+  <p>Additional tools and registers. Live tools open directly; the rest are coming soon.</p>
+</div>
+
+<div class="mt-grid">
+  {% for t in tools %}
+    <{% if t.url %}a class="mt-card" href="{{ t.url }}"{% if 'http' in t.url %} target="_blank" rel="noopener noreferrer"{% endif %}{% else %}span class="mt-card soon" title="Coming soon"{% endif %}>
+      <span class="mt-ic" aria-hidden="true">
+        {% if t.icon == 'add-patient' %}<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+        {% elif t.icon == 'clock' %}<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        {% elif t.icon == 'clinic' %}<svg viewBox="0 0 24 24"><path d="M8.56 3.69a9 9 0 0 0-2.92 1.95"/><path d="M3.69 8.56A9 9 0 0 0 3 12"/><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92"/><path d="M8.56 20.31A9 9 0 0 0 12 21"/><path d="M15.44 20.31a9 9 0 0 0 2.92-1.95"/><path d="M20.31 15.44A9 9 0 0 0 21 12"/><path d="M20.31 8.56a9 9 0 0 0-1.95-2.92"/><path d="M15.44 3.69A9 9 0 0 0 12 3"/><circle cx="12" cy="12" r="2"/></svg>
+        {% elif t.icon == 'calendar' %}<svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        {% elif t.icon == 'doc' %}<svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        {% elif t.icon == 'pause' %}<svg viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+        {% endif %}
+      </span>
+      <span class="mt-t">{{ t.title }}</span>
+      <span class="mt-d">{{ t.desc }}</span>
+      {% if t.url %}
+        <span class="mt-cta">Open
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </span>
+      {% else %}
+        <span class="mt-cta"><span class="mt-badge">Coming soon</span></span>
+      {% endif %}
+    </{% if t.url %}a{% else %}span{% endif %}>
+  {% endfor %}
+</div>
+{% endblock %}
