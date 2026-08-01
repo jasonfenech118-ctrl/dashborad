@@ -1,4 +1,4 @@
-<!doctype html>
+{% load static %}<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -33,8 +33,16 @@
     font-family:var(--serif);
     color:var(--ink);
     padding:0 0 40px;
+    min-height:100vh;position:relative;isolation:isolate;
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
+  }
+  /* Fixed Malta harbour background (screen only) to match the rest of the app.
+     Hidden on print so the discharge letter itself is unaffected. */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
+      url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
   }
 
   /* ---------- Toolbar (screen only) ---------- */
@@ -294,6 +302,7 @@
   @media print{
     @page{ size:A4; margin:14mm 18mm 24mm 18mm; }
     body{background:#fff;padding:0}
+    body::before{display:none !important}
     .toolbar,.catalogue-card,.format-tools{display:none !important}
     .page{
       width:auto;min-height:auto;margin:0;padding:0;
