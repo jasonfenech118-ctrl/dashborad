@@ -167,8 +167,8 @@
 
   /* outcomes register */
   .outcomes{margin-top:20px;}
-  .reg{display:flex;flex-wrap:wrap;gap:10px;padding:14px;}
-  .reg .cell{flex:1 1 180px;min-width:180px;display:flex;align-items:center;gap:12px;padding:14px 16px;
+  .reg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:14px;}
+  .reg .cell{display:flex;align-items:center;gap:12px;padding:14px 16px;
     border:1px solid var(--border);border-radius:10px;min-height:44px;background:rgba(255,255,255,.5);}
   .reg .cell:hover{background:var(--canvas);border-color:var(--blue-600);}
   .reg .cell:hover{background:var(--canvas);}
