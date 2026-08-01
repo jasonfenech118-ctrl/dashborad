@@ -1,11 +1,12 @@
 import datetime
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
-from . import models
+from . import forms, models
 
 
 def _safe_count(qs):
@@ -170,6 +171,25 @@ def ordering_forms(request):
 
 
 @login_required
+def add_patient(request):
+    """Dedicated page to add a new patient.
+
+    Captures demographics, surgery details, clinical findings, medical and
+    social history, and a data-protection selection, then creates the record
+    and opens the new patient's detail page.
+    """
+    if request.method == "POST":
+        form = forms.PatientForm(request.POST)
+        if form.is_valid():
+            patient = form.save()
+            messages.success(request, "New patient added.")
+            return redirect("clinic:patient_detail", patient_id=patient.id)
+    else:
+        form = forms.PatientForm()
+    return render(request, "clinic/patient_form.html", {"form": form})
+
+
+@login_required
 def more_tools(request):
     """Landing page collecting the remaining dashboard tools.
 
@@ -178,12 +198,6 @@ def more_tools(request):
     as 'Coming soon'. Renders from base.html for consistent nav and auth.
     """
     tools = [
-        {
-            "title": "Add New Patient",
-            "desc": "Start a new admission.",
-            "url": "/admin/clinic/patient/add/",
-            "icon": "add-patient",
-        },
         {
             "title": "Surgical Rotation",
             "desc": "Theatre schedule and surgical rotation.",

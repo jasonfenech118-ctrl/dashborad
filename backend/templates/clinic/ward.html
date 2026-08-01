@@ -102,7 +102,7 @@
         <li class="empty">No patients to show. Connect the database or adjust your search.</li>
       {% endfor %}
     </ul>
-    <a class="add" href="/admin/clinic/patient/add/">+ Add patient</a>
+    <a class="add" href="{% url 'clinic:add_patient' %}">+ Add patient</a>
   </aside>
 
   <!-- RIGHT: patient chart -->
