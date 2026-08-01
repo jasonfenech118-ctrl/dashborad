@@ -6,8 +6,9 @@
 <title>MDH Stoma Care — Clinic Dashboard</title>
 <style>
   :root{
-    --navy:#122036; --navy-2:#1b2f4d; --teal:#0d7377; --teal-2:#14a2a8;
-    --gold:#e6a817; --ink:#1a2333; --muted:#6b7a8d; --line:#e4ebf0;
+    /* Brand palette: blue + light blue + red */
+    --navy:#13294b; --navy-2:#1e3a8a; --teal:#1d4ed8; --teal-2:#3b82f6;
+    --gold:#dc2626; --ink:#1a2333; --muted:#6b7a8d; --line:#e4ebf0;
     --bg:#eef2f6; --card:#ffffff; --shadow:0 6px 22px rgba(18,32,54,.10);
     --radius:14px;
   }
@@ -30,11 +31,11 @@
   .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.10);
     cursor:pointer;font-size:16px;transition:background .15s;}
   .icon-btn:hover{background:rgba(255,255,255,.2);}
-  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#c8890a);
-    display:grid;place-items:center;font-weight:800;color:#3a2a00;font-size:14px;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ef4444,var(--gold));
+    display:grid;place-items:center;font-weight:800;color:#fff;font-size:14px;}
 
   /* ---------- Hero ---------- */
-  .hero{position:relative;overflow:hidden;background:radial-gradient(1200px 400px at 15% -20%,rgba(20,162,168,.35),transparent),
+  .hero{position:relative;overflow:hidden;background:radial-gradient(1200px 400px at 15% -20%,rgba(59,130,246,.40),transparent),
     linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 55%,#20496b 100%);color:#fff;padding:34px 26px 30px;}
   .hero::after{content:"";position:absolute;inset:0;background:
     radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.25),transparent),
@@ -74,17 +75,17 @@
   .tile:hover .chev{transform:translateX(3px);color:var(--teal);}
 
   /* icon palette */
-  .c-teal{background:linear-gradient(135deg,#14a2a8,#0d7377);}
+  .c-teal{background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
   .c-navy{background:linear-gradient(135deg,#26456e,#1a2e4a);}
-  .c-gold{background:linear-gradient(135deg,#f0b93b,#d1930d);}
+  .c-gold{background:linear-gradient(135deg,#ef4444,#dc2626);}
   .c-green{background:linear-gradient(135deg,#2fae66,#158048);}
-  .c-purple{background:linear-gradient(135deg,#8b5cf6,#6d34d6);}
-  .c-red{background:linear-gradient(135deg,#e5604d,#c33422);}
+  .c-purple{background:linear-gradient(135deg,#60a5fa,#2563eb);}
+  .c-red{background:linear-gradient(135deg,#ef4444,#c33422);}
   .c-slate{background:linear-gradient(135deg,#64798f,#455568);}
-  .c-cyan{background:linear-gradient(135deg,#2bb7d6,#1585a6);}
+  .c-cyan{background:linear-gradient(135deg,#38bdf8,#0ea5e9);}
 
   /* count badge on outcome tiles */
-  .badge{margin-left:auto;background:#eef4f4;color:var(--teal);font-weight:800;font-size:12px;
+  .badge{margin-left:auto;background:#eff6ff;color:var(--teal);font-weight:800;font-size:12px;
     padding:3px 10px;border-radius:999px;}
 
   footer{max-width:1240px;margin:0 auto;padding:20px 26px 40px;color:var(--muted);font-size:12px;
