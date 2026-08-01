@@ -333,6 +333,8 @@
     <span class="title" id="ribbonTitle" onclick="openWizard()" title="Click to reopen the fill-in / edit questions">Stoma Discharge Letter</span>
     <span class="hint">Choose the stoma type when prompted, then pick one-piece/two-piece and the appliance inside the letter. Fill the fields, then Save or Print.</span>
     <span class="actions">
+      <a class="btn" href="{% url 'clinic:dashboard' %}" title="Back to home" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
       <button class="btn green" onclick="saveToSharePoint()">Save</button>
       <button class="btn" onclick="sendToEmail()">Send to Email</button>
       <button class="btn" onclick="window.print()">Print</button>
