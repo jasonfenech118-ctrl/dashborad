@@ -47,6 +47,7 @@
       border-bottom:3px solid transparent;
     }
     .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
+    .topbar nav a svg{width:15px;height:15px;margin-right:5px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
     .topbar nav a:hover{opacity:1;background:var(--navy2);}
     .topbar nav a.active{opacity:1;border-bottom-color:var(--red);background:var(--navy2);}
     .topbar nav a.dis{cursor:default;}
@@ -87,7 +88,7 @@
   <div class="topbar">
     <span class="logo">MDH <span>Stoma</span></span>
     <nav>
-      <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'clinic:dashboard' %}" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
       <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
       <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
       <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
