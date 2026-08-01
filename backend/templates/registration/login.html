@@ -1,4 +1,4 @@
-<!doctype html>
+{% load static %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -10,11 +10,17 @@
     body{
       font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);margin:0;
       min-height:100vh;display:flex;align-items:center;justify-content:center;
+      position:relative;isolation:isolate;padding:20px;
       background:var(--navy);
-      background-image:radial-gradient(1100px 500px at 50% -10%,rgba(29,78,216,.45),transparent 60%);
-      padding:20px;
     }
-    .card{background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);width:100%;max-width:380px;overflow:hidden;}
+    /* Fixed Malta harbour background with a soft white overlay for legibility. */
+    body::before{
+      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+      background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),
+        url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
+    }
+    .card{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+      border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);width:100%;max-width:380px;overflow:hidden;}
     .card .brand{background:var(--teal);color:#fff;padding:22px 26px;display:flex;align-items:center;gap:14px;}
     .card .brand .lock{
       width:44px;height:44px;flex:none;border-radius:11px;
