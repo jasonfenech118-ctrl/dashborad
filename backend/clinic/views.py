@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
 
 from . import forms, models
 
@@ -128,6 +130,124 @@ def ward(request):
 
 
 @login_required
+def todays_clinic(request):
+    """Today's clinic — the day's appointment list with quick outcomes.
+
+    Shows every appointment for a given day (defaults to today; ?date=YYYY-MM-DD
+    to browse other days) and lets the team mark each patient Seen, Did-not-
+    attend, or Cancelled without leaving the page. Every read and write is
+    defensive so the page still renders when the DB isn't reachable.
+    """
+    # --- POST: record an outcome, then redirect back (PRG) ------------------
+    if request.method == "POST":
+        appt_id = (request.POST.get("appt_id") or "").strip()
+        action = (request.POST.get("action") or "").strip()
+        post_date = (request.POST.get("date") or "").strip()
+
+        who_name = (request.user.get_full_name() or request.user.get_username())
+        who_email = request.user.email or ""
+        now = timezone.now()
+
+        try:
+            appt = models.Appointment.objects.filter(pk=appt_id).first()
+        except Exception:
+            appt = None
+
+        if appt is None:
+            messages.error(request, "Appointment not found.")
+        elif action == "seen":
+            appt.status = "seen"
+            appt.outcome_recorded_at = now
+            appt.outcome_recorded_by_name = who_name
+            appt.outcome_recorded_by_email = who_email
+            appt.cancelled_at = None
+            appt.cancelled_by_name = None
+            appt.cancelled_by_email = None
+            appt.save()
+            messages.success(request, f"Marked {appt.patient} as seen.")
+        elif action == "dna":
+            appt.status = "dna"
+            appt.outcome_recorded_at = now
+            appt.outcome_recorded_by_name = who_name
+            appt.outcome_recorded_by_email = who_email
+            appt.cancelled_at = None
+            appt.cancelled_by_name = None
+            appt.cancelled_by_email = None
+            appt.save()
+            messages.success(request, f"Marked {appt.patient} as did-not-attend.")
+        elif action == "cancel":
+            appt.status = "cancelled"
+            appt.cancelled_at = now
+            appt.cancelled_by_name = who_name
+            appt.cancelled_by_email = who_email
+            appt.save()
+            messages.success(request, f"Cancelled {appt.patient}'s appointment.")
+        elif action == "reopen":
+            appt.status = "scheduled"
+            appt.outcome_recorded_at = None
+            appt.outcome_recorded_by_name = None
+            appt.outcome_recorded_by_email = None
+            appt.cancelled_at = None
+            appt.cancelled_by_name = None
+            appt.cancelled_by_email = None
+            appt.save()
+            messages.success(request, f"Reopened {appt.patient}'s appointment.")
+        else:
+            messages.error(request, "Unknown action.")
+
+        url = reverse("clinic:todays_clinic")
+        return redirect(f"{url}?date={post_date}" if post_date else url)
+
+    # --- GET: which day are we viewing? -------------------------------------
+    today = datetime.date.today()
+    day = today
+    raw_date = (request.GET.get("date") or "").strip()
+    if raw_date:
+        try:
+            day = datetime.date.fromisoformat(raw_date)
+        except ValueError:
+            day = today
+
+    try:
+        appts = list(
+            models.Appointment.objects
+            .filter(appt_date=day)
+            .select_related("patient", "assigned_to", "bank_staff")
+            .order_by("appt_slot")
+        )
+    except Exception:
+        appts = []
+
+    # Outcome buckets for the summary strip.
+    def _st(a):
+        return (a.status or "").lower()
+
+    seen = [a for a in appts if _st(a) in {"seen", "completed"}]
+    dna = [a for a in appts if _st(a) == "dna"]
+    cancelled = [a for a in appts if _st(a) == "cancelled"]
+    done_ids = {a.id for a in seen} | {a.id for a in dna} | {a.id for a in cancelled}
+    waiting = [a for a in appts if a.id not in done_ids]
+
+    summary = {
+        "total": len(appts),
+        "waiting": len(waiting),
+        "seen": len(seen),
+        "dna": len(dna),
+        "cancelled": len(cancelled),
+    }
+
+    return render(request, "clinic/todays_clinic.html", {
+        "appts": appts,
+        "summary": summary,
+        "day": day,
+        "is_today": day == today,
+        "prev_day": day - datetime.timedelta(days=1),
+        "next_day": day + datetime.timedelta(days=1),
+        "today": today,
+    })
+
+
+@login_required
 def discharge_letter(request):
     """Standalone Stoma discharge-letter generator.
 
@@ -187,6 +307,50 @@ def add_patient(request):
     else:
         form = forms.PatientForm()
     return render(request, "clinic/patient_form.html", {"form": form})
+
+
+@login_required
+def correspondence(request):
+    """Correspondence hub — patient letters and communications.
+
+    Landing page grouping the clinic's outgoing correspondence. The discharge
+    letter generator is live; the rest are placeholders until wired up.
+    """
+    return render(request, "clinic/coming_soon.html", {
+        "page_title": "Correspondence",
+        "lead": "Patient letters and clinic communications in one place.",
+        "links": [
+            {"title": "Discharge Letter", "desc": "Generate a stoma discharge letter.",
+             "url": "clinic:discharge_letter", "new_tab": True},
+        ],
+        "soon": [
+            "GP / referral letters",
+            "Clinic appointment letters",
+            "Sent correspondence log",
+        ],
+    })
+
+
+@login_required
+def reminders(request):
+    """Reminders hub — follow-ups and recalls that need action.
+
+    Placeholder landing page for the reminders workflow (follow-ups due,
+    patient recalls, task reminders) until the individual lists are built.
+    """
+    return render(request, "clinic/coming_soon.html", {
+        "page_title": "Reminders",
+        "lead": "Follow-ups, recalls and tasks that need attention.",
+        "links": [
+            {"title": "Follow-ups Due", "desc": "Patients due for review this month.",
+             "url": "clinic:patient_list", "query": "?status=active"},
+        ],
+        "soon": [
+            "Patient recall reminders",
+            "Appointment reminders",
+            "Personal task reminders",
+        ],
+    })
 
 
 @login_required
