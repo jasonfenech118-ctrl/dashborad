@@ -9,12 +9,15 @@
 <title>Stoma Discharge Letter</title>
 <style>
   :root{
-    --navy:#000E77;
-    --blue:#96B7CA;
+    /* Screen-chrome palette (toolbar, buttons, wizard) — matches the app
+       theme. The printed letterhead uses a hardcoded #000080 and is
+       unaffected, so printed letters look exactly as before. */
+    --navy:#1d4ed8;
+    --blue:#93c5fd;
     --ink:#111;
     --fill:#eef4fb;          /* on-screen "fillable" tint */
     --fill-border:#b9d0e6;
-    --focus:#2f6fb0;
+    --focus:#2563eb;
     --paper:#ffffff;
     --desk:#e9ecf1;
     --serif:"Times New Roman", Times, Georgia, serif;
@@ -43,7 +46,7 @@
     font-family:var(--sans);
   }
   .toolbar .title{font-weight:700;letter-spacing:.02em;font-size:26px;margin-right:14px}
-  .toolbar .title .stoma-type{color:#ff4d4d}
+  .toolbar .title .stoma-type{color:#dc2626}
   .toolbar .hint{font-size:14px;opacity:.82;flex:1 1 220px}
   .toolbar .actions{display:flex;gap:8px;flex-wrap:wrap}
   .btn{
