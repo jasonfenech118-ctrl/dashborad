@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Sign in — MDH Stoma Care Clinic</title>
   <style>
-    :root{--teal:#4f46e5;--teal-600:#4338ca;--navy:#1e293b;--gold:#6366f1;--border:#e2e8f0;--muted:#64748b;--ink:#0f172a;}
+    :root{--teal:#1d4ed8;--teal-600:#1e40af;--navy:#13294b;--gold:#38bdf8;--red:#dc2626;--border:#e2e8f0;--muted:#64748b;--ink:#0f172a;}
     *{box-sizing:border-box;}
     body{
       font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);margin:0;
       min-height:100vh;display:flex;align-items:center;justify-content:center;
       background:var(--navy);
-      background-image:radial-gradient(1100px 500px at 50% -10%,rgba(79,70,229,.35),transparent 60%);
+      background-image:radial-gradient(1100px 500px at 50% -10%,rgba(29,78,216,.45),transparent 60%);
       padding:20px;
     }
     .card{background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);width:100%;max-width:380px;overflow:hidden;}
     .card .brand{background:var(--teal);color:#fff;padding:22px 26px;display:flex;align-items:center;gap:14px;}
     .card .brand .lock{
       width:44px;height:44px;flex:none;border-radius:11px;
-      background:rgba(255,255,255,.15);display:grid;place-items:center;
+      background:#fff;display:grid;place-items:center;
     }
-    .card .brand .lock svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .card .brand .lock svg{width:24px;height:24px;stroke:var(--red);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
     .card .brand .logo{font-weight:800;font-size:19px;}
-    .card .brand .logo span{color:#c7d2fe;}
+    .card .brand .logo span{color:#93c5fd;}
     .card .brand .sub{font-size:12px;opacity:.9;margin-top:2px;}
     .card form{padding:24px 26px 26px;}
     label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:0 0 6px;}
     input[type=text],input[type=password]{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;margin-bottom:16px;}
-    input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.15);}
+    input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
     .btn{width:100%;background:var(--teal);color:#fff;border:none;padding:12px;border-radius:9px;font-weight:800;font-size:14px;cursor:pointer;}
     .btn:hover{background:var(--teal-600);}
     .err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:16px;}

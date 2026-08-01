@@ -6,14 +6,15 @@
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
     :root{
-      /* Modern slate + indigo. Legacy names kept so child pages cascade:
-         --teal is now the indigo primary, --navy the slate nav/ink. */
-      --teal:#4f46e5;        /* indigo-600  primary accent   */
-      --teal-600:#4338ca;    /* indigo-700  hover            */
-      --teal-50:#eef2ff;     /* indigo-50   tint             */
-      --navy:#1e293b;        /* slate-800   nav / headings   */
-      --navy2:#334155;       /* slate-700   nav hover/active */
-      --gold:#6366f1;        /* indigo-500  logo highlight   */
+      /* Brand palette: blue + light blue + red. Legacy names kept so child
+         pages cascade: --teal is the blue primary, --navy the navy-blue nav. */
+      --teal:#1d4ed8;        /* blue-700    primary accent   */
+      --teal-600:#1e40af;    /* blue-800    hover            */
+      --teal-50:#eff6ff;     /* blue-50     tint             */
+      --navy:#13294b;        /* deep navy   nav / headings   */
+      --navy2:#1e3a8a;       /* blue-900    nav hover/active */
+      --gold:#38bdf8;        /* light blue  logo highlight   */
+      --red:#dc2626;         /* red         accent           */
       --ink:#0f172a;         /* slate-900   body text        */
       --border:#e2e8f0;      /* slate-200                    */
       --muted:#64748b;       /* slate-500                    */
@@ -39,7 +40,7 @@
     }
     .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
     .topbar nav a:hover{opacity:1;background:var(--navy2);}
-    .topbar nav a.active{opacity:1;border-bottom-color:var(--teal);background:var(--navy2);}
+    .topbar nav a.active{opacity:1;border-bottom-color:var(--red);background:var(--navy2);}
     .topbar nav a.dis{cursor:default;}
     .topbar nav a.dis:hover{background:transparent;opacity:.82;}
     .topbar .spacer{flex:1;}
@@ -59,7 +60,7 @@
     tr:hover td{background:#f8fafc;}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
-    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,70,229,.15);}
+    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
     .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
     .btn:hover{background:var(--teal-600);}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}

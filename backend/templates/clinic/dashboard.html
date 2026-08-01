@@ -6,11 +6,11 @@
 <title>MDH Stoma Care — Clinic Dashboard</title>
 <style>
   :root{
-    /* Modern slate + indigo */
-    --navy-900:#1e293b; --blue-600:#4f46e5; --teal-600:#6366f1;
+    /* Brand palette: blue + light blue + red */
+    --navy-900:#13294b; --blue-600:#1d4ed8; --teal-600:#2563eb;
     --canvas:#f8fafc; --surface:#ffffff;
     --text-primary:#0f172a; --text-secondary:#64748b; --border:#e2e8f0;
-    --success:#059669; --warning:#d97706; --danger:#dc2626; --focus:#6366f1;
+    --success:#059669; --warning:#d97706; --danger:#dc2626; --focus:#1d4ed8;
     --sidebar:228px; --radius:10px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -52,7 +52,7 @@
   .side-nav a.active{background:var(--blue-600);color:#fff;font-weight:600;}
   .side-nav a.active::before{
     content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;
-    border-radius:0 3px 3px 0;background:#a5b4fc;
+    border-radius:0 3px 3px 0;background:#93c5fd;
   }
   .side-sep{height:1px;background:rgba(255,255,255,.12);margin:12px 20px;}
   .side-foot{margin-top:auto;padding:0 12px;}
@@ -143,8 +143,8 @@
   .staff:first-of-type{border-top:none;}
   .staff:hover{background:var(--canvas);}
   .staff .ini{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
-    background:#eef2ff;color:var(--blue-600);font-weight:700;font-size:12.5px;}
-  .staff .ini.shared{background:#e0e7ff;color:var(--teal-600);}
+    background:#eff6ff;color:var(--blue-600);font-weight:700;font-size:12.5px;}
+  .staff .ini.shared{background:#dbeafe;color:var(--teal-600);}
   .staff .s-tx{min-width:0;flex:1;display:flex;flex-direction:column;}
   .staff .s-t{font-weight:600;font-size:14px;color:var(--navy-900);}
   .staff .s-s{font-size:12.5px;color:var(--text-secondary);margin-top:2px;}
