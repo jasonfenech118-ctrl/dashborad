@@ -40,37 +40,45 @@ def dashboard(request):
     return render(request, "clinic/dashboard.html", {"stats": stats})
 
 
-@login_required
-def reports(request):
-    today = datetime.date.today()
-    P = models.Patient.objects
+# Ordered list of the report metrics: (key, human label).
+_METRIC_DEFS = [
+    ("new_cases", "New Cases"),
+    ("ileostomy", "Ileostomy"),
+    ("colostomy", "Colostomy"),
+    ("urostomy", "Urostomy"),
+    ("followups", "Follow-ups"),
+    ("emails", "Emails Responded"),
+    ("inpatient_visits", "Inpatient Visits"),
+    ("siting_sessions", "Stoma Siting Sessions"),
+    ("total_stomas", "Total Stomas Formed"),
+]
 
-    def fmt(v):
-        return "—" if v is None else v
 
-    period = (request.GET.get("period") or "month").strip()
+def _int_arg(value, default):
     try:
-        sel_year = int(request.GET.get("year", today.year))
+        return int(value)
     except (ValueError, TypeError):
-        sel_year = today.year
-    try:
-        sel_month = int(request.GET.get("month", today.month))
-    except (ValueError, TypeError):
-        sel_month = today.month
-    sel_month = max(1, min(12, sel_month))
+        return default
 
+
+def _range_for(period, year, month):
+    """Return (date_from, date_to) for a whole month or whole year."""
     if period == "year":
-        date_from = datetime.date(sel_year, 1, 1)
-        date_to = datetime.date(sel_year, 12, 31)
+        return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
+    date_from = datetime.date(year, month, 1)
+    if month == 12:
+        date_to = datetime.date(year, 12, 31)
     else:
-        date_from = datetime.date(sel_year, sel_month, 1)
-        if sel_month == 12:
-            date_to = datetime.date(sel_year, 12, 31)
-        else:
-            date_to = datetime.date(sel_year, sel_month + 1, 1) - datetime.timedelta(days=1)
+        date_to = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+    return date_from, date_to
 
+
+def _stats_for_range(date_from, date_to):
+    """Compute every report metric over a date range. None (DB error) -> 0."""
+    P = models.Patient.objects
+    E = models.Encounter.objects
     new_in_period = P.filter(surgery_date__gte=date_from, surgery_date__lte=date_to)
-    period_stats = {
+    raw = {
         "new_cases": _safe_count(new_in_period),
         "ileostomy": _safe_count(new_in_period.filter(stoma_type_summary__icontains="ileostomy")),
         "colostomy": _safe_count(new_in_period.filter(stoma_type_summary__icontains="colostomy")),
@@ -81,38 +89,82 @@ def reports(request):
             )
         ),
         "emails": _safe_count(
-            models.Encounter.objects.filter(
-                encounter_date__gte=date_from, encounter_date__lte=date_to,
-                encounter_type__icontains="email",
-            )
+            E.filter(encounter_date__gte=date_from, encounter_date__lte=date_to,
+                     encounter_type__icontains="email")
         ),
         "inpatient_visits": _safe_count(
-            models.Encounter.objects.filter(
-                encounter_date__gte=date_from, encounter_date__lte=date_to,
-                encounter_type__icontains="inpatient",
-            )
+            E.filter(encounter_date__gte=date_from, encounter_date__lte=date_to,
+                     encounter_type__icontains="inpatient")
         ),
         "siting_sessions": _safe_count(
-            models.Encounter.objects.filter(
-                encounter_date__gte=date_from, encounter_date__lte=date_to,
-                encounter_type__icontains="siting",
-            )
+            E.filter(encounter_date__gte=date_from, encounter_date__lte=date_to,
+                     encounter_type__icontains="siting")
         ),
-        "total_stomas": _safe_count(new_in_period),
     }
-    period_stats = {k: fmt(v) for k, v in period_stats.items()}
+    raw["total_stomas"] = raw["new_cases"]
+    return {k: (0 if v is None else v) for k, v in raw.items()}
+
+
+@login_required
+def reports(request):
+    today = datetime.date.today()
+
+    period = (request.GET.get("period") or "month").strip()
+    sel_year = _int_arg(request.GET.get("year"), today.year)
+    sel_month = max(1, min(12, _int_arg(request.GET.get("month"), today.month)))
+
+    # Default comparison period: the previous month (or previous year).
+    if period == "year":
+        def_cyear, def_cmonth = sel_year - 1, sel_month
+    elif sel_month == 1:
+        def_cyear, def_cmonth = sel_year - 1, 12
+    else:
+        def_cyear, def_cmonth = sel_year, sel_month - 1
+    cmp_year = _int_arg(request.GET.get("cyear"), def_cyear)
+    cmp_month = max(1, min(12, _int_arg(request.GET.get("cmonth"), def_cmonth)))
+
+    cur = _stats_for_range(*_range_for(period, sel_year, sel_month))
+    cmp = _stats_for_range(*_range_for(period, cmp_year, cmp_month))
+
+    metrics = [
+        {"key": key, "label": label, "cur": cur[key], "cmp": cmp[key],
+         "delta": cur[key] - cmp[key]}
+        for key, label in _METRIC_DEFS
+    ]
+    chart_max = max([1] + [m["cur"] for m in metrics] + [m["cmp"] for m in metrics])
 
     month_names = {i: calendar.month_name[i] for i in range(1, 13)}
     year_range = list(range(today.year - 5, today.year + 2))
 
+    if period == "year":
+        sel_label, cmp_label = str(sel_year), str(cmp_year)
+    else:
+        sel_label = f"{month_names[sel_month]} {sel_year}"
+        cmp_label = f"{month_names[cmp_month]} {cmp_year}"
+
+    file_tag = f"{sel_year}-{sel_month:02d}" if period == "month" else str(sel_year)
+    report_data = {
+        "sel_label": sel_label,
+        "cmp_label": cmp_label,
+        "file_tag": file_tag,
+        "metrics": [{"label": m["label"], "cur": m["cur"], "cmp": m["cmp"],
+                      "delta": m["delta"]} for m in metrics],
+    }
+
     return render(request, "clinic/reports.html", {
-        "period_stats": period_stats,
+        "metrics": metrics,
+        "chart_max": chart_max,
         "period": period,
         "sel_year": sel_year,
         "sel_month": sel_month,
         "sel_month_name": month_names.get(sel_month, ""),
+        "cmp_year": cmp_year,
+        "cmp_month": cmp_month,
+        "sel_label": sel_label,
+        "cmp_label": cmp_label,
         "month_names": month_names,
         "year_range": year_range,
+        "report_data": report_data,
     })
 
 

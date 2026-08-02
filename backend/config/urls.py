@@ -3,9 +3,9 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.views.generic import RedirectView
 
-admin.site.site_header = "MDH Stoma Care Clinic — Administration"
-admin.site.site_title = "MDH Stoma Care Clinic"
-admin.site.index_title = "Clinic data administration"
+admin.site.site_header = "Administration"
+admin.site.site_title = "Admin"
+admin.site.index_title = "Data administration"
 
 urlpatterns = [
     # App login/logout — lands on the home dashboard, not the admin site.

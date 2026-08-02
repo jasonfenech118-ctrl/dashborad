@@ -2,8 +2,15 @@
 {% block title %}Reports — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
+  .rp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .rp-head h1{margin-bottom:0;}
   .rp-head p{margin:6px 0 0;color:var(--muted);font-size:13.5px;max-width:560px;}
+  .rp-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .rp-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:8px;
+    border:1.5px solid var(--border);background:#fff;color:var(--ink);font-size:13px;font-weight:700;
+    cursor:pointer;font-family:inherit;text-decoration:none;}
+  .rp-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .rp-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 
   .period-panel{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
     border:1px solid var(--border);border-radius:12px;margin-top:22px;overflow:hidden;}
@@ -26,13 +33,74 @@
   .stat:last-child{border-right:none;}
   .stat .n{font-size:28px;font-weight:800;color:var(--navy);line-height:1;}
   .stat .l{margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.25;}
+
+  /* compare panel */
+  .cmp-panel{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:12px;margin-top:16px;overflow:hidden;}
+  .cmp-bar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .cmp-bar h3{font-size:15px;font-weight:700;color:var(--navy);margin:0;}
+  .cmp-pick{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:12.5px;color:var(--muted);flex-wrap:wrap;}
+  .cmp-pick select{height:32px;border:1px solid var(--border);border-radius:7px;background:#fff;
+    font-size:12.5px;color:var(--ink);cursor:pointer;padding:0 8px;font-family:inherit;}
+  .legend{display:flex;gap:16px;padding:12px 18px 0;font-size:12.5px;color:var(--muted);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .legend i{width:13px;height:13px;border-radius:3px;display:inline-block;}
+  .sw-cur{background:var(--teal);}
+  .sw-cmp{background:#93c5fd;border:1.5px solid #3b82f6;}
+
+  /* grouped horizontal bar chart (pure CSS, print-safe) */
+  .chart{padding:14px 18px 18px;display:grid;gap:12px;}
+  .chart-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;}
+  .chart-row .cr-lbl{font-size:12.5px;color:var(--ink);font-weight:600;text-align:right;}
+  .cr-bars{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .cr-track{display:flex;align-items:center;gap:8px;}
+  .cr-bar{height:16px;border-radius:0 4px 4px 0;min-width:2px;transition:width .3s ease;}
+  .cr-bar.cur{background:var(--teal);}
+  .cr-bar.cmp{background:#93c5fd;border:1.5px solid #3b82f6;border-left:none;}
+  .cr-val{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  @media(max-width:560px){ .chart-row{grid-template-columns:1fr;} .chart-row .cr-lbl{text-align:left;} }
+
+  /* comparison table */
+  .cmp-table{width:100%;border-collapse:collapse;}
+  .cmp-table th,.cmp-table td{padding:10px 18px;font-size:13px;border-bottom:1px solid var(--border);text-align:right;}
+  .cmp-table th{background:var(--teal-50);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;}
+  .cmp-table th:first-child,.cmp-table td:first-child{text-align:left;}
+  .cmp-table tr:last-child td{border-bottom:none;}
+  .cmp-table td.metric{font-weight:600;color:var(--ink);}
+  .delta{font-weight:700;}
+  .delta.up{color:var(--teal);}
+  .delta.down{color:var(--red);}
+  .delta.same{color:var(--muted);}
+
+  @media print{
+    body::before{display:none !important;}
+    .topbar,.rp-actions,.period-nav,.period-toggle,.cmp-pick{display:none !important;}
+    .period-panel,.cmp-panel{border-color:#ccc;box-shadow:none;background:#fff !important;backdrop-filter:none !important;}
+    .wrap{max-width:none;padding:0;}
+    a[href]:after{content:"";}
+  }
 </style>
 
+{{ report_data|json_script:"report-data" }}
+
 <div class="rp-head">
-  <h1>Reports</h1>
-  <p>Monthly and yearly statistics for the stoma care team. Toggle between month and year to view totals.</p>
+  <div>
+    <h1>Reports</h1>
+    <p>Monthly and yearly statistics for the stoma care team. Toggle the period, compare against another month, print or download.</p>
+  </div>
+  <div class="rp-actions">
+    <button type="button" class="rp-btn" onclick="window.print()">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+    <button type="button" class="rp-btn" id="dl-csv">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      Download CSV
+    </button>
+  </div>
 </div>
 
+<!-- ===== Current period summary ===== -->
 <section class="period-panel" aria-label="Period statistics">
   <div class="period-bar">
     <h3>{% if period == "year" %}{{ sel_year }} — Yearly Summary{% else %}{{ sel_month_name }} {{ sel_year }} — Monthly Summary{% endif %}</h3>
@@ -62,15 +130,97 @@
     </div>
   </div>
   <div class="stats-grid">
-    <div class="stat"><div class="n">{{ period_stats.new_cases }}</div><div class="l">New Cases</div></div>
-    <div class="stat"><div class="n">{{ period_stats.ileostomy }}</div><div class="l">Ileostomy</div></div>
-    <div class="stat"><div class="n">{{ period_stats.colostomy }}</div><div class="l">Colostomy</div></div>
-    <div class="stat"><div class="n">{{ period_stats.urostomy }}</div><div class="l">Urostomy</div></div>
-    <div class="stat"><div class="n">{{ period_stats.followups }}</div><div class="l">Follow-ups</div></div>
-    <div class="stat"><div class="n">{{ period_stats.emails }}</div><div class="l">Emails Responded</div></div>
-    <div class="stat"><div class="n">{{ period_stats.inpatient_visits }}</div><div class="l">Inpatient Visits</div></div>
-    <div class="stat"><div class="n">{{ period_stats.siting_sessions }}</div><div class="l">Stoma Siting Sessions</div></div>
-    <div class="stat"><div class="n">{{ period_stats.total_stomas }}</div><div class="l">Total Stomas Formed</div></div>
+    {% for m in metrics %}
+    <div class="stat"><div class="n">{{ m.cur }}</div><div class="l">{{ m.label }}</div></div>
+    {% endfor %}
   </div>
 </section>
+
+<!-- ===== Comparison: chart + table ===== -->
+<section class="cmp-panel" aria-label="Period comparison">
+  <div class="cmp-bar">
+    <h3>{{ sel_label }} vs {{ cmp_label }}</h3>
+    <div class="cmp-pick">
+      <span>Compare with</span>
+      {% if period == "month" %}
+      <select onchange="location.href='?period={{ period }}&year={{ sel_year }}&month={{ sel_month }}&cyear={{ cmp_year }}&cmonth='+this.value">
+        {% for num, name in month_names.items %}<option value="{{ num }}"{% if num == cmp_month %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <select onchange="location.href='?period={{ period }}&year={{ sel_year }}&month={{ sel_month }}&cmonth={{ cmp_month }}&cyear='+this.value">
+        {% for y in year_range %}<option value="{{ y }}"{% if y == cmp_year %} selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i class="sw-cur"></i>{{ sel_label }}</span>
+    <span><i class="sw-cmp"></i>{{ cmp_label }}</span>
+  </div>
+
+  <div class="chart">
+    {% for m in metrics %}
+    <div class="chart-row">
+      <div class="cr-lbl">{{ m.label }}</div>
+      <div class="cr-bars">
+        <div class="cr-track">
+          <div class="cr-bar cur" style="width:{% widthratio m.cur chart_max 100 %}%" title="{{ sel_label }}: {{ m.cur }}"></div>
+          <span class="cr-val">{{ m.cur }}</span>
+        </div>
+        <div class="cr-track">
+          <div class="cr-bar cmp" style="width:{% widthratio m.cmp chart_max 100 %}%" title="{{ cmp_label }}: {{ m.cmp }}"></div>
+          <span class="cr-val">{{ m.cmp }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <table class="cmp-table">
+    <thead>
+      <tr><th>Metric</th><th>{{ sel_label }}</th><th>{{ cmp_label }}</th><th>Change</th></tr>
+    </thead>
+    <tbody>
+      {% for m in metrics %}
+      <tr>
+        <td class="metric">{{ m.label }}</td>
+        <td>{{ m.cur }}</td>
+        <td>{{ m.cmp }}</td>
+        <td class="delta {% if m.delta > 0 %}up{% elif m.delta < 0 %}down{% else %}same{% endif %}">
+          {% if m.delta > 0 %}▲ +{{ m.delta }}{% elif m.delta < 0 %}▼ {{ m.delta }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  (function(){
+    var el = document.getElementById('report-data');
+    if(!el) return;
+    var data = JSON.parse(el.textContent);
+    var btn = document.getElementById('dl-csv');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      var rows = [['Metric', data.sel_label, data.cmp_label, 'Change']];
+      data.metrics.forEach(function(m){
+        rows.push([m.label, m.cur, m.cmp, (m.delta > 0 ? '+' : '') + m.delta]);
+      });
+      var csv = rows.map(function(r){
+        return r.map(function(c){
+          c = String(c);
+          return /[",\n]/.test(c) ? '"' + c.replace(/"/g,'""') + '"' : c;
+        }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'stoma-report-' + data.file_tag + '.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  })();
+</script>
 {% endblock %}
