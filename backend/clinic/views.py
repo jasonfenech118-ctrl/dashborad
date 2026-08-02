@@ -143,12 +143,40 @@ def reports(request):
         cmp_label = f"{month_names[cmp_month]} {cmp_year}"
 
     file_tag = f"{sel_year}-{sel_month:02d}" if period == "month" else str(sel_year)
+
+    pie_stoma_cur = [
+        {"label": "Ileostomy", "value": cur["ileostomy"]},
+        {"label": "Colostomy", "value": cur["colostomy"]},
+        {"label": "Urostomy", "value": cur["urostomy"]},
+    ]
+    pie_stoma_cmp = [
+        {"label": "Ileostomy", "value": cmp["ileostomy"]},
+        {"label": "Colostomy", "value": cmp["colostomy"]},
+        {"label": "Urostomy", "value": cmp["urostomy"]},
+    ]
+    pie_activity_cur = [
+        {"label": "Follow-ups", "value": cur["followups"]},
+        {"label": "Emails", "value": cur["emails"]},
+        {"label": "Inpatient Visits", "value": cur["inpatient_visits"]},
+        {"label": "Siting Sessions", "value": cur["siting_sessions"]},
+    ]
+    pie_activity_cmp = [
+        {"label": "Follow-ups", "value": cmp["followups"]},
+        {"label": "Emails", "value": cmp["emails"]},
+        {"label": "Inpatient Visits", "value": cmp["inpatient_visits"]},
+        {"label": "Siting Sessions", "value": cmp["siting_sessions"]},
+    ]
+
     report_data = {
         "sel_label": sel_label,
         "cmp_label": cmp_label,
         "file_tag": file_tag,
         "metrics": [{"label": m["label"], "cur": m["cur"], "cmp": m["cmp"],
                       "delta": m["delta"]} for m in metrics],
+        "pie_stoma_cur": pie_stoma_cur,
+        "pie_stoma_cmp": pie_stoma_cmp,
+        "pie_activity_cur": pie_activity_cur,
+        "pie_activity_cmp": pie_activity_cmp,
     }
 
     return render(request, "clinic/reports.html", {
