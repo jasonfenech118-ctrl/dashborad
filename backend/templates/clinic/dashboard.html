@@ -190,32 +190,44 @@
   .main[data-view="overview"] #region-outcomes,
   .main[data-view="overview"] #region-registers,
   .main[data-view="overview"] #region-reminders,
+  .main[data-view="overview"] #region-metrics,
   .main[data-view="clinical"] #region-workloads,
   .main[data-view="clinical"] #region-outcomes,
   .main[data-view="clinical"] #region-registers,
   .main[data-view="clinical"] #region-reminders,
+  .main[data-view="clinical"] #region-metrics,
   .main[data-view="workloads"] #region-actions,
   .main[data-view="workloads"] #region-outcomes,
   .main[data-view="workloads"] #region-registers,
   .main[data-view="workloads"] #region-reminders,
+  .main[data-view="workloads"] #region-metrics,
   .main[data-view="outcomes"] #region-actions,
   .main[data-view="outcomes"] #region-workloads,
   .main[data-view="outcomes"] #region-registers,
   .main[data-view="outcomes"] #region-reminders,
+  .main[data-view="outcomes"] #region-metrics,
   .main[data-view="registers"] #region-actions,
   .main[data-view="registers"] #region-workloads,
   .main[data-view="registers"] #region-outcomes,
   .main[data-view="registers"] #region-reminders,
+  .main[data-view="registers"] #region-metrics,
   .main[data-view="reminders"] #region-actions,
   .main[data-view="reminders"] #region-workloads,
   .main[data-view="reminders"] #region-outcomes,
-  .main[data-view="reminders"] #region-registers{display:none;}
+  .main[data-view="reminders"] #region-registers,
+  .main[data-view="reminders"] #region-metrics,
+  .main[data-view="metrics"] #region-actions,
+  .main[data-view="metrics"] #region-workloads,
+  .main[data-view="metrics"] #region-outcomes,
+  .main[data-view="metrics"] #region-registers,
+  .main[data-view="metrics"] #region-reminders{display:none;}
   .main[data-view="overview"] .cols,
   .main[data-view="clinical"] .cols,
   .main[data-view="workloads"] .cols,
   .main[data-view="outcomes"] .cols,
   .main[data-view="registers"] .cols,
-  .main[data-view="reminders"] .cols{grid-template-columns:1fr;}
+  .main[data-view="reminders"] .cols,
+  .main[data-view="metrics"] .cols{grid-template-columns:1fr;}
 
   /* tab-styled navigation links */
   .tabs a.tab-link{background:none;border:none;padding:12px 2px;font-size:14px;color:var(--text-secondary);
@@ -279,9 +291,6 @@
         <a href="{% url 'clinic:ward' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>
           <span>Inpatient Visits</span></a>
-        <a href="{% url 'clinic:more_tools' %}">
-          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.56 3.69a9 9 0 0 0-2.92 1.95"/><path d="M3.69 8.56A9 9 0 0 0 3 12"/><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92"/><path d="M8.56 20.31A9 9 0 0 0 12 21"/><path d="M15.44 20.31a9 9 0 0 0 2.92-1.95"/><path d="M20.31 15.44A9 9 0 0 0 21 12"/><path d="M20.31 8.56a9 9 0 0 0-1.95-2.92"/><path d="M15.44 3.69A9 9 0 0 0 12 3"/><circle cx="12" cy="12" r="2"/></svg>
-          <span>Outpatient Clinic</span></a>
         <a href="{% url 'clinic:patient_list' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Patients</span></a>
@@ -306,7 +315,7 @@
     </aside>
 
     <!-- ============ MAIN ============ -->
-    <div class="main" id="main" data-view="overview">
+    <div class="main" id="main" data-view="clinical">
 
       <!-- top bar -->
       <header class="topbar">
@@ -379,12 +388,12 @@
 
         <!-- contextual tabs -->
         <div class="tabs" role="tablist" aria-label="Dashboard views">
-          <button role="tab" id="tab-overview"  aria-selected="true"  aria-controls="main" data-view="overview"  tabindex="0">Overview</button>
-          <button role="tab" id="tab-clinical"  aria-selected="false" aria-controls="main" data-view="clinical"  tabindex="-1">Clinical Workspace</button>
+          <button role="tab" id="tab-clinical"  aria-selected="true"  aria-controls="main" data-view="clinical"  tabindex="0">Clinical Workspace</button>
           <button role="tab" id="tab-workloads" aria-selected="false" aria-controls="main" data-view="workloads" tabindex="-1">Nurse Workloads</button>
           <button role="tab" id="tab-outcomes"  aria-selected="false" aria-controls="main" data-view="outcomes"  tabindex="-1">Patient Outcomes</button>
           <button role="tab" id="tab-registers" aria-selected="false" aria-controls="main" data-view="registers" tabindex="-1">Registers</button>
           <button role="tab" id="tab-reminders" aria-selected="false" aria-controls="main" data-view="reminders" tabindex="-1">Reminders</button>
+          <button role="tab" id="tab-metrics"   aria-selected="false" aria-controls="main" data-view="metrics"   tabindex="-1">Performance Metrics</button>
         </div>
 
         <div class="cols">
@@ -505,10 +514,20 @@
           <!-- REMINDERS -->
           <section class="panel" id="region-reminders" aria-label="Reminders">
             <div class="panel-head"><h2>Reminders</h2></div>
-            <div class="reminders-empty" style="padding:32px 18px;text-align:center;color:var(--text-secondary);font-size:14px;">
+            <div style="padding:32px 18px;text-align:center;color:var(--text-secondary);font-size:14px;">
               <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:36px;height:36px;margin-bottom:10px;color:#94a3b8;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
               <p style="margin:0 0 4px;font-weight:600;color:var(--navy-900);">No reminders yet</p>
               <p style="margin:0;font-size:13px;">Appointment and follow-up reminders will appear here.</p>
+            </div>
+          </section>
+
+          <!-- PERFORMANCE METRICS -->
+          <section class="panel" id="region-metrics" aria-label="Performance Metrics">
+            <div class="panel-head"><h2>Performance Metrics</h2></div>
+            <div style="padding:32px 18px;text-align:center;color:var(--text-secondary);font-size:14px;">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:36px;height:36px;margin-bottom:10px;color:#94a3b8;"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              <p style="margin:0 0 4px;font-weight:600;color:var(--navy-900);">Coming soon</p>
+              <p style="margin:0;font-size:13px;">Clinical performance metrics and analytics will appear here.</p>
             </div>
           </section>
         </div>
