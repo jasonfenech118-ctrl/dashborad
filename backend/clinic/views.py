@@ -37,8 +37,17 @@ def dashboard(request):
         return "—" if v is None else v
 
     stats = {k: fmt(v) for k, v in outcome_counts.items()}
+    return render(request, "clinic/dashboard.html", {"stats": stats})
 
-    # ---- Period-based statistics (month / year toggle) ----
+
+@login_required
+def reports(request):
+    today = datetime.date.today()
+    P = models.Patient.objects
+
+    def fmt(v):
+        return "—" if v is None else v
+
     period = (request.GET.get("period") or "month").strip()
     try:
         sel_year = int(request.GET.get("year", today.year))
@@ -96,8 +105,7 @@ def dashboard(request):
     month_names = {i: calendar.month_name[i] for i in range(1, 13)}
     year_range = list(range(today.year - 5, today.year + 2))
 
-    return render(request, "clinic/dashboard.html", {
-        "stats": stats,
+    return render(request, "clinic/reports.html", {
         "period_stats": period_stats,
         "period": period,
         "sel_year": sel_year,
@@ -105,7 +113,6 @@ def dashboard(request):
         "sel_month_name": month_names.get(sel_month, ""),
         "month_names": month_names,
         "year_range": year_range,
-        "current_year": today.year,
     })
 
 
