@@ -1,3 +1,4 @@
+import calendar
 import datetime
 
 from django.contrib import messages
@@ -22,21 +23,10 @@ def dashboard(request):
     today = datetime.date.today()
     P = models.Patient.objects
 
-    # Hero stats + register counts. Each is defensive so the page still renders
-    # (showing "—") when the DB isn't connected or a table is missing.
-    counts = {
+    # Outcome / register counts (always shown in their tab panels).
+    outcome_counts = {
         "active": _safe_count(P.filter(followup_status="active")),
         "inpatient": _safe_count(P.filter(followup_status="inpatient")),
-        "reviews_today": _safe_count(
-            models.Appointment.objects.filter(appt_date=today)
-        ),
-        "followups_due": _safe_count(
-            P.filter(
-                followup_status="active",
-                followup_due_month=today.month,
-                followup_year=today.year,
-            )
-        ),
         "reversed": _safe_count(P.filter(followup_status="reversed")),
         "deceased": _safe_count(P.filter(followup_status="deceased")),
         "gozo": _safe_count(P.filter(followup_status="relocated_gozo")),
@@ -46,8 +36,77 @@ def dashboard(request):
     def fmt(v):
         return "—" if v is None else v
 
-    stats = {k: fmt(v) for k, v in counts.items()}
-    return render(request, "clinic/dashboard.html", {"stats": stats})
+    stats = {k: fmt(v) for k, v in outcome_counts.items()}
+
+    # ---- Period-based statistics (month / year toggle) ----
+    period = (request.GET.get("period") or "month").strip()
+    try:
+        sel_year = int(request.GET.get("year", today.year))
+    except (ValueError, TypeError):
+        sel_year = today.year
+    try:
+        sel_month = int(request.GET.get("month", today.month))
+    except (ValueError, TypeError):
+        sel_month = today.month
+    sel_month = max(1, min(12, sel_month))
+
+    if period == "year":
+        date_from = datetime.date(sel_year, 1, 1)
+        date_to = datetime.date(sel_year, 12, 31)
+    else:
+        date_from = datetime.date(sel_year, sel_month, 1)
+        if sel_month == 12:
+            date_to = datetime.date(sel_year, 12, 31)
+        else:
+            date_to = datetime.date(sel_year, sel_month + 1, 1) - datetime.timedelta(days=1)
+
+    new_in_period = P.filter(surgery_date__gte=date_from, surgery_date__lte=date_to)
+    period_stats = {
+        "new_cases": _safe_count(new_in_period),
+        "ileostomy": _safe_count(new_in_period.filter(stoma_type_summary__icontains="ileostomy")),
+        "colostomy": _safe_count(new_in_period.filter(stoma_type_summary__icontains="colostomy")),
+        "urostomy": _safe_count(new_in_period.filter(stoma_type_summary__icontains="urostomy")),
+        "followups": _safe_count(
+            models.FollowupSeenEpisode.objects.filter(
+                review_date__gte=date_from, review_date__lte=date_to,
+            )
+        ),
+        "emails": _safe_count(
+            models.Encounter.objects.filter(
+                encounter_date__gte=date_from, encounter_date__lte=date_to,
+                encounter_type__icontains="email",
+            )
+        ),
+        "inpatient_visits": _safe_count(
+            models.Encounter.objects.filter(
+                encounter_date__gte=date_from, encounter_date__lte=date_to,
+                encounter_type__icontains="inpatient",
+            )
+        ),
+        "siting_sessions": _safe_count(
+            models.Encounter.objects.filter(
+                encounter_date__gte=date_from, encounter_date__lte=date_to,
+                encounter_type__icontains="siting",
+            )
+        ),
+        "total_stomas": _safe_count(new_in_period),
+    }
+    period_stats = {k: fmt(v) for k, v in period_stats.items()}
+
+    month_names = {i: calendar.month_name[i] for i in range(1, 13)}
+    year_range = list(range(today.year - 5, today.year + 2))
+
+    return render(request, "clinic/dashboard.html", {
+        "stats": stats,
+        "period_stats": period_stats,
+        "period": period,
+        "sel_year": sel_year,
+        "sel_month": sel_month,
+        "sel_month_name": month_names.get(sel_month, ""),
+        "month_names": month_names,
+        "year_range": year_range,
+        "current_year": today.year,
+    })
 
 
 @login_required

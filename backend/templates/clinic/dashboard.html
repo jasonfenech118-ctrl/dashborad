@@ -116,14 +116,27 @@
     padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;}
   .head-search .btn:hover{background:#1e40af;}
 
-  /* stats strip */
-  .stats{display:flex;align-items:stretch;background:rgba(255,255,255,.88);
-    backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid var(--border);
-    border-radius:var(--radius);margin-top:22px;overflow:hidden;}
-  .stat{flex:1;padding:18px 22px;text-align:center;border-left:1px solid var(--border);}
-  .stat:first-child{border-left:none;}
-  .stat .n{font-size:30px;font-weight:800;color:var(--navy-900);line-height:1;}
-  .stat .l{margin-top:7px;font-size:13px;color:var(--text-secondary);}
+  /* period stats panel */
+  .period-panel{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    border:1px solid var(--border);border-radius:var(--radius);margin-top:22px;overflow:hidden;}
+  .period-bar{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .period-bar h3{font-size:15px;font-weight:700;color:var(--navy-900);margin:0;white-space:nowrap;}
+  .period-toggle{display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-left:auto;}
+  .period-toggle a{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-secondary);
+    text-decoration:none;border-right:1px solid var(--border);transition:.15s;}
+  .period-toggle a:last-child{border-right:none;}
+  .period-toggle a:hover{background:var(--canvas);color:var(--text-primary);}
+  .period-toggle a.active{background:var(--blue-600);color:#fff;}
+  .period-nav{display:flex;align-items:center;gap:6px;}
+  .period-nav select,.period-nav .pn-btn{height:34px;border:1px solid var(--border);border-radius:7px;
+    background:var(--surface);font-size:13px;color:var(--text-primary);cursor:pointer;padding:0 10px;}
+  .period-nav .pn-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;padding:0;}
+  .period-nav .pn-btn:hover{background:var(--canvas);}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0;}
+  .stat{padding:18px 18px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .stat:last-child{border-right:none;}
+  .stat .n{font-size:26px;font-weight:800;color:var(--navy-900);line-height:1;}
+  .stat .l{margin-top:7px;font-size:12px;color:var(--text-secondary);line-height:1.25;}
 
   /* tabs */
   .tabs{display:flex;gap:26px;border-bottom:1px solid var(--border);margin-top:26px;overflow-x:auto;}
@@ -378,12 +391,46 @@
           </div>
         </div>
 
-        <!-- statistics strip -->
-        <section class="stats" aria-label="Key statistics">
-          <div class="stat"><div class="n">{{ stats.active }}</div><div class="l">Active Patients</div></div>
-          <div class="stat"><div class="n">{{ stats.inpatient }}</div><div class="l">Inpatients</div></div>
-          <div class="stat"><div class="n">{{ stats.reviews_today }}</div><div class="l">Today's Reviews</div></div>
-          <div class="stat"><div class="n">{{ stats.followups_due }}</div><div class="l">Follow-ups Due</div></div>
+        <!-- period statistics -->
+        <section class="period-panel" aria-label="Period statistics">
+          <div class="period-bar">
+            <h3>{% if period == "year" %}{{ sel_year }} — Yearly Summary{% else %}{{ sel_month_name }} {{ sel_year }} — Monthly Summary{% endif %}</h3>
+
+            <div class="period-nav">
+              {% if period == "month" %}
+              <a class="pn-btn" href="?period=month&month={% if sel_month == 1 %}12&year={{ sel_year|add:"-1" }}{% else %}{{ sel_month|add:"-1" }}&year={{ sel_year }}{% endif %}" title="Previous month">
+                <svg class="ic" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a>
+              <select onchange="location.href='?period=month&month='+this.value+'&year={{ sel_year }}'">
+                {% for num, name in month_names.items %}<option value="{{ num }}"{% if num == sel_month %} selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+              <a class="pn-btn" href="?period=month&month={% if sel_month == 12 %}1&year={{ sel_year|add:"1" }}{% else %}{{ sel_month|add:"1" }}&year={{ sel_year }}{% endif %}" title="Next month">
+                <svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a>
+              {% endif %}
+              <a class="pn-btn" href="?period={{ period }}&month={{ sel_month }}&year={{ sel_year|add:"-1" }}" title="Previous year">
+                <svg class="ic" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a>
+              <select onchange="location.href='?period={{ period }}&month={{ sel_month }}&year='+this.value">
+                {% for y in year_range %}<option value="{{ y }}"{% if y == sel_year %} selected{% endif %}>{{ y }}</option>{% endfor %}
+              </select>
+              <a class="pn-btn" href="?period={{ period }}&month={{ sel_month }}&year={{ sel_year|add:"1" }}" title="Next year">
+                <svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a>
+            </div>
+
+            <div class="period-toggle">
+              <a href="?period=month&month={{ sel_month }}&year={{ sel_year }}"{% if period == "month" %} class="active"{% endif %}>Monthly</a>
+              <a href="?period=year&year={{ sel_year }}"{% if period == "year" %} class="active"{% endif %}>Yearly</a>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat"><div class="n">{{ period_stats.new_cases }}</div><div class="l">New Cases</div></div>
+            <div class="stat"><div class="n">{{ period_stats.ileostomy }}</div><div class="l">Ileostomy</div></div>
+            <div class="stat"><div class="n">{{ period_stats.colostomy }}</div><div class="l">Colostomy</div></div>
+            <div class="stat"><div class="n">{{ period_stats.urostomy }}</div><div class="l">Urostomy</div></div>
+            <div class="stat"><div class="n">{{ period_stats.followups }}</div><div class="l">Follow-ups</div></div>
+            <div class="stat"><div class="n">{{ period_stats.emails }}</div><div class="l">Emails Responded</div></div>
+            <div class="stat"><div class="n">{{ period_stats.inpatient_visits }}</div><div class="l">Inpatient Visits</div></div>
+            <div class="stat"><div class="n">{{ period_stats.siting_sessions }}</div><div class="l">Stoma Siting Sessions</div></div>
+            <div class="stat"><div class="n">{{ period_stats.total_stomas }}</div><div class="l">Total Stomas Formed</div></div>
+          </div>
         </section>
 
         <!-- contextual tabs -->
