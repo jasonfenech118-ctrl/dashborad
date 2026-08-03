@@ -293,6 +293,11 @@ def ordering_forms(request):
     """
     forms = [
         {
+            "title": "Extra Supplies Requisition (ESRF STO-01)",
+            "desc": "Extra supplies requisition form for Stoma Care — Logistics Department, Mater Dei Hospital.",
+            "url": "/ordering/esrf/",
+        },
+        {
             "title": "Stoma Appliances",
             "desc": "Pouches, baseplates and one-piece / two-piece systems.",
             "url": "",
@@ -314,6 +319,11 @@ def ordering_forms(request):
         },
     ]
     return render(request, "clinic/ordering_forms.html", {"forms": forms})
+
+
+@login_required
+def esrf_form(request):
+    return render(request, "clinic/esrf_form.html")
 
 
 @login_required
