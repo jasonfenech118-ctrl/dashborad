@@ -1,0 +1,219 @@
+{% extends "clinic/base.html" %}
+{% block title %}ESRF STO-01 — Extra Supplies Requisition{% endblock %}
+{% block content %}
+<style>
+  .esrf-toolbar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;
+  }
+  .esrf-toolbar .back{
+    display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+    color:var(--teal);text-decoration:none;
+  }
+  .esrf-toolbar .back:hover{text-decoration:underline;}
+  .esrf-toolbar .spacer{flex:1;}
+  .esrf-toolbar .btn{font-size:12px;padding:7px 14px;}
+
+  .esrf{
+    background:#fff;border:1px solid var(--border);border-radius:12px;
+    padding:32px 36px;max-width:900px;margin:0 auto;
+  }
+
+  .esrf-head{text-align:center;margin-bottom:18px;}
+  .esrf-head .org{font-size:13px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;margin-bottom:2px;}
+  .esrf-head .dept{font-size:12px;color:var(--muted);margin-bottom:1px;}
+  .esrf-head .addr{font-size:11px;color:var(--muted);}
+  .esrf-title{
+    font-size:18px;font-weight:800;text-align:center;margin:14px 0 4px;
+    letter-spacing:.5px;
+  }
+  .esrf-email{
+    text-align:center;font-size:11px;color:var(--muted);margin-bottom:18px;
+  }
+  .esrf-email a{color:var(--teal);}
+
+  .esrf-meta{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;
+    margin-bottom:18px;font-size:13px;
+  }
+  .esrf-meta label{font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:2px;}
+  .esrf-meta input,.esrf-meta select{
+    width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;
+    font-size:13px;background:#f8fafc;color:var(--ink);
+  }
+  .esrf-meta input:focus,.esrf-meta select:focus{
+    outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);
+  }
+  .esrf-meta .ro{background:#f1f5f9;color:var(--muted);cursor:default;}
+
+  .esrf-tbl{width:100%;border-collapse:collapse;margin-bottom:18px;}
+  .esrf-tbl th{
+    background:var(--teal);color:#fff;font-size:10px;text-transform:uppercase;
+    letter-spacing:.4px;padding:8px 10px;text-align:left;border:1px solid var(--teal);
+  }
+  .esrf-tbl td{
+    border:1px solid var(--border);padding:0;
+  }
+  .esrf-tbl td input{
+    width:100%;border:none;padding:8px 10px;font-size:13px;background:transparent;color:var(--ink);
+  }
+  .esrf-tbl td input:focus{outline:none;background:var(--teal-50);}
+  .esrf-tbl tr:hover td{background:#f8fafc;}
+  .esrf-tbl .row-num{
+    width:30px;text-align:center;font-size:11px;color:var(--muted);background:#f8fafc;
+    padding:8px 0;border:1px solid var(--border);
+  }
+
+  .esrf-foot{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;
+    font-size:13px;padding-top:14px;border-top:2px solid var(--teal);
+  }
+  .esrf-foot label{font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:2px;}
+  .esrf-foot input{
+    width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;
+    font-size:13px;background:#f8fafc;color:var(--ink);
+  }
+  .esrf-foot input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+
+  .add-row-btn{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;
+    border:1.5px dashed var(--border);border-radius:6px;padding:6px 14px;
+    background:transparent;margin-bottom:18px;
+  }
+  .add-row-btn:hover{background:var(--teal-50);border-color:var(--teal);}
+
+  @media print{
+    .esrf-toolbar{display:none !important;}
+    .esrf{border:none;padding:0;box-shadow:none;max-width:none;}
+    .esrf-tbl td input,
+    .esrf-meta input,
+    .esrf-foot input{border:none;padding:4px 2px;background:transparent;}
+    .add-row-btn{display:none !important;}
+  }
+</style>
+
+<div class="esrf-toolbar">
+  <a href="{% url 'clinic:ordering_forms' %}" class="back">
+    <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    Back to Ordering Forms
+  </a>
+  <span class="spacer"></span>
+  <button class="btn" onclick="resetForm()" style="background:#fff;color:var(--ink);border-color:var(--border);">Clear Form</button>
+  <button class="btn" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="esrf" id="esrf">
+  <!-- Header -->
+  <div class="esrf-head">
+    <div class="org">Materials Management &amp; Logistics Directorate</div>
+    <div class="dept">Logistics Department</div>
+    <div class="addr">Mater Dei Hospital, Msida MSD 2090</div>
+  </div>
+
+  <div class="esrf-title">Extra Supplies Requisition Form</div>
+  <div class="esrf-email">To be sent for processing to: <a href="mailto:logisticsdept.mdh@gov.mt">logisticsdept.mdh@gov.mt</a></div>
+
+  <!-- Meta fields -->
+  <div class="esrf-meta">
+    <div>
+      <label for="esrf-ward">Section / Ward</label>
+      <input id="esrf-ward" class="ro" value="Stoma Care" readonly>
+    </div>
+    <div>
+      <label for="esrf-cc">Cost Centre</label>
+      <input id="esrf-cc" class="ro" value="STO-01" readonly>
+    </div>
+    <div>
+      <label for="esrf-ext">Ext No.</label>
+      <input id="esrf-ext" value="25454431">
+    </div>
+    <div>
+      <label for="esrf-delivery">Scheduled Delivery Period &amp; Day</label>
+      <input id="esrf-delivery" placeholder="e.g. Every Monday">
+    </div>
+  </div>
+
+  <!-- Items table -->
+  <table class="esrf-tbl" id="esrf-table">
+    <thead>
+      <tr>
+        <th style="width:30px;">#</th>
+        <th style="width:140px;">Item Code</th>
+        <th>Item Description</th>
+        <th style="width:65px;">APP Qty</th>
+        <th style="width:80px;">Approved EF</th>
+        <th style="width:220px;">Reason for Extra Supply</th>
+      </tr>
+    </thead>
+    <tbody id="esrf-tbody">
+    </tbody>
+  </table>
+
+  <button class="add-row-btn" onclick="addRows(3)" type="button">
+    <svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    Add Rows
+  </button>
+
+  <!-- Signature / footer -->
+  <div class="esrf-foot">
+    <div>
+      <label for="esrf-code">Authorisation Code</label>
+      <input id="esrf-code" placeholder="e.g. MDHG200126">
+    </div>
+    <div>
+      <label for="esrf-date">Date</label>
+      <input id="esrf-date" type="date">
+    </div>
+    <div style="grid-column:1/-1;">
+      <label for="esrf-name">Requesting Officer Name</label>
+      <input id="esrf-name" placeholder="Full name">
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var INITIAL_ROWS = 10;
+  var tbody = document.getElementById('esrf-tbody');
+  var rowCount = 0;
+
+  function createRow(){
+    rowCount++;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="row-num">' + rowCount + '</td>' +
+      '<td><input name="code_' + rowCount + '" placeholder="Item code"></td>' +
+      '<td><input name="desc_' + rowCount + '" placeholder="Description"></td>' +
+      '<td><input name="app_' + rowCount + '" placeholder="Qty" style="text-align:center;"></td>' +
+      '<td><input name="ef_' + rowCount + '" placeholder="" style="text-align:center;"></td>' +
+      '<td><input name="reason_' + rowCount + '" placeholder="Reason"></td>';
+    tbody.appendChild(tr);
+  }
+
+  window.addRows = function(n){
+    for(var i=0;i<(n||3);i++) createRow();
+  };
+
+  window.resetForm = function(){
+    if(!confirm('Clear all fields?')) return;
+    tbody.innerHTML = '';
+    rowCount = 0;
+    for(var i=0;i<INITIAL_ROWS;i++) createRow();
+    document.getElementById('esrf-ext').value = '25454431';
+    document.getElementById('esrf-delivery').value = '';
+    document.getElementById('esrf-code').value = '';
+    document.getElementById('esrf-date').value = '';
+    document.getElementById('esrf-name').value = '';
+  };
+
+  // Set today's date
+  var today = new Date();
+  var dd = String(today.getDate()).padStart(2,'0');
+  var mm = String(today.getMonth()+1).padStart(2,'0');
+  document.getElementById('esrf-date').value = today.getFullYear()+'-'+mm+'-'+dd;
+
+  // Initial rows
+  for(var i=0;i<INITIAL_ROWS;i++) createRow();
+})();
+</script>
+{% endblock %}
