@@ -11,6 +11,7 @@ urlpatterns = [
     path("reports/", views.reports, name="reports"),
     path("ordering/", views.ordering_forms, name="ordering_forms"),
     path("ordering/esrf/", views.esrf_form, name="esrf_form"),
+    path("documents/", views.clinic_documents, name="clinic_documents"),
     path("more/", views.more_tools, name="more_tools"),
     path("patients/add/", views.add_patient, name="add_patient"),
     path("patients/", views.patient_list, name="patient_list"),

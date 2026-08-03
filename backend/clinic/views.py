@@ -327,6 +327,11 @@ def esrf_form(request):
 
 
 @login_required
+def clinic_documents(request):
+    return render(request, "clinic/clinic_documents.html")
+
+
+@login_required
 def add_patient(request):
     """Dedicated page to add a new patient.
 
