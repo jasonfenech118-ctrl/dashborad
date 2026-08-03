@@ -12,6 +12,7 @@ urlpatterns = [
     path("ordering/", views.ordering_forms, name="ordering_forms"),
     path("ordering/esrf/", views.esrf_form, name="esrf_form"),
     path("documents/", views.clinic_documents, name="clinic_documents"),
+    path("documents/<uuid:pk>/", views.ordering_document_detail, name="ordering_document_detail"),
     path("more/", views.more_tools, name="more_tools"),
     path("patients/add/", views.add_patient, name="add_patient"),
     path("patients/", views.patient_list, name="patient_list"),

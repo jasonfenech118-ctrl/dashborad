@@ -1,11 +1,18 @@
 import calendar
 import datetime
+import time
+import urllib.parse
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
 
 from . import forms, models
 
@@ -321,14 +328,226 @@ def ordering_forms(request):
     return render(request, "clinic/ordering_forms.html", {"forms": forms})
 
 
+def _user_full_name(user):
+    """Best display name for the signature line: full name, else username."""
+    full = (user.get_full_name() or "").strip()
+    return full or user.get_username()
+
+
+def _email_configured():
+    """True when a real SMTP backend is configured (not the console stub)."""
+    return "smtp" in (settings.EMAIL_BACKEND or "").lower()
+
+
+def _next_reference():
+    """Sequential per-day reference, e.g. ESRF-STO01-20260803-001."""
+    today = datetime.date.today()
+    prefix = f"ESRF-STO01-{today:%Y%m%d}"
+    try:
+        n = models.OrderingDocument.objects.filter(reference__startswith=prefix).count() + 1
+        ref = f"{prefix}-{n:03d}"
+        while models.OrderingDocument.objects.filter(reference=ref).exists():
+            n += 1
+            ref = f"{prefix}-{n:03d}"
+        return ref
+    except Exception:
+        # DB unreachable — fall back to a timestamp-unique reference.
+        return f"{prefix}-{int(time.time())}"
+
+
+def _parse_items(request):
+    """Pull the line-item arrays from the POST into a clean list of dicts.
+
+    Empty rows (no code and no description) are dropped.
+    """
+    codes = request.POST.getlist("code")
+    descs = request.POST.getlist("description")
+    apps = request.POST.getlist("app")
+    efs = request.POST.getlist("ef")
+    reasons = request.POST.getlist("reason")
+    rows = []
+    for i in range(max(len(codes), len(descs), len(apps), len(efs), len(reasons))):
+        def get(lst):
+            return (lst[i] if i < len(lst) else "").strip()
+        code, desc = get(codes), get(descs)
+        if not code and not desc:
+            continue
+        rows.append({
+            "code": code, "description": desc,
+            "app": get(apps), "ef": get(efs), "reason": get(reasons),
+        })
+    return rows
+
+
+def _send_order_email(doc):
+    """Render and send the requisition to Logistics. Raises on failure."""
+    subject = f"Extra Supplies Requisition — {doc.section_ward} ({doc.reference})"
+    ctx = {"doc": doc}
+    html_body = render_to_string("clinic/email/esrf_order.html", ctx)
+    text_body = render_to_string("clinic/email/esrf_order.txt", ctx)
+    recipient = doc.recipient_email or settings.LOGISTICS_EMAIL
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
+
+def _mailto_link(doc):
+    """A fallback mailto: link so the user can send from their own client."""
+    lines = [
+        "Extra Supplies Requisition Form",
+        f"Reference: {doc.reference}",
+        f"Section/Ward: {doc.section_ward}",
+        f"Cost Centre: {doc.cost_centre}",
+        f"Ext no.: {doc.ext_no or ''}",
+        f"Scheduled delivery: {doc.delivery_period or ''}",
+        "",
+        "Items:",
+    ]
+    for it in (doc.items or []):
+        if it.get("code") or it.get("description"):
+            lines.append(
+                f"  - {it.get('code','')}  {it.get('description','')}  "
+                f"APP: {it.get('app','')}  Reason: {it.get('reason','')}"
+            )
+    lines += ["", f"Requested by: {doc.requested_by_name or ''}",
+              f"Date: {doc.form_date or ''}"]
+    body = "\r\n".join(lines)
+    subject = f"Extra Supplies Requisition — {doc.section_ward} ({doc.reference})"
+    recipient = doc.recipient_email or settings.LOGISTICS_EMAIL
+    return (
+        f"mailto:{recipient}?subject={urllib.parse.quote(subject)}"
+        f"&body={urllib.parse.quote(body)}"
+    )
+
+
 @login_required
 def esrf_form(request):
-    return render(request, "clinic/esrf_form.html")
+    """The fillable Extra Supplies Requisition Form.
+
+    GET renders the form (name + date pre-filled from the logged-in user).
+    POST saves the submission to the Clinic Documents archive and emails it
+    to Logistics.
+    """
+    if request.method == "POST":
+        return _esrf_submit(request)
+
+    return render(request, "clinic/esrf_form.html", {
+        "user_full_name": _user_full_name(request.user),
+        "today": datetime.date.today(),
+        "logistics_email": settings.LOGISTICS_EMAIL,
+    })
+
+
+def _esrf_submit(request):
+    items = _parse_items(request)
+    if not items:
+        messages.error(request, "Add at least one item before sending.")
+        return render(request, "clinic/esrf_form.html", {
+            "user_full_name": _user_full_name(request.user),
+            "today": datetime.date.today(),
+            "logistics_email": settings.LOGISTICS_EMAIL,
+        })
+
+    raw_date = (request.POST.get("form_date") or "").strip()
+    try:
+        form_date = datetime.date.fromisoformat(raw_date) if raw_date else datetime.date.today()
+    except ValueError:
+        form_date = datetime.date.today()
+
+    doc = models.OrderingDocument(
+        reference=_next_reference(),
+        form_type="ESRF STO-01",
+        section_ward="Stoma Care",
+        cost_centre="STO-01",
+        ext_no=(request.POST.get("ext_no") or "").strip(),
+        delivery_period=(request.POST.get("delivery_period") or "").strip(),
+        items=items,
+        requested_by_name=(request.POST.get("requested_by") or "").strip()
+                          or _user_full_name(request.user),
+        requested_by_username=request.user.get_username(),
+        form_date=form_date,
+        recipient_email=settings.LOGISTICS_EMAIL,
+        status=models.OrderingDocument.STATUS_SAVED,
+    )
+
+    # Try to email it, then persist the outcome.
+    email_ok, email_note = False, ""
+    if _email_configured():
+        try:
+            _send_order_email(doc)
+            email_ok = True
+        except Exception as exc:  # noqa: BLE001 — surface any send error to the user
+            email_note = f"Email could not be sent ({exc}). The form was saved."
+    else:
+        email_note = ("Email sending isn't set up yet, so the form was saved to "
+                      "Clinic Documents but not sent automatically.")
+
+    if email_ok:
+        doc.status = models.OrderingDocument.STATUS_SENT
+        doc.sent_at = timezone.now()
+
+    saved = True
+    try:
+        doc.save()
+    except Exception:
+        saved = False
+
+    if email_ok:
+        messages.success(
+            request,
+            f"Requisition {doc.reference} sent to {doc.recipient_email} and "
+            f"saved to Clinic Documents.",
+        )
+    elif saved:
+        messages.warning(request, email_note)
+    else:
+        messages.error(
+            request,
+            "The database is unavailable, so the form could not be saved. "
+            "Please try again shortly.",
+        )
+        return redirect("clinic:esrf_form")
+
+    return redirect("clinic:ordering_document_detail", pk=doc.pk)
 
 
 @login_required
 def clinic_documents(request):
-    return render(request, "clinic/clinic_documents.html")
+    """Clinic Documents archive — every ordering form sent from the app."""
+    q = (request.GET.get("q") or "").strip()
+    documents, db_ok = [], True
+    try:
+        qs = models.OrderingDocument.objects.all()
+        if q:
+            qs = qs.filter(
+                Q(reference__icontains=q)
+                | Q(requested_by_name__icontains=q)
+                | Q(section_ward__icontains=q)
+            )
+        documents = list(qs[:200])
+    except Exception:
+        db_ok = False
+    return render(request, "clinic/clinic_documents.html", {
+        "documents": documents,
+        "db_ok": db_ok,
+        "q": q,
+    })
+
+
+@login_required
+def ordering_document_detail(request, pk):
+    """Read-only view of an archived requisition (printable)."""
+    doc = get_object_or_404(models.OrderingDocument, pk=pk)
+    return render(request, "clinic/ordering_document.html", {
+        "doc": doc,
+        "mailto": _mailto_link(doc),
+        "is_sent": doc.status == models.OrderingDocument.STATUS_SENT,
+    })
 
 
 @login_required
