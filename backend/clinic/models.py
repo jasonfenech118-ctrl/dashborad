@@ -337,3 +337,58 @@ class BankStaffAssignment(UUIDModel):
 
     def __str__(self):
         return f"{self.bank_staff} — {self.work_date}"
+
+
+# ------------------------------------------------ ordering / clinic documents
+
+
+class OrderingDocument(UUIDModel):
+    """An ordering form that has been submitted (and emailed) to Logistics.
+
+    Unlike the models above this table is owned by Django (managed = True), so
+    it is created by a normal migration. It is the backing store for the
+    Clinic Documents archive: every requisition sent from the app is saved
+    here so the team keeps a permanent, searchable record.
+    """
+
+    STATUS_SENT = "sent"
+    STATUS_SAVED = "saved"  # saved but email not delivered (not configured / failed)
+    STATUS_CHOICES = [
+        (STATUS_SENT, "Sent"),
+        (STATUS_SAVED, "Saved (not emailed)"),
+    ]
+
+    reference = models.CharField(max_length=60, unique=True)
+    form_type = models.CharField(max_length=40, default="ESRF STO-01")
+    section_ward = models.CharField(max_length=120, default="Stoma Care")
+    cost_centre = models.CharField(max_length=40, default="STO-01")
+    ext_no = models.CharField(max_length=40, blank=True, null=True)
+    delivery_period = models.CharField(max_length=120, blank=True, null=True)
+
+    # The line items: list of {code, description, app, ef, reason}.
+    items = models.JSONField(default=list, blank=True)
+
+    requested_by_name = models.CharField(max_length=200, blank=True, null=True)
+    requested_by_username = models.CharField(max_length=200, blank=True, null=True)
+    form_date = models.DateField(blank=True, null=True)
+
+    recipient_email = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_SAVED)
+    sent_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "ordering_documents"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.reference} — {self.section_ward}"
+
+    @property
+    def item_count(self):
+        """Number of line items that actually carry a code or description."""
+        return sum(
+            1 for it in (self.items or [])
+            if (it.get("code") or it.get("description"))
+        )

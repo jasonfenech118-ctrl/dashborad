@@ -1,53 +1,67 @@
 {% extends "clinic/base.html" %}
 {% block title %}Clinic Documents — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
-<h1>Clinic Documents</h1>
-<p class="muted" style="margin-bottom:20px;font-size:13px;">Clinical documents, protocols and reference material for the Stoma Care team.</p>
-<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
-
-  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
-      </span>
-      <strong style="font-size:14px;">Protocols & Guidelines</strong>
-    </div>
-    <p class="muted" style="font-size:12px;flex:1;">Stoma care clinical protocols, assessment guidelines and care pathways.</p>
-    <span class="btn" style="text-align:center;font-size:12px;opacity:.45;cursor:default;background:#cbd5e1;border-color:#cbd5e1;">Coming Soon</span>
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Clinic Documents</h1>
+    <p class="muted" style="font-size:13px;">Ordering forms sent from the app are saved here automatically.</p>
   </div>
-
-  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
-      </span>
-      <strong style="font-size:14px;">Patient Education</strong>
-    </div>
-    <p class="muted" style="font-size:12px;flex:1;">Printable patient information leaflets and education materials.</p>
-    <span class="btn" style="text-align:center;font-size:12px;opacity:.45;cursor:default;background:#cbd5e1;border-color:#cbd5e1;">Coming Soon</span>
-  </div>
-
-  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>
-      </span>
-      <strong style="font-size:14px;">Audit & Compliance</strong>
-    </div>
-    <p class="muted" style="font-size:12px;flex:1;">Audit checklists, compliance records and quality improvement documents.</p>
-    <span class="btn" style="text-align:center;font-size:12px;opacity:.45;cursor:default;background:#cbd5e1;border-color:#cbd5e1;">Coming Soon</span>
-  </div>
-
-  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-      </span>
-      <strong style="font-size:14px;">Templates & Forms</strong>
-    </div>
-    <p class="muted" style="font-size:12px;flex:1;">Referral templates, consent forms and other clinical documentation.</p>
-    <span class="btn" style="text-align:center;font-size:12px;opacity:.45;cursor:default;background:#cbd5e1;border-color:#cbd5e1;">Coming Soon</span>
-  </div>
-
+  <a href="{% url 'clinic:esrf_form' %}" class="btn">New Requisition</a>
 </div>
+
+<form method="get" class="controls" style="margin-top:14px;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search reference, requester or ward…" style="min-width:280px;">
+  <button class="btn" type="submit">Search</button>
+  {% if q %}<a class="btn" href="{% url 'clinic:clinic_documents' %}" style="background:#64748b;">Clear</a>{% endif %}
+</form>
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    The documents archive is temporarily unavailable (database not reachable). Please try again shortly.
+  </div>
+{% elif documents %}
+  <table>
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Section / Ward</th>
+        <th>Items</th>
+        <th>Requested By</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in documents %}
+      <tr>
+        <td><strong>{{ d.reference }}</strong></td>
+        <td>{{ d.section_ward }}</td>
+        <td>{{ d.item_count }}</td>
+        <td>{{ d.requested_by_name|default:"—" }}</td>
+        <td>{{ d.form_date|date:"d/m/Y"|default:"—" }}</td>
+        <td>
+          {% if d.status == "sent" %}
+            <span class="pill" style="background:#ecfdf3;color:#067647;">Sent</span>
+          {% else %}
+            <span class="pill" style="background:#fffaeb;color:#b54708;">Saved</span>
+          {% endif %}
+        </td>
+        <td><a href="{% url 'clinic:ordering_document_detail' pk=d.id %}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card" style="text-align:center;padding:40px 18px;">
+    <div style="width:46px;height:46px;border-radius:10px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+      <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);width:24px;height:24px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+    </div>
+    <div style="font-weight:700;margin-bottom:4px;">No documents yet</div>
+    <p class="muted" style="font-size:13px;margin-bottom:16px;">
+      {% if q %}No documents match “{{ q }}”.{% else %}Ordering forms you send to Logistics will appear here automatically.{% endif %}
+    </p>
+    {% if not q %}<a href="{% url 'clinic:esrf_form' %}" class="btn">Create a Requisition</a>{% endif %}
+  </div>
+{% endif %}
 {% endblock %}

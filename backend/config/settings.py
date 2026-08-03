@@ -95,6 +95,24 @@ else:
         }
     }
 
+# --- Email ---------------------------------------------------------------
+# Defaults to the console backend so the app never crashes when SMTP isn't
+# set up (emails are printed to the server log). To send for real, set
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend plus the host /
+# user / password below (see .env.example). On PythonAnywhere, outbound SMTP
+# needs a paid account.
+EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", "")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@mdh-stoma.local")
+
+# Where ordering forms are sent for processing.
+LOGISTICS_EMAIL = env("LOGISTICS_EMAIL", "logisticsdept.mdh@gov.mt")
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
