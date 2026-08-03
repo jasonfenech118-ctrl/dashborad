@@ -1,7 +1,9 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}ESRF STO-01 — Extra Supplies Requisition{% endblock %}
 {% block content %}
 <style>
+  /* ============ ESRF — faithful reproduction of the official STO-01 form ============ */
   .esrf-toolbar{
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;
   }
@@ -13,82 +15,93 @@
   .esrf-toolbar .spacer{flex:1;}
   .esrf-toolbar .btn{font-size:12px;padding:7px 14px;}
 
-  .esrf{
-    background:#fff;border:1px solid var(--border);border-radius:12px;
-    padding:32px 36px;max-width:900px;margin:0 auto;
+  /* The "paper" — A4-ish sheet, Arial to match the workbook */
+  .esrf-paper{
+    background:#fff;color:#000;font-family:Arial, Helvetica, sans-serif;
+    width:820px;max-width:100%;margin:0 auto;padding:26px 30px 30px;
+    border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 1px 4px rgba(15,23,42,.08);
   }
 
-  .esrf-head{text-align:center;margin-bottom:18px;}
-  .esrf-head .org{font-size:13px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;margin-bottom:2px;}
-  .esrf-head .dept{font-size:12px;color:var(--muted);margin-bottom:1px;}
-  .esrf-head .addr{font-size:11px;color:var(--muted);}
-  .esrf-title{
-    font-size:18px;font-weight:800;text-align:center;margin:14px 0 4px;
-    letter-spacing:.5px;
+  /* ---- Letterhead: logo left, boxed directorate text on the right ---- */
+  .esrf-lh{display:flex;align-items:center;gap:20px;margin-bottom:16px;}
+  .esrf-lh .logo{flex:0 0 auto;}
+  .esrf-lh .logo img{display:block;width:230px;height:auto;}
+  .esrf-lh .org{
+    margin-left:auto;border:1px solid #000;padding:8px 14px;text-align:center;
+    min-width:340px;
   }
-  .esrf-email{
-    text-align:center;font-size:11px;color:var(--muted);margin-bottom:18px;
-  }
-  .esrf-email a{color:var(--teal);}
+  .esrf-lh .org .l1{font-size:11px;font-weight:400;line-height:1.5;}
+  .esrf-lh .org .l2{font-size:11px;font-weight:400;line-height:1.5;}
+  .esrf-lh .org .l3{font-size:11px;font-weight:400;line-height:1.5;}
 
-  .esrf-meta{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;
-    margin-bottom:18px;font-size:13px;
-  }
-  .esrf-meta label{font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:2px;}
-  .esrf-meta input,.esrf-meta select{
-    width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;
-    font-size:13px;background:#f8fafc;color:var(--ink);
-  }
-  .esrf-meta input:focus,.esrf-meta select:focus{
-    outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);
-  }
-  .esrf-meta .ro{background:#f1f5f9;color:var(--muted);cursor:default;}
+  /* ---- Main bordered grid ---- */
+  .esrf-grid{border:1.5px solid #000;border-collapse:collapse;width:100%;}
+  .esrf-grid td,.esrf-grid th{border:1px solid #000;padding:0;vertical-align:middle;}
 
-  .esrf-tbl{width:100%;border-collapse:collapse;margin-bottom:18px;}
-  .esrf-tbl th{
-    background:var(--teal);color:#fff;font-size:10px;text-transform:uppercase;
-    letter-spacing:.4px;padding:8px 10px;text-align:left;border:1px solid var(--teal);
+  .esrf-title-cell{
+    text-align:center;font-size:22px;font-weight:400;letter-spacing:.5px;
+    padding:8px 6px;height:40px;
   }
-  .esrf-tbl td{
-    border:1px solid var(--border);padding:0;
+  .esrf-email-cell{
+    text-align:center;font-size:12px;padding:6px;height:30px;
   }
-  .esrf-tbl td input{
-    width:100%;border:none;padding:8px 10px;font-size:13px;background:transparent;color:var(--ink);
-  }
-  .esrf-tbl td input:focus{outline:none;background:var(--teal-50);}
-  .esrf-tbl tr:hover td{background:#f8fafc;}
-  .esrf-tbl .row-num{
-    width:30px;text-align:center;font-size:11px;color:var(--muted);background:#f8fafc;
-    padding:8px 0;border:1px solid var(--border);
-  }
+  .esrf-email-cell a{color:#000;text-decoration:none;}
 
-  .esrf-foot{
-    display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;
-    font-size:13px;padding-top:14px;border-top:2px solid var(--teal);
+  /* Info rows */
+  .esrf-lbl{font-size:11px;padding:6px 8px;white-space:nowrap;background:#fff;}
+  .esrf-lbl.sm{font-size:9px;}
+  .esrf-fieldcell{padding:0;}
+  .esrf-fieldcell input{
+    width:100%;border:none;background:#fff;font-family:Arial,Helvetica,sans-serif;
+    font-size:12px;padding:6px 8px;text-align:center;color:#000;
+    box-sizing:border-box;height:30px;display:block;
   }
-  .esrf-foot label{font-weight:700;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:2px;}
-  .esrf-foot input{
-    width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;
-    font-size:13px;background:#f8fafc;color:var(--ink);
+  .esrf-fieldcell input:focus{outline:none;background:#fff7ed;}
+  .esrf-fieldcell input.ro{background:#f3f4f6;color:#111;cursor:default;font-weight:600;}
+
+  /* Table header (peach — Excel accent6 lighter 40%) */
+  .esrf-grid th{
+    background:#fcd5b4;font-family:Calibri,Arial,sans-serif;font-weight:700;
+    font-size:11px;text-align:center;padding:7px 6px;height:34px;color:#000;
   }
-  .esrf-foot input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+  /* the "approved EF" office-use column is shaded on the body rows too */
+  .esrf-grid td.ef{background:#fcd5b4;}
+  .esrf-grid td.ef input{background:#fcd5b4;}
+  .esrf-grid td.ef input:focus{background:#f8c9a0;}
+
+  .esrf-grid tbody tr{height:30px;}
+  .esrf-grid tbody td{height:30px;}
+  .esrf-rownum{width:26px;text-align:center;font-size:10px;color:#555;background:#fafafa;}
+
+  /* Footer band + signature */
+  .esrf-ref{
+    font-size:11px;font-weight:700;letter-spacing:.5px;text-align:center;
+    padding:6px;background:#fff;
+  }
+  .esrf-sign td{padding:6px 8px;font-size:11px;}
+  .esrf-sign .sig-name input,.esrf-sign .sig-date input{
+    width:100%;border:none;background:#fff;font-family:Arial,sans-serif;font-size:12px;
+    padding:4px 2px;text-align:center;color:#000;
+  }
+  .esrf-sign .sig-name input:focus,.esrf-sign .sig-date input:focus{outline:none;background:#fff7ed;}
+  .esrf-sign .k{font-size:9px;color:#333;text-transform:uppercase;letter-spacing:.3px;}
 
   .add-row-btn{
     display:inline-flex;align-items:center;gap:4px;
     font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;
     border:1.5px dashed var(--border);border-radius:6px;padding:6px 14px;
-    background:transparent;margin-bottom:18px;
+    background:#fff;margin-top:14px;
   }
   .add-row-btn:hover{background:var(--teal-50);border-color:var(--teal);}
 
   @media print{
-    .esrf-toolbar{display:none !important;}
-    .esrf{border:none;padding:0;box-shadow:none;max-width:none;}
-    .esrf-tbl td input,
-    .esrf-meta input,
-    .esrf-foot input{border:none;padding:4px 2px;background:transparent;}
-    .add-row-btn{display:none !important;}
+    .esrf-toolbar,.add-row-btn{display:none !important;}
+    .esrf-paper{border:none;box-shadow:none;width:100%;max-width:none;padding:0;border-radius:0;}
+    .esrf-fieldcell input:focus,
+    .esrf-sign .sig-name input:focus,.esrf-sign .sig-date input:focus{background:#fff !important;}
+    .esrf-grid td.ef,.esrf-grid td.ef input{background:#fcd5b4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .esrf-grid th{background:#fcd5b4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{size:A4 portrait;margin:12mm;}
   }
 </style>
 
@@ -102,118 +115,122 @@
   <button class="btn" onclick="window.print()">Print / Save PDF</button>
 </div>
 
-<div class="esrf" id="esrf">
-  <!-- Header -->
-  <div class="esrf-head">
-    <div class="org">Materials Management &amp; Logistics Directorate</div>
-    <div class="dept">Logistics Department</div>
-    <div class="addr">Mater Dei Hospital, Msida MSD 2090</div>
-  </div>
+<div class="esrf-paper" id="esrf">
 
-  <div class="esrf-title">Extra Supplies Requisition Form</div>
-  <div class="esrf-email">To be sent for processing to: <a href="mailto:logisticsdept.mdh@gov.mt">logisticsdept.mdh@gov.mt</a></div>
-
-  <!-- Meta fields -->
-  <div class="esrf-meta">
-    <div>
-      <label for="esrf-ward">Section / Ward</label>
-      <input id="esrf-ward" class="ro" value="Stoma Care" readonly>
+  <!-- ===== Letterhead ===== -->
+  <div class="esrf-lh">
+    <div class="logo">
+      <img src="{% static 'images/mater_dei_logo.png' %}" alt="SPTAR Mater Dei">
     </div>
-    <div>
-      <label for="esrf-cc">Cost Centre</label>
-      <input id="esrf-cc" class="ro" value="STO-01" readonly>
-    </div>
-    <div>
-      <label for="esrf-ext">Ext No.</label>
-      <input id="esrf-ext" value="25454431">
-    </div>
-    <div>
-      <label for="esrf-delivery">Scheduled Delivery Period &amp; Day</label>
-      <input id="esrf-delivery" placeholder="e.g. Every Monday">
+    <div class="org">
+      <div class="l1">MATERIALS MANAGEMENT &amp; LOGISTICS DIRECTORATE</div>
+      <div class="l2">LOGISTICS DEPARTMENT</div>
+      <div class="l3">MATER DEI HOSPITAL MSIDA MSD 2090</div>
     </div>
   </div>
 
-  <!-- Items table -->
-  <table class="esrf-tbl" id="esrf-table">
-    <thead>
-      <tr>
-        <th style="width:30px;">#</th>
-        <th style="width:140px;">Item Code</th>
-        <th>Item Description</th>
-        <th style="width:65px;">APP Qty</th>
-        <th style="width:80px;">Approved EF</th>
-        <th style="width:220px;">Reason for Extra Supply</th>
-      </tr>
-    </thead>
-    <tbody id="esrf-tbody">
-    </tbody>
+  <!-- ===== Main grid ===== -->
+  <table class="esrf-grid">
+    <colgroup>
+      <col style="width:15%">
+      <col style="width:41%">
+      <col style="width:10%">
+      <col style="width:12%">
+      <col style="width:22%">
+    </colgroup>
+
+    <!-- Title -->
+    <tr><td class="esrf-title-cell" colspan="5">EXTRA SUPPLIES REQUISITION FORM</td></tr>
+
+    <!-- Processing email -->
+    <tr><td class="esrf-email-cell" colspan="5">TO BE SENT FOR PROCESSING TO: <a href="mailto:logisticsdept.mdh@gov.mt">logisticsdept.mdh@gov.mt</a></td></tr>
+
+    <!-- Section / Ward + Cost Centre -->
+    <tr>
+      <td class="esrf-lbl">SECTION/WARD:</td>
+      <td class="esrf-fieldcell"><input id="esrf-ward" class="ro" value="Stoma Care" readonly></td>
+      <td class="esrf-lbl" colspan="2">COST CENTRE:</td>
+      <td class="esrf-fieldcell"><input id="esrf-cc" class="ro" value="STO-01" readonly></td>
+    </tr>
+
+    <!-- Ext no. + Scheduled delivery -->
+    <tr>
+      <td class="esrf-lbl">EXT no.:</td>
+      <td class="esrf-fieldcell"><input id="esrf-ext" value="25454431"></td>
+      <td class="esrf-lbl sm" colspan="2">SCHEDULED DELIVERY PERIOD AND DAY:</td>
+      <td class="esrf-fieldcell"><input id="esrf-delivery" placeholder=""></td>
+    </tr>
+
+    <!-- Table header -->
+    <tr>
+      <th>ITEM CODE</th>
+      <th>ITEM DESCRIPTION</th>
+      <th>APP</th>
+      <th>approved EF</th>
+      <th>STATE REASONS FOR REQUIRING EXTRA SUPPLY</th>
+    </tr>
+
+    <tbody id="esrf-tbody"><!-- rows injected by JS --></tbody>
+
+    <!-- Form reference band -->
+    <tr><td class="esrf-ref" colspan="5">MDHG200126</td></tr>
+
+    <!-- Signature -->
+    <tr class="esrf-sign">
+      <td colspan="3" class="sig-name">
+        <div class="k">Name</div>
+        <input id="esrf-name" value="Jason Fenech">
+      </td>
+      <td class="esrf-lbl" style="text-align:center;font-weight:700;">DATE</td>
+      <td class="sig-date">
+        <input id="esrf-date" type="date">
+      </td>
+    </tr>
   </table>
 
   <button class="add-row-btn" onclick="addRows(3)" type="button">
     <svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
     Add Rows
   </button>
-
-  <!-- Signature / footer -->
-  <div class="esrf-foot">
-    <div>
-      <label for="esrf-code">Authorisation Code</label>
-      <input id="esrf-code" placeholder="e.g. MDHG200126">
-    </div>
-    <div>
-      <label for="esrf-date">Date</label>
-      <input id="esrf-date" type="date">
-    </div>
-    <div style="grid-column:1/-1;">
-      <label for="esrf-name">Requesting Officer Name</label>
-      <input id="esrf-name" placeholder="Full name">
-    </div>
-  </div>
 </div>
 
 <script>
 (function(){
-  var INITIAL_ROWS = 10;
+  var INITIAL_ROWS = 8;
   var tbody = document.getElementById('esrf-tbody');
-  var rowCount = 0;
+  var n = 0;
 
-  function createRow(){
-    rowCount++;
+  function addRow(){
+    n++;
     var tr = document.createElement('tr');
     tr.innerHTML =
-      '<td class="row-num">' + rowCount + '</td>' +
-      '<td><input name="code_' + rowCount + '" placeholder="Item code"></td>' +
-      '<td><input name="desc_' + rowCount + '" placeholder="Description"></td>' +
-      '<td><input name="app_' + rowCount + '" placeholder="Qty" style="text-align:center;"></td>' +
-      '<td><input name="ef_' + rowCount + '" placeholder="" style="text-align:center;"></td>' +
-      '<td><input name="reason_' + rowCount + '" placeholder="Reason"></td>';
+      '<td class="esrf-fieldcell"><input name="code_'  + n + '"></td>' +
+      '<td class="esrf-fieldcell"><input name="desc_'  + n + '" style="text-align:left;padding-left:8px;"></td>' +
+      '<td class="esrf-fieldcell"><input name="app_'   + n + '"></td>' +
+      '<td class="esrf-fieldcell ef"><input name="ef_' + n + '"></td>' +
+      '<td class="esrf-fieldcell"><input name="reason_'+ n + '" style="text-align:left;padding-left:8px;"></td>';
     tbody.appendChild(tr);
   }
 
-  window.addRows = function(n){
-    for(var i=0;i<(n||3);i++) createRow();
-  };
+  window.addRows = function(k){ for(var i=0;i<(k||3);i++) addRow(); };
 
   window.resetForm = function(){
     if(!confirm('Clear all fields?')) return;
-    tbody.innerHTML = '';
-    rowCount = 0;
-    for(var i=0;i<INITIAL_ROWS;i++) createRow();
-    document.getElementById('esrf-ext').value = '25454431';
-    document.getElementById('esrf-delivery').value = '';
-    document.getElementById('esrf-code').value = '';
-    document.getElementById('esrf-date').value = '';
-    document.getElementById('esrf-name').value = '';
+    tbody.innerHTML=''; n=0;
+    for(var i=0;i<INITIAL_ROWS;i++) addRow();
+    document.getElementById('esrf-ext').value='25454431';
+    document.getElementById('esrf-delivery').value='';
+    document.getElementById('esrf-name').value='Jason Fenech';
+    setToday();
   };
 
-  // Set today's date
-  var today = new Date();
-  var dd = String(today.getDate()).padStart(2,'0');
-  var mm = String(today.getMonth()+1).padStart(2,'0');
-  document.getElementById('esrf-date').value = today.getFullYear()+'-'+mm+'-'+dd;
+  function setToday(){
+    var d=new Date(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+    document.getElementById('esrf-date').value=d.getFullYear()+'-'+mm+'-'+dd;
+  }
 
-  // Initial rows
-  for(var i=0;i<INITIAL_ROWS;i++) createRow();
+  for(var i=0;i<INITIAL_ROWS;i++) addRow();
+  setToday();
 })();
 </script>
 {% endblock %}
