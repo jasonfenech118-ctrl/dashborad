@@ -45,7 +45,10 @@
   table.tv input,table.tv select{width:100%;border:1px solid transparent;border-radius:6px;padding:7px 8px;font-size:13px;background:#f8fafc;color:var(--ink);font-family:inherit;}
   table.tv input:focus,table.tv select:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 2px rgba(29,78,216,.12);}
   table.tv td.c{text-align:center;}
-  .col-pos{width:60px;} .col-bid{width:130px;} .col-sel{width:74px;} .col-act{width:48px;}
+  .col-pos{width:60px;} .col-bid{width:130px;} .col-sel{width:74px;} .col-act{width:48px;} .col-samples{width:138px;}
+  .req-on{margin-top:6px;}
+  .req-on label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:2px;}
+  .req-on input{font-size:12px;}
   .bid-wrap{display:flex;align-items:center;gap:4px;} .bid-wrap .cur{color:var(--muted);font-weight:700;font-size:13px;}
   .pos-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:999px;font-weight:800;font-size:13px;background:#e2e8f0;color:#475569;}
   tr.winner td{background:#f0fdf4 !important;} tr.winner .pos-badge{background:#16a34a;color:#fff;}
@@ -124,7 +127,7 @@
     <table class="tv">
       <thead><tr>
         <th class="col-pos">Pos</th><th>Supplier / Company</th><th>Receipt ID</th>
-        <th class="col-bid">Bid (€)</th><th>Brand</th><th>Specs + CE</th><th>Samples</th>
+        <th class="col-bid">Bid (€)</th><th>Brand</th><th>Specs + CE</th><th class="col-samples">Samples</th>
         <th class="col-sel">Selected</th><th class="col-act"></th>
       </tr></thead>
       <tbody id="tv-body"></tbody>
@@ -180,7 +183,9 @@
       '<td class="col-bid"><span class="bid-wrap"><span class="cur">€</span><input data-f="bid" type="number" step="0.01" min="0" value="'+esc(b.bid)+'" inputmode="decimal" '+RO+'></span></td>'+
       '<td><input data-f="brand" value="'+esc(b.brand)+'" '+RO+'></td>'+
       '<td><select data-f="specsCe" '+ROS+'>'+YN(b.specsCe)+'</select></td>'+
-      '<td><select data-f="samples" '+ROS+'>'+YN(b.samples)+'</select></td>'+
+      '<td class="col-samples"><select data-f="samples" '+ROS+'>'+YN(b.samples)+'</select>'+
+        (b.samples==="Yes" ? '<div class="req-on"><label>Requested on</label><input data-f="reqOn" type="date" value="'+esc(b.reqOn)+'" '+RO+'></div>' : '')+
+      '</td>'+
       '<td class="c col-sel"><input type="radio" name="selbid" '+(state.selectedId===b.id?"checked":"")+' data-sel="'+b.id+'" '+ROS+' style="width:auto;transform:scale(1.2);"></td>'+
       '<td class="c col-act">'+
         '<button class="row-toggle" type="button" title="Details" data-toggle="'+b.id+'"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="'+(d?"m18 15-6-6-6 6":"m6 9 6 6 6-6")+'"/></svg></button>'+
@@ -188,7 +193,6 @@
       '</td></tr>';
     if(!d) return main;
     return main+'<tr class="detail" data-detail="'+b.id+'"><td colspan="9"><div class="detail-inner">'+
-      '<div><label>Samples Requested On</label><input data-f="reqOn" type="date" value="'+esc(b.reqOn)+'" '+RO+'></div>'+
       '<div><label>Samples Delivery Due</label><input data-f="dueOn" type="date" value="'+esc(b.dueOn)+'" '+RO+'></div>'+
       '<div><label>Samples Provided On</label><input data-f="provOn" type="date" value="'+esc(b.provOn)+'" '+RO+'></div>'+
       '<div class="full"><label>Feedback No 1</label><textarea data-f="fb1" '+RO+'>'+esc(b.fb1)+'</textarea></div>'+
@@ -256,6 +260,11 @@
   });
   body.addEventListener("change",function(e){
     var f=e.target.getAttribute("data-f");
+    if(f==="samples"){
+      var tr=e.target.closest("tr[data-id]"); var b=tr&&findBidder(+tr.dataset.id);
+      if(b){ b.samples=e.target.value; markDirty(); }
+      render(); return;   // reveal / hide the "Requested on" date
+    }
     if(f==="bid"){ render(); return; }
     if(e.target.getAttribute("data-sel")){ state.selectedId=+e.target.getAttribute("data-sel"); markDirty(); }
   });
