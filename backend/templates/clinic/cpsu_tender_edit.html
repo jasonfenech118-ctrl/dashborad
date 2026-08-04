@@ -1,0 +1,275 @@
+{% extends "clinic/base.html" %}
+{% block title %}{{ tender.title }} — Tender Evaluation{% endblock %}
+{% block content %}
+<style>
+  /* clean working surface — hide the app background image on this page */
+  body::before{display:none !important;}
+
+  .tv-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  .tv-head .ht{flex:1;min-width:220px;}
+  .tv-head h1{margin:6px 0 2px;font-size:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .tv-head .sub{color:var(--muted);font-size:13px;}
+  .tv-head .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .tv-head .back:hover{text-decoration:underline;}
+  .tv-head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:#f1f5f9;}
+  .btn-green{background:#1e8f4e;}
+  .btn-green:hover{background:#176e3c;}
+  .status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .status.open{background:#eff6ff;color:#1d4ed8;}
+  .status.closed{background:#f1f5f9;color:#475569;}
+
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+
+  .tv-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;}
+  .tv-fields label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .tv-fields input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;}
+  .tv-fields input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+
+  .tv-summary{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;}
+  .tv-chip{background:var(--teal-50);border:1px solid #dbeafe;border-radius:10px;padding:10px 14px;font-size:13px;}
+  .tv-chip .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+  .tv-chip .v{font-weight:800;font-size:15px;}
+  .tv-chip.win{background:#ecfdf3;border-color:#abefc6;}
+  .tv-chip.win .v{color:#067647;}
+
+  .tv-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff;}
+  table.tv{width:100%;border-collapse:collapse;min-width:920px;}
+  table.tv th{background:var(--navy);color:#fff;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;padding:10px 8px;text-align:left;white-space:nowrap;}
+  table.tv td{border-bottom:1px solid var(--border);padding:5px 8px;vertical-align:middle;}
+  table.tv tbody tr:hover td{background:#f8fafc;}
+  table.tv input,table.tv select{width:100%;border:1px solid transparent;border-radius:6px;padding:7px 8px;font-size:13px;background:#f8fafc;color:var(--ink);font-family:inherit;}
+  table.tv input:focus,table.tv select:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 2px rgba(29,78,216,.12);}
+  table.tv td.c{text-align:center;}
+  .col-pos{width:60px;} .col-bid{width:130px;} .col-sel{width:74px;} .col-act{width:48px;}
+  .bid-wrap{display:flex;align-items:center;gap:4px;} .bid-wrap .cur{color:var(--muted);font-weight:700;font-size:13px;}
+  .pos-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:999px;font-weight:800;font-size:13px;background:#e2e8f0;color:#475569;}
+  tr.winner td{background:#f0fdf4 !important;} tr.winner .pos-badge{background:#16a34a;color:#fff;}
+  .row-remove{border:none;background:none;color:#dc2626;cursor:pointer;padding:6px;border-radius:6px;line-height:0;}
+  .row-remove:hover{background:#fee2e2;}
+  .row-toggle{border:none;background:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;line-height:0;}
+  .row-toggle:hover{background:#e2e8f0;color:var(--ink);}
+  tr.detail td{background:#f8fafc;padding:0;}
+  .detail-inner{padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px;}
+  .detail-inner .full{grid-column:1/-1;}
+  .detail-inner label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .detail-inner input,.detail-inner textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  .detail-inner textarea{min-height:52px;resize:vertical;}
+  @media(max-width:720px){.detail-inner{grid-template-columns:1fr;}}
+  .add-bidder{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;border:1.5px dashed var(--border);border-radius:8px;padding:9px 16px;background:#fff;margin-top:14px;}
+  .add-bidder:hover{background:var(--teal-50);border-color:var(--teal);}
+  .locked-note{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--muted);margin-bottom:14px;}
+
+  @media print{
+    .tv-head .actions,.tv-head .back,.add-bidder,.col-act,.row-toggle,.row-remove{display:none !important;}
+    .tv-scroll{overflow:visible;border:none;} table.tv{min-width:0;}
+    table.tv th{background:#13294b !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    table.tv input,table.tv select{background:#fff;border:none;}
+    @page{size:A4 landscape;margin:10mm;}
+  }
+</style>
+
+<div class="tv-head">
+  <div class="ht">
+    <a href="{% url 'clinic:cpsu_tenders' %}" class="back">
+      <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Tenders
+    </a>
+    <h1><span id="doc-title">{{ tender.title }}</span>
+      {% if tender.is_open %}<span class="status open">Open</span>{% else %}<span class="status closed">Closed</span>{% endif %}
+    </h1>
+    <div class="sub">Enter each bidder's price — they're ranked automatically, lowest bid on top. Add as many bidders as you need.</div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" type="button" onclick="window.print()">Print / Save PDF</button>
+    {% if tender.is_open %}
+      <button class="btn btn-ghost" type="button" onclick="submitTender('save')">Save</button>
+      <button class="btn btn-green" type="button" onclick="submitTender('close')">Save &amp; Close</button>
+    {% else %}
+      <button class="btn" type="button" onclick="submitTender('reopen')">Reopen</button>
+    {% endif %}
+  </div>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+{% if not tender.is_open %}
+  <div class="locked-note">This tender is <strong>closed</strong>. It's read-only — choose <strong>Reopen</strong> to make changes.</div>
+{% endif %}
+
+<form method="post" id="tender-form" action="{% url 'clinic:tender_edit' pk=tender.pk %}">
+  {% csrf_token %}
+  <input type="hidden" name="payload" id="payload">
+  <input type="hidden" name="action" id="action" value="save">
+
+  <div class="card">
+    <div class="tv-fields" id="tv-header">
+      <div><label>Tender Title</label><input data-h="title" placeholder="e.g. Stoma appliances 2026"></div>
+      <div><label>Tender ID</label><input data-h="tenderId"></div>
+      <div><label>Tender Code</label><input data-h="code"></div>
+      <div><label>Contract Value (€)</label><input data-h="contractValue" type="number" step="0.01" min="0"></div>
+      <div><label>Opened</label><input data-h="opened" type="date"></div>
+      <div><label>Coordinator</label><input data-h="coordinator"></div>
+      <div><label>Finalised</label><input data-h="finalised" type="date"></div>
+    </div>
+  </div>
+
+  <div class="tv-summary" id="tv-summary"></div>
+
+  <div class="tv-scroll">
+    <table class="tv">
+      <thead><tr>
+        <th class="col-pos">Pos</th><th>Supplier / Company</th><th>Receipt ID</th>
+        <th class="col-bid">Bid (€)</th><th>Brand</th><th>Specs + CE</th><th>Samples</th>
+        <th class="col-sel">Selected</th><th class="col-act"></th>
+      </tr></thead>
+      <tbody id="tv-body"></tbody>
+    </table>
+  </div>
+
+  {% if tender.is_open %}
+  <button class="add-bidder" type="button" onclick="addBidder()">
+    <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    Add Bidder
+  </button>
+  {% endif %}
+</form>
+
+<script id="tender-data" type="application/json">{{ data_json|safe }}</script>
+<script>
+(function(){
+  var IS_OPEN = {% if tender.is_open %}true{% else %}false{% endif %};
+  var seed = {};
+  try{ seed = JSON.parse(document.getElementById("tender-data").textContent) || {}; }catch(e){ seed = {}; }
+  var state = {
+    header: seed.header || {},
+    bidders: Array.isArray(seed.bidders) ? seed.bidders : [],
+    selectedId: seed.selectedId != null ? seed.selectedId : null,
+    nextId: 1, expanded: {}
+  };
+  state.bidders.forEach(function(b){ if(typeof b.id==="number" && b.id>=state.nextId) state.nextId=b.id+1; });
+
+  var dirty = false;
+  function markDirty(){ dirty = true; }
+
+  function bidNum(b){ var v=parseFloat(b.bid); return isNaN(v)?null:v; }
+  function ranked(){
+    return state.bidders.map(function(b,i){return {b:b,i:i};}).sort(function(x,y){
+      var bx=bidNum(x.b), by=bidNum(y.b);
+      if(bx!==null&&by!==null){ return bx!==by?bx-by:x.i-y.i; }
+      if(bx!==null) return -1; if(by!==null) return 1; return x.i-y.i;
+    }).map(function(o){return o.b;});
+  }
+  function positions(){ var pos={},n=0; ranked().forEach(function(b){ if(bidNum(b)!==null){n++;pos[b.id]=n;}else pos[b.id]=null; }); return pos; }
+
+  var esc=function(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");};
+  var RO = IS_OPEN ? "" : "readonly";
+  var ROS = IS_OPEN ? "" : "disabled";
+  var YN=function(v){return '<option value=""'+(v?"":" selected")+'>—</option><option value="Yes"'+(v==="Yes"?" selected":"")+'>Yes</option><option value="No"'+(v==="No"?" selected":"")+'>No</option>';};
+
+  function rowHTML(b,pos){
+    var win=pos===1, d=state.expanded[b.id];
+    var main='<tr data-id="'+b.id+'" class="'+(win?"winner":"")+'">'+
+      '<td class="c col-pos"><span class="pos-badge">'+(pos?pos:"—")+'</span></td>'+
+      '<td><input data-f="supplier" value="'+esc(b.supplier)+'" placeholder="Company name" '+RO+'></td>'+
+      '<td><input data-f="receiptId" value="'+esc(b.receiptId)+'" '+RO+'></td>'+
+      '<td class="col-bid"><span class="bid-wrap"><span class="cur">€</span><input data-f="bid" type="number" step="0.01" min="0" value="'+esc(b.bid)+'" inputmode="decimal" '+RO+'></span></td>'+
+      '<td><input data-f="brand" value="'+esc(b.brand)+'" '+RO+'></td>'+
+      '<td><select data-f="specsCe" '+ROS+'>'+YN(b.specsCe)+'</select></td>'+
+      '<td><select data-f="samples" '+ROS+'>'+YN(b.samples)+'</select></td>'+
+      '<td class="c col-sel"><input type="radio" name="selbid" '+(state.selectedId===b.id?"checked":"")+' data-sel="'+b.id+'" '+ROS+' style="width:auto;transform:scale(1.2);"></td>'+
+      '<td class="c col-act">'+
+        '<button class="row-toggle" type="button" title="Details" data-toggle="'+b.id+'"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="'+(d?"m18 15-6-6-6 6":"m6 9 6 6 6-6")+'"/></svg></button>'+
+        (IS_OPEN?'<button class="row-remove" type="button" title="Remove" data-remove="'+b.id+'"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>':'')+
+      '</td></tr>';
+    if(!d) return main;
+    return main+'<tr class="detail" data-detail="'+b.id+'"><td colspan="9"><div class="detail-inner">'+
+      '<div><label>Samples Requested On</label><input data-f="reqOn" type="date" value="'+esc(b.reqOn)+'" '+RO+'></div>'+
+      '<div><label>Samples Delivery Due</label><input data-f="dueOn" type="date" value="'+esc(b.dueOn)+'" '+RO+'></div>'+
+      '<div><label>Samples Provided On</label><input data-f="provOn" type="date" value="'+esc(b.provOn)+'" '+RO+'></div>'+
+      '<div class="full"><label>Feedback No 1</label><textarea data-f="fb1" '+RO+'>'+esc(b.fb1)+'</textarea></div>'+
+      '<div class="full"><label>Feedback No 2</label><textarea data-f="fb2" '+RO+'>'+esc(b.fb2)+'</textarea></div>'+
+      '<div class="full"><label>Feedback No 3</label><textarea data-f="fb3" '+RO+'>'+esc(b.fb3)+'</textarea></div>'+
+      '<div class="full"><label>Annotations</label><textarea data-f="annotations" '+RO+'>'+esc(b.annotations)+'</textarea></div>'+
+    '</div></td></tr>';
+  }
+
+  function render(){
+    var pos=positions(), rows=ranked();
+    document.getElementById("tv-body").innerHTML = rows.length
+      ? rows.map(function(b){return rowHTML(b,pos[b.id]);}).join("")
+      : '<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:26px;">No bidders yet'+(IS_OPEN?' — click “Add Bidder” to start.':'.')+'</td></tr>';
+    renderSummary(pos);
+  }
+  function renderSummary(pos){
+    var valid=state.bidders.filter(function(b){return bidNum(b)!==null;}), lowest=null;
+    ranked().some(function(b){ if(bidNum(b)!==null){lowest=b;return true;} return false; });
+    var html='<div class="tv-chip"><div class="k">Bidders</div><div class="v">'+state.bidders.length+'</div></div>';
+    if(lowest) html+='<div class="tv-chip win"><div class="k">Lowest bid (Pos 1)</div><div class="v">€'+Number(bidNum(lowest)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' — '+esc(lowest.supplier||"—")+'</div></div>';
+    if(valid.length>1){ var hi=valid.reduce(function(a,b){return bidNum(b)>bidNum(a)?b:a;}); html+='<div class="tv-chip"><div class="k">Spread (highest − lowest)</div><div class="v">€'+Number(bidNum(hi)-bidNum(lowest)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>'; }
+    document.getElementById("tv-summary").innerHTML=html;
+  }
+  function relabel(){
+    var pos=positions();
+    document.querySelectorAll("#tv-body tr[data-id]").forEach(function(tr){
+      var id=+tr.dataset.id, badge=tr.querySelector(".pos-badge");
+      if(badge) badge.textContent=pos[id]?pos[id]:"—";
+      tr.classList.toggle("winner", pos[id]===1);
+    });
+    renderSummary(pos);
+  }
+  function findBidder(id){ return state.bidders.filter(function(b){return b.id===id;})[0]; }
+
+  window.addBidder=function(){ if(!IS_OPEN) return; state.bidders.push({id:state.nextId++,supplier:"",receiptId:"",bid:"",brand:"",specsCe:"",samples:"",reqOn:"",dueOn:"",provOn:"",fb1:"",fb2:"",fb3:"",annotations:""}); markDirty(); render(); };
+
+  window.submitTender=function(action){
+    if(action==="reopen"){ document.getElementById("action").value="reopen"; dirty=false; document.getElementById("tender-form").submit(); return; }
+    // sync header from inputs (in case of any missed events)
+    document.querySelectorAll("#tv-header input").forEach(function(i){ state.header[i.getAttribute("data-h")]=i.value; });
+    document.getElementById("payload").value=JSON.stringify({header:state.header,bidders:state.bidders,selectedId:state.selectedId});
+    document.getElementById("action").value=action;
+    dirty=false;
+    document.getElementById("tender-form").submit();
+  };
+
+  // header inputs
+  document.getElementById("tv-header").addEventListener("input",function(e){
+    var k=e.target.getAttribute("data-h"); if(!k) return; state.header[k]=e.target.value; markDirty();
+    if(k==="title"){ var d=document.getElementById("doc-title"); if(d&&e.target.value) d.textContent=e.target.value; }
+  });
+  // restore header values
+  Object.keys(state.header||{}).forEach(function(k){ var el=document.querySelector('#tv-header input[data-h="'+k+'"]'); if(el) el.value=state.header[k]; });
+  if(!IS_OPEN){ document.querySelectorAll("#tv-header input").forEach(function(i){ i.setAttribute("readonly","readonly"); }); }
+
+  // body edits
+  var body=document.getElementById("tv-body");
+  body.addEventListener("input",function(e){
+    var f=e.target.getAttribute("data-f"); if(!f) return;
+    var tr=e.target.closest("tr[data-id]")||e.target.closest("tr.detail");
+    var id=tr.dataset.id?+tr.dataset.id:+tr.dataset.detail;
+    var b=findBidder(id); if(!b) return; b[f]=e.target.value; markDirty();
+    if(f==="bid") relabel(); else if(f==="supplier") renderSummary(positions());
+  });
+  body.addEventListener("change",function(e){
+    var f=e.target.getAttribute("data-f");
+    if(f==="bid"){ render(); return; }
+    if(e.target.getAttribute("data-sel")){ state.selectedId=+e.target.getAttribute("data-sel"); markDirty(); }
+  });
+  body.addEventListener("click",function(e){
+    var t=e.target.closest("[data-remove]");
+    if(t){ var id=+t.getAttribute("data-remove"); state.bidders=state.bidders.filter(function(b){return b.id!==id;}); if(state.selectedId===id) state.selectedId=null; delete state.expanded[id]; markDirty(); render(); return; }
+    var g=e.target.closest("[data-toggle]");
+    if(g){ var gid=+g.getAttribute("data-toggle"); state.expanded[gid]=!state.expanded[gid]; render(); return; }
+  });
+
+  window.addEventListener("beforeunload",function(e){ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+  if(IS_OPEN && !state.bidders.length){ addBidder(); dirty=false; }
+  render();
+})();
+</script>
+{% endblock %}

@@ -114,3 +114,12 @@ class OrderingDocumentAdmin(admin.ModelAdmin):
     search_fields = ("reference", "requested_by_name", "section_ward")
     date_hierarchy = "form_date"
     readonly_fields = ("created_at", "sent_at")
+
+
+@admin.register(models.TenderEvaluation)
+class TenderEvaluationAdmin(admin.ModelAdmin):
+    list_display = ("title", "status", "bidder_count", "lowest_bid", "lowest_bidder",
+                    "created_by_username", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("title", "lowest_bidder", "created_by_username")
+    readonly_fields = ("created_at", "updated_at")

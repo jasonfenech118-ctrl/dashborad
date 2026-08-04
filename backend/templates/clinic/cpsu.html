@@ -1,6 +1,7 @@
 {% extends "clinic/base.html" %}
 {% block title %}CPSU — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
+<style>body::before{display:none !important;}</style>
 <h1>CPSU</h1>
 <p class="muted" style="margin-bottom:20px;font-size:13px;">Central Procurement &amp; Supplies Unit — tender evaluation and procurement tools.</p>
 
@@ -13,7 +14,7 @@
       </span>
       <strong style="font-size:14px;">Tenders</strong>
     </div>
-    <p class="muted" style="font-size:12px;flex:1;">Evaluate tender bids side by side. Prices are ranked automatically — lowest bid on top — and you can add as many bidders as you need.</p>
+    <p class="muted" style="font-size:12px;flex:1;">Open a tender to evaluate bids side by side — prices are ranked automatically, lowest bid on top — then close it when done. Reopen any tender later.</p>
     <a href="{% url 'clinic:cpsu_tenders' %}" class="btn" style="text-align:center;font-size:12px;">Tenders</a>
   </div>
 
