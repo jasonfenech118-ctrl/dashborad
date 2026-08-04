@@ -1,9 +1,21 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}CPSU — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
-<style>body::before{display:none !important;}</style>
-<h1>CPSU</h1>
-<p class="muted" style="margin-bottom:20px;font-size:13px;">Central Procurement &amp; Supplies Unit — tender evaluation and procurement tools.</p>
+<style>
+  body::before{display:none !important;}   /* clean surface */
+  .cpsu-hero{background:#fff;border:1px solid var(--border);border-radius:14px;
+    padding:26px 20px;text-align:center;margin-bottom:18px;box-shadow:0 1px 4px rgba(15,23,42,.05);}
+  .cpsu-hero img{max-width:min(460px,82%);height:auto;display:block;margin:0 auto;}
+  .cpsu-hero .sub{color:var(--muted);font-size:13px;margin-top:14px;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+</style>
+
+<h1 class="sr-only">CPSU</h1>
+<div class="cpsu-hero">
+  <img src="{% static 'images/cpsu_logo.jpg' %}" alt="CPSU — Central Procurement &amp; Supplies Unit">
+  <div class="sub">Central Procurement &amp; Supplies Unit — tender evaluation and procurement tools.</div>
+</div>
 
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
 
