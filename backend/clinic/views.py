@@ -551,6 +551,18 @@ def ordering_document_detail(request, pk):
 
 
 @login_required
+def cpsu(request):
+    """CPSU (Central Procurement & Supplies Unit) landing page."""
+    return render(request, "clinic/cpsu.html")
+
+
+@login_required
+def cpsu_tenders(request):
+    """Tender evaluation tool — auto-ranks bidders lowest-price-first."""
+    return render(request, "clinic/cpsu_tenders.html")
+
+
+@login_required
 def add_patient(request):
     """Dedicated page to add a new patient.
 
