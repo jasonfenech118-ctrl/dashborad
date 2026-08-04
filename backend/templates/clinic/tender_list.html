@@ -1,0 +1,79 @@
+{% extends "clinic/base.html" %}
+{% block title %}{{ title }} — CPSU{% endblock %}
+{% block content %}
+<style>
+  body::before{display:none !important;}
+  .th-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
+  .th-head .ht{flex:1;min-width:220px;}
+  .th-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .th-back:hover{text-decoration:underline;}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .act-link{color:var(--teal);font-weight:600;font-size:13px;}
+  .act-del{color:#dc2626;font-weight:600;font-size:13px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .act-del:hover{text-decoration:underline;}
+  .row-actions{display:flex;gap:14px;align-items:center;justify-content:flex-end;}
+</style>
+
+<div class="th-head">
+  <div class="ht">
+    <a href="{% url 'clinic:cpsu_tenders' %}" class="th-back">
+      <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Tenders
+    </a>
+    <h1 style="margin-top:6px;">{{ title }}</h1>
+    <p class="muted" style="font-size:13px;">
+      {% if is_closed %}Completed tenders. Open one to view it, or reopen it to make changes.
+      {% else %}Tenders you're currently evaluating. Open one to continue.{% endif %}
+    </p>
+  </div>
+  <form method="post" action="{% url 'clinic:tender_new' %}" style="margin:0;">
+    {% csrf_token %}<button class="btn" type="submit">+ New Tender</button>
+  </form>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    The tenders archive is temporarily unavailable (database not reachable). Please try again shortly.
+  </div>
+{% elif tenders %}
+  <table>
+    <thead>
+      <tr>
+        <th>Tender</th><th>Bidders</th><th>Lowest bid</th>
+        {% if is_closed %}<th>Selected</th>{% endif %}
+        <th>Updated</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tenders %}
+      <tr>
+        <td><a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">{{ t.title }}</a></td>
+        <td>{{ t.bidder_count }}</td>
+        <td>{% if t.lowest_bid != None %}€{{ t.lowest_bid|floatformat:2 }}{% if t.lowest_bidder and not is_closed %} — {{ t.lowest_bidder }}{% endif %}{% else %}—{% endif %}</td>
+        {% if is_closed %}<td>{{ t.lowest_bidder|default:"—" }}</td>{% endif %}
+        <td>{{ t.updated_at|date:"d/m/Y H:i" }}</td>
+        <td>
+          <div class="row-actions">
+            <a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">{% if is_closed %}View{% else %}Open{% endif %}</a>
+            <form method="post" action="{% url 'clinic:tender_delete' pk=t.id %}" style="margin:0;" onsubmit="return confirm('Delete this tender permanently?');">
+              {% csrf_token %}<button class="act-del" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card" style="text-align:center;padding:38px 18px;">
+    <p class="muted" style="font-size:13px;margin-bottom:16px;">
+      {% if is_closed %}No closed tenders yet.{% else %}No current tenders. Start a new evaluation to rank bids automatically.{% endif %}
+    </p>
+    {% if not is_closed %}<form method="post" action="{% url 'clinic:tender_new' %}" style="margin:0;">{% csrf_token %}<button class="btn" type="submit">+ New Tender</button></form>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

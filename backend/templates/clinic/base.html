@@ -94,7 +94,7 @@
     .topbar .util .who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:4px;}
 
     /* ---- page content ---- */
-    .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+    .wrap{width:100%;max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
     h1{font-size:22px;margin:0 0 16px;}
     h2{font-size:16px;margin:24px 0 10px;color:var(--teal);}
     a{color:var(--teal);}
@@ -179,7 +179,7 @@
         <a href="{% url 'clinic:clinic_documents' %}" class="{% if vn == 'clinic_documents' or vn == 'ordering_document_detail' %}active{% endif %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
           <span>Clinic Documents</span></a>
-        <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">
+        <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tenders_current' or vn == 'tenders_closed' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           <span>CPSU</span></a>
       </nav>
@@ -210,7 +210,7 @@
           <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
           <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' or vn == 'esrf_form' %}active{% endif %}">Ordering Forms</a>
           <a href="{% url 'clinic:clinic_documents' %}" class="{% if vn == 'clinic_documents' or vn == 'ordering_document_detail' %}active{% endif %}">Clinic Documents</a>
-          <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">CPSU</a>
+          <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tenders_current' or vn == 'tenders_closed' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">CPSU</a>
           <a href="{% url 'clinic:reports' %}" class="{% if vn == 'reports' %}active{% endif %}">Reports</a>
         </nav>
         <span class="spacer"></span>
