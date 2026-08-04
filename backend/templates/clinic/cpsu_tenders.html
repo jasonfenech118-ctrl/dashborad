@@ -1,304 +1,98 @@
 {% extends "clinic/base.html" %}
-{% block title %}Tender Evaluation — CPSU{% endblock %}
+{% block title %}Tenders — CPSU{% endblock %}
 {% block content %}
 <style>
-  .tv-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
-  .tv-head .ht{flex:1;min-width:220px;}
-  .tv-head h1{margin:6px 0 2px;font-size:20px;}
-  .tv-head .sub{color:var(--muted);font-size:13px;}
-  .tv-head .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
-  .tv-head .back:hover{text-decoration:underline;}
-  .tv-head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
-  .btn-ghost:hover{background:#f1f5f9;}
-
-  /* Tender detail card */
-  .tv-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;}
-  .tv-fields label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
-  .tv-fields input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;}
-  .tv-fields input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.12);}
-
-  /* Summary strip */
-  .tv-summary{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;}
-  .tv-chip{background:var(--teal-50);border:1px solid #dbeafe;border-radius:10px;padding:10px 14px;font-size:13px;}
-  .tv-chip .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
-  .tv-chip .v{font-weight:800;font-size:15px;}
-  .tv-chip.win{background:#ecfdf3;border-color:#abefc6;}
-  .tv-chip.win .v{color:#067647;}
-
-  /* Bidders table */
-  .tv-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff;}
-  table.tv{width:100%;border-collapse:collapse;min-width:920px;}
-  table.tv th{background:var(--navy);color:#fff;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
-    padding:10px 8px;text-align:left;white-space:nowrap;position:sticky;top:0;}
-  table.tv td{border-bottom:1px solid var(--border);padding:5px 8px;vertical-align:middle;}
-  table.tv tbody tr:hover td{background:#f8fafc;}
-  table.tv input,table.tv select{width:100%;border:1px solid transparent;border-radius:6px;padding:7px 8px;font-size:13px;
-    background:#f8fafc;color:var(--ink);font-family:inherit;}
-  table.tv input:focus,table.tv select:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 2px rgba(29,78,216,.12);}
-  table.tv td.c{text-align:center;}
-  .col-pos{width:60px;}
-  .col-bid{width:130px;}
-  .col-sel{width:74px;}
-  .col-act{width:48px;}
-  .bid-wrap{display:flex;align-items:center;gap:4px;}
-  .bid-wrap .cur{color:var(--muted);font-weight:700;font-size:13px;}
-
-  .pos-badge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;
-    border-radius:999px;font-weight:800;font-size:13px;background:#e2e8f0;color:#475569;}
-  tr.winner td{background:#f0fdf4 !important;}
-  tr.winner .pos-badge{background:#16a34a;color:#fff;}
-
-  .row-remove{border:none;background:none;color:#dc2626;cursor:pointer;padding:6px;border-radius:6px;line-height:0;}
-  .row-remove:hover{background:#fee2e2;}
-  .row-toggle{border:none;background:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;line-height:0;}
-  .row-toggle:hover{background:#e2e8f0;color:var(--ink);}
-
-  /* Expandable detail row */
-  tr.detail td{background:#f8fafc;padding:0;}
-  .detail-inner{padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px;}
-  .detail-inner .full{grid-column:1/-1;}
-  .detail-inner label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
-  .detail-inner input,.detail-inner textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
-  .detail-inner textarea{min-height:52px;resize:vertical;}
-  @media(max-width:720px){.detail-inner{grid-template-columns:1fr;}}
-
-  .add-bidder{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;
-    border:1.5px dashed var(--border);border-radius:8px;padding:9px 16px;background:#fff;margin-top:14px;}
-  .add-bidder:hover{background:var(--teal-50);border-color:var(--teal);}
-
-  @media print{
-    .tv-head .actions,.tv-head .back,.add-bidder,.col-act,.row-toggle,.row-remove{display:none !important;}
-    .tv-scroll{overflow:visible;border:none;}
-    table.tv{min-width:0;}
-    table.tv th{background:#13294b !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    tr.winner td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    table.tv input,table.tv select{background:#fff;border:none;}
-    @page{size:A4 landscape;margin:10mm;}
-  }
+  body::before{display:none !important;}   /* clean working surface */
+  .th-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
+  .th-head .ht{flex:1;min-width:220px;}
+  .th-head .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .th-head .back:hover{text-decoration:underline;}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .t-sec{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin:22px 0 10px;}
+  .act-link{color:var(--teal);font-weight:600;font-size:13px;}
+  .act-del{color:#dc2626;font-weight:600;font-size:13px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .act-del:hover{text-decoration:underline;}
+  .row-actions{display:flex;gap:14px;align-items:center;justify-content:flex-end;}
 </style>
 
-<div class="tv-head">
+<div class="th-head">
   <div class="ht">
     <a href="{% url 'clinic:cpsu' %}" class="back">
       <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
       CPSU
     </a>
-    <h1>Tender Evaluation</h1>
-    <div class="sub">Enter each bidder's price — they're ranked automatically, lowest bid on top. Add as many bidders as you need.</div>
+    <h1 style="margin-top:6px;">Tenders</h1>
+    <p class="muted" style="font-size:13px;">Open a tender to evaluate bids, then close it when the evaluation is done. Closed tenders can be reopened any time.</p>
   </div>
-  <div class="actions">
-    <button class="btn btn-ghost" type="button" onclick="window.print()">Print / Save PDF</button>
-    <button class="btn btn-ghost" type="button" onclick="clearAll()">Clear</button>
-    <button class="btn" type="button" onclick="sortNow()">Sort by price</button>
-  </div>
+  <form method="post" action="{% url 'clinic:tender_new' %}" style="margin:0;">
+    {% csrf_token %}
+    <button class="btn" type="submit">+ New Tender</button>
+  </form>
 </div>
 
-<!-- Tender details -->
-<div class="card">
-  <div class="tv-fields" id="tv-header">
-    <div><label>Tender Title</label><input data-h="title" placeholder="e.g. Stoma appliances 2026"></div>
-    <div><label>Tender ID</label><input data-h="tenderId"></div>
-    <div><label>Tender Code</label><input data-h="code"></div>
-    <div><label>Contract Value (€)</label><input data-h="contractValue" type="number" step="0.01" min="0"></div>
-    <div><label>Opened</label><input data-h="opened" type="date"></div>
-    <div><label>Coordinator</label><input data-h="coordinator"></div>
-    <div><label>Finalised</label><input data-h="finalised" type="date"></div>
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    The tenders archive is temporarily unavailable (database not reachable). Please try again shortly.
   </div>
-</div>
+{% else %}
+  <div class="t-sec">Open ({{ open_tenders|length }})</div>
+  {% if open_tenders %}
+    <table>
+      <thead><tr><th>Tender</th><th>Bidders</th><th>Lowest bid</th><th>Updated</th><th></th></tr></thead>
+      <tbody>
+        {% for t in open_tenders %}
+        <tr>
+          <td><a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">{{ t.title }}</a></td>
+          <td>{{ t.bidder_count }}</td>
+          <td>{% if t.lowest_bid != None %}€{{ t.lowest_bid|floatformat:2 }}{% if t.lowest_bidder %} — {{ t.lowest_bidder }}{% endif %}{% else %}—{% endif %}</td>
+          <td>{{ t.updated_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            <div class="row-actions">
+              <a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">Open</a>
+              <form method="post" action="{% url 'clinic:tender_delete' pk=t.id %}" style="margin:0;" onsubmit="return confirm('Delete this tender permanently?');">
+                {% csrf_token %}<button class="act-del" type="submit">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="card" style="text-align:center;padding:34px 18px;">
+      <p class="muted" style="font-size:13px;margin-bottom:14px;">No open tenders. Start a new evaluation to rank bids automatically.</p>
+      <form method="post" action="{% url 'clinic:tender_new' %}" style="margin:0;">{% csrf_token %}<button class="btn" type="submit">+ New Tender</button></form>
+    </div>
+  {% endif %}
 
-<!-- Summary -->
-<div class="tv-summary" id="tv-summary"></div>
-
-<!-- Bidders -->
-<div class="tv-scroll">
-  <table class="tv">
-    <thead>
-      <tr>
-        <th class="col-pos">Pos</th>
-        <th>Supplier / Company</th>
-        <th>Receipt ID</th>
-        <th class="col-bid">Bid (€)</th>
-        <th>Brand</th>
-        <th>Specs + CE</th>
-        <th>Samples</th>
-        <th class="col-sel">Selected</th>
-        <th class="col-act"></th>
-      </tr>
-    </thead>
-    <tbody id="tv-body"></tbody>
-  </table>
-</div>
-
-<button class="add-bidder" type="button" onclick="addBidder()">
-  <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-  Add Bidder
-</button>
-
-<script>
-(function(){
-  var KEY = "cpsu_tender_v1";
-  var state = {header:{}, bidders:[], selectedId:null, nextId:1, expanded:{}};
-
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
-  function load(){
-    try{ var s = JSON.parse(localStorage.getItem(KEY)); if(s && s.bidders){ state = s; state.expanded = state.expanded||{}; } }catch(e){}
-  }
-
-  function bidNum(b){ var v = parseFloat(b.bid); return isNaN(v) ? null : v; }
-
-  function ranked(){
-    // sort by bid ascending; blanks keep original order at the bottom
-    return state.bidders.map(function(b,i){return {b:b,i:i};}).sort(function(x,y){
-      var bx=bidNum(x.b), by=bidNum(y.b);
-      if(bx!==null && by!==null){ return bx!==by ? bx-by : x.i-y.i; }
-      if(bx!==null) return -1;
-      if(by!==null) return 1;
-      return x.i-y.i;
-    }).map(function(o){return o.b;});
-  }
-
-  function positions(){
-    var pos={}, n=0;
-    ranked().forEach(function(b){ if(bidNum(b)!==null){ n++; pos[b.id]=n; } else { pos[b.id]=null; } });
-    return pos;
-  }
-
-  var esc = function(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); };
-  var YN = function(v){
-    return '<option value=""'+(v?"":" selected")+'>—</option>'+
-           '<option value="Yes"'+(v==="Yes"?" selected":"")+'>Yes</option>'+
-           '<option value="No"'+(v==="No"?" selected":"")+'>No</option>';
-  };
-
-  function rowHTML(b, pos){
-    var win = pos===1;
-    var d = state.expanded[b.id];
-    var main =
-      '<tr data-id="'+b.id+'" class="'+(win?"winner":"")+'">'+
-        '<td class="c col-pos"><span class="pos-badge">'+(pos?pos:"—")+'</span></td>'+
-        '<td><input data-f="supplier" value="'+esc(b.supplier)+'" placeholder="Company name"></td>'+
-        '<td><input data-f="receiptId" value="'+esc(b.receiptId)+'"></td>'+
-        '<td class="col-bid"><span class="bid-wrap"><span class="cur">€</span><input data-f="bid" type="number" step="0.01" min="0" value="'+esc(b.bid)+'" inputmode="decimal"></span></td>'+
-        '<td><input data-f="brand" value="'+esc(b.brand)+'"></td>'+
-        '<td><select data-f="specsCe">'+YN(b.specsCe)+'</select></td>'+
-        '<td><select data-f="samples">'+YN(b.samples)+'</select></td>'+
-        '<td class="c col-sel"><input type="radio" name="selbid" '+(state.selectedId===b.id?"checked":"")+' data-sel="'+b.id+'" style="width:auto;transform:scale(1.2);"></td>'+
-        '<td class="c col-act">'+
-          '<button class="row-toggle" title="Details" data-toggle="'+b.id+'"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="'+(d?"m18 15-6-6-6 6":"m6 9 6 6 6-6")+'"/></svg></button>'+
-          '<button class="row-remove" title="Remove" data-remove="'+b.id+'"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'+
-        '</td>'+
-      '</tr>';
-    if(!d) return main;
-    var detail =
-      '<tr class="detail" data-detail="'+b.id+'"><td colspan="9"><div class="detail-inner">'+
-        '<div><label>Samples Requested On</label><input data-f="reqOn" type="date" value="'+esc(b.reqOn)+'"></div>'+
-        '<div><label>Samples Delivery Due</label><input data-f="dueOn" type="date" value="'+esc(b.dueOn)+'"></div>'+
-        '<div><label>Samples Provided On</label><input data-f="provOn" type="date" value="'+esc(b.provOn)+'"></div>'+
-        '<div class="full"><label>Feedback No 1</label><textarea data-f="fb1">'+esc(b.fb1)+'</textarea></div>'+
-        '<div class="full"><label>Feedback No 2</label><textarea data-f="fb2">'+esc(b.fb2)+'</textarea></div>'+
-        '<div class="full"><label>Feedback No 3</label><textarea data-f="fb3">'+esc(b.fb3)+'</textarea></div>'+
-        '<div class="full"><label>Annotations</label><textarea data-f="annotations">'+esc(b.annotations)+'</textarea></div>'+
-      '</div></td></tr>';
-    return main+detail;
-  }
-
-  function render(){
-    var pos = positions();
-    var rows = ranked();
-    document.getElementById("tv-body").innerHTML =
-      rows.length ? rows.map(function(b){return rowHTML(b, pos[b.id]);}).join("")
-                  : '<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:26px;">No bidders yet — click “Add Bidder” to start.</td></tr>';
-    renderSummary(pos);
-    save();
-  }
-
-  function renderSummary(pos){
-    var valid = state.bidders.filter(function(b){return bidNum(b)!==null;});
-    var lowest = null;
-    ranked().some(function(b){ if(bidNum(b)!==null){ lowest=b; return true; } return false; });
-    var html = '<div class="tv-chip"><div class="k">Bidders</div><div class="v">'+state.bidders.length+'</div></div>';
-    if(lowest){
-      html += '<div class="tv-chip win"><div class="k">Lowest bid (Pos 1)</div><div class="v">€'+Number(bidNum(lowest)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' — '+esc(lowest.supplier||"—")+'</div></div>';
-    }
-    if(valid.length>1){
-      var highest = valid.reduce(function(a,b){return bidNum(b)>bidNum(a)?b:a;});
-      var saving = bidNum(highest)-bidNum(lowest);
-      html += '<div class="tv-chip"><div class="k">Spread (highest − lowest)</div><div class="v">€'+Number(saving).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>';
-    }
-    document.getElementById("tv-summary").innerHTML = html;
-  }
-
-  // Update position badges + winner highlight live (no reorder) while typing a bid.
-  function relabel(){
-    var pos = positions();
-    document.querySelectorAll("#tv-body tr[data-id]").forEach(function(tr){
-      var id = +tr.dataset.id;
-      var badge = tr.querySelector(".pos-badge");
-      if(badge) badge.textContent = pos[id] ? pos[id] : "—";
-      tr.classList.toggle("winner", pos[id]===1);
-    });
-    renderSummary(pos);
-  }
-
-  window.addBidder = function(){
-    state.bidders.push({id:state.nextId++, supplier:"",receiptId:"",bid:"",brand:"",specsCe:"",samples:"",
-      reqOn:"",dueOn:"",provOn:"",fb1:"",fb2:"",fb3:"",annotations:""});
-    render();
-  };
-  window.sortNow = function(){ render(); };
-  window.clearAll = function(){
-    if(!confirm("Clear the whole tender evaluation?")) return;
-    state = {header:{}, bidders:[], selectedId:null, nextId:1, expanded:{}};
-    document.querySelectorAll("#tv-header input").forEach(function(i){i.value="";});
-    render();
-  };
-
-  function findBidder(id){ return state.bidders.filter(function(b){return b.id===id;})[0]; }
-
-  // Header fields
-  document.getElementById("tv-header").addEventListener("input", function(e){
-    var k = e.target.getAttribute("data-h"); if(!k) return;
-    state.header[k] = e.target.value; save();
-  });
-
-  // Body: field edits (delegated)
-  var body = document.getElementById("tv-body");
-  body.addEventListener("input", function(e){
-    var f = e.target.getAttribute("data-f"); if(!f) return;
-    var tr = e.target.closest("tr[data-id]") || e.target.closest("tr.detail");
-    var id = tr.dataset.id ? +tr.dataset.id : +tr.dataset.detail;
-    var b = findBidder(id); if(!b) return;
-    b[f] = e.target.value;
-    if(f==="bid") relabel();   // live re-rank badges while typing
-    else if(f==="supplier") renderSummary(positions());
-    save();
-  });
-  body.addEventListener("change", function(e){
-    var f = e.target.getAttribute("data-f");
-    if(f==="bid"){ render(); return; }         // reorder once the bid is committed
-    if(e.target.getAttribute("data-sel")){
-      state.selectedId = +e.target.getAttribute("data-sel"); save();
-    }
-  });
-  body.addEventListener("click", function(e){
-    var t = e.target.closest("[data-remove]");
-    if(t){ var id=+t.getAttribute("data-remove");
-      state.bidders = state.bidders.filter(function(b){return b.id!==id;});
-      if(state.selectedId===id) state.selectedId=null;
-      delete state.expanded[id]; render(); return; }
-    var g = e.target.closest("[data-toggle]");
-    if(g){ var gid=+g.getAttribute("data-toggle");
-      state.expanded[gid] = !state.expanded[gid]; render(); return; }
-  });
-
-  // init
-  load();
-  // restore header inputs
-  document.querySelectorAll("#tv-header input").forEach(function(i){
-    var k=i.getAttribute("data-h"); if(state.header && state.header[k]!=null) i.value=state.header[k];
-  });
-  if(!state.bidders.length){ addBidder(); addBidder(); } else { render(); }
-})();
-</script>
+  {% if closed_tenders %}
+    <div class="t-sec">Closed ({{ closed_tenders|length }})</div>
+    <table>
+      <thead><tr><th>Tender</th><th>Bidders</th><th>Lowest bid</th><th>Selected</th><th>Updated</th><th></th></tr></thead>
+      <tbody>
+        {% for t in closed_tenders %}
+        <tr>
+          <td><a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">{{ t.title }}</a></td>
+          <td>{{ t.bidder_count }}</td>
+          <td>{% if t.lowest_bid != None %}€{{ t.lowest_bid|floatformat:2 }}{% else %}—{% endif %}</td>
+          <td>{{ t.lowest_bidder|default:"—" }}</td>
+          <td>{{ t.updated_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            <div class="row-actions">
+              <a class="act-link" href="{% url 'clinic:tender_edit' pk=t.id %}">View</a>
+              <form method="post" action="{% url 'clinic:tender_delete' pk=t.id %}" style="margin:0;" onsubmit="return confirm('Delete this tender permanently?');">
+                {% csrf_token %}<button class="act-del" type="submit">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endif %}
 {% endblock %}

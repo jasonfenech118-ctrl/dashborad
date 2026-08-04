@@ -1,5 +1,6 @@
 import calendar
 import datetime
+import json
 import time
 import urllib.parse
 
@@ -556,10 +557,122 @@ def cpsu(request):
     return render(request, "clinic/cpsu.html")
 
 
+def _tender_summary(data):
+    """Derive (title, bidder_count, lowest_bid, lowest_bidder) from editor state."""
+    header = (data or {}).get("header") or {}
+    title = (header.get("title") or "").strip() or "Untitled tender"
+    bidders = (data or {}).get("bidders") or []
+    low_val, low_name = None, None
+    for b in bidders:
+        try:
+            v = float(str(b.get("bid")).strip())
+        except (TypeError, ValueError):
+            continue
+        if low_val is None or v < low_val:
+            low_val, low_name = v, (b.get("supplier") or "").strip()
+    return title, len(bidders), low_val, low_name
+
+
 @login_required
 def cpsu_tenders(request):
-    """Tender evaluation tool — auto-ranks bidders lowest-price-first."""
-    return render(request, "clinic/cpsu_tenders.html")
+    """List of saved tender evaluations, grouped into open and closed."""
+    tenders, db_ok = [], True
+    try:
+        tenders = list(models.TenderEvaluation.objects.all()[:300])
+    except Exception:
+        db_ok = False
+    T = models.TenderEvaluation
+    return render(request, "clinic/cpsu_tenders.html", {
+        "open_tenders": [t for t in tenders if t.status == T.STATUS_OPEN],
+        "closed_tenders": [t for t in tenders if t.status == T.STATUS_CLOSED],
+        "db_ok": db_ok,
+    })
+
+
+@login_required
+def tender_new(request):
+    """Create a blank tender and open its editor."""
+    t = models.TenderEvaluation(
+        title="Untitled tender",
+        created_by_username=request.user.get_username(),
+        data={"header": {}, "bidders": [], "selectedId": None},
+    )
+    try:
+        t.save()
+    except Exception:
+        messages.error(request, "Could not create a tender — the database is unavailable.")
+        return redirect("clinic:cpsu_tenders")
+    return redirect("clinic:tender_edit", pk=t.pk)
+
+
+@login_required
+def tender_edit(request, pk):
+    """Open a tender's editor (GET) or save it (POST)."""
+    tender = get_object_or_404(models.TenderEvaluation, pk=pk)
+    if request.method == "POST":
+        return _tender_save(request, tender)
+    default = {"header": {}, "bidders": [], "selectedId": None}
+    return render(request, "clinic/cpsu_tender_edit.html", {
+        "tender": tender,
+        "data_json": json.dumps(tender.data or default),
+    })
+
+
+def _tender_save(request, tender):
+    action = (request.POST.get("action") or "save").strip()
+
+    if action == "reopen":
+        tender.status = models.TenderEvaluation.STATUS_OPEN
+        try:
+            tender.save(update_fields=["status", "updated_at"])
+            messages.success(request, "Tender reopened.")
+        except Exception:
+            messages.error(request, "Could not reopen the tender.")
+        return redirect("clinic:tender_edit", pk=tender.pk)
+
+    try:
+        data = json.loads(request.POST.get("payload") or "{}")
+        if not isinstance(data, dict):
+            data = {}
+    except (ValueError, TypeError):
+        data = {}
+    data.setdefault("header", {})
+    data.setdefault("bidders", [])
+
+    title, count, low_val, low_name = _tender_summary(data)
+    tender.data = data
+    tender.title = title
+    tender.bidder_count = count
+    tender.lowest_bid = low_val
+    tender.lowest_bidder = low_name
+    if action == "close":
+        tender.status = models.TenderEvaluation.STATUS_CLOSED
+
+    try:
+        tender.save()
+    except Exception:
+        messages.error(request, "Could not save — the database is unavailable.")
+        return redirect("clinic:tender_edit", pk=tender.pk)
+
+    if action == "close":
+        messages.success(request, f"Tender “{tender.title}” closed and saved.")
+        return redirect("clinic:cpsu_tenders")
+    messages.success(request, "Tender saved.")
+    return redirect("clinic:tender_edit", pk=tender.pk)
+
+
+@login_required
+def tender_delete(request, pk):
+    """Delete a tender (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:cpsu_tenders")
+    tender = get_object_or_404(models.TenderEvaluation, pk=pk)
+    try:
+        tender.delete()
+        messages.success(request, "Tender deleted.")
+    except Exception:
+        messages.error(request, "Could not delete the tender.")
+    return redirect("clinic:cpsu_tenders")
 
 
 @login_required

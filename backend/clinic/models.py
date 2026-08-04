@@ -392,3 +392,39 @@ class OrderingDocument(UUIDModel):
             1 for it in (self.items or [])
             if (it.get("code") or it.get("description"))
         )
+
+
+class TenderEvaluation(UUIDModel):
+    """A CPSU tender evaluation the user can open, work on and close.
+
+    Managed by Django (migration-created). The full editor state — tender
+    header, the bidder rows and which bidder is selected — is kept in `data`;
+    a few fields are denormalised (title, status, lowest bid, bidder count) so
+    the tender list renders without unpacking every record.
+    """
+
+    STATUS_OPEN = "open"
+    STATUS_CLOSED = "closed"
+    STATUS_CHOICES = [(STATUS_OPEN, "Open"), (STATUS_CLOSED, "Closed")]
+
+    title = models.CharField(max_length=200, default="Untitled tender")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_OPEN)
+    data = models.JSONField(default=dict, blank=True)
+    bidder_count = models.IntegerField(default=0)
+    lowest_bid = models.FloatField(blank=True, null=True)
+    lowest_bidder = models.CharField(max_length=200, blank=True, null=True)
+    created_by_username = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "tender_evaluations"
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.status})"
+
+    @property
+    def is_open(self):
+        return self.status == self.STATUS_OPEN
