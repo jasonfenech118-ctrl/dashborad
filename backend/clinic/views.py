@@ -575,18 +575,42 @@ def _tender_summary(data):
 
 @login_required
 def cpsu_tenders(request):
-    """List of saved tender evaluations, grouped into open and closed."""
-    tenders, db_ok = [], True
+    """Tenders hub — New Tender / Current Tenders / Closed Tenders."""
+    open_count = closed_count = None
+    db_ok = True
     try:
-        tenders = list(models.TenderEvaluation.objects.all()[:300])
+        T = models.TenderEvaluation
+        open_count = T.objects.filter(status=T.STATUS_OPEN).count()
+        closed_count = T.objects.filter(status=T.STATUS_CLOSED).count()
     except Exception:
         db_ok = False
-    T = models.TenderEvaluation
     return render(request, "clinic/cpsu_tenders.html", {
-        "open_tenders": [t for t in tenders if t.status == T.STATUS_OPEN],
-        "closed_tenders": [t for t in tenders if t.status == T.STATUS_CLOSED],
-        "db_ok": db_ok,
+        "open_count": open_count, "closed_count": closed_count, "db_ok": db_ok,
     })
+
+
+def _tender_list(request, status, title):
+    tenders, db_ok = [], True
+    try:
+        tenders = list(models.TenderEvaluation.objects.filter(status=status)[:300])
+    except Exception:
+        db_ok = False
+    return render(request, "clinic/tender_list.html", {
+        "tenders": tenders, "db_ok": db_ok, "status": status, "title": title,
+        "is_closed": status == models.TenderEvaluation.STATUS_CLOSED,
+    })
+
+
+@login_required
+def tenders_current(request):
+    """List of open (current) tenders."""
+    return _tender_list(request, models.TenderEvaluation.STATUS_OPEN, "Current Tenders")
+
+
+@login_required
+def tenders_closed(request):
+    """List of closed tenders."""
+    return _tender_list(request, models.TenderEvaluation.STATUS_CLOSED, "Closed Tenders")
 
 
 @login_required
