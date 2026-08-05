@@ -6,9 +6,9 @@
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
     :root{
-      --teal:#1d4ed8;
-      --teal-600:#1e40af;
-      --teal-50:#eff6ff;
+      --teal:#cf1124;
+      --teal-600:#a50e1d;
+      --teal-50:#fdecee;
       --navy:#13294b;
       --navy2:#1e3a8a;
       --gold:#38bdf8;
@@ -23,12 +23,10 @@
     }
     *{box-sizing:border-box;margin:0;padding:0;}
     html,body{height:100%;}
-    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);
       min-height:100vh;position:relative;isolation:isolate;font-size:14px;line-height:1.45;}
     body::before{
-      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-      background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
-        url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
+      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--bg);
     }
     a{text-decoration:none;color:inherit;}
     button{font-family:inherit;}
@@ -61,7 +59,7 @@
     .side-nav a.active{background:var(--teal);color:#fff;font-weight:600;}
     .side-nav a.active::before{
       content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;
-      border-radius:0 3px 3px 0;background:#93c5fd;
+      border-radius:0 3px 3px 0;background:#f6a5ab;
     }
     .side-sep{height:1px;background:rgba(255,255,255,.12);margin:12px 20px;}
     .side-foot{margin-top:auto;padding:0 12px;}
@@ -82,8 +80,8 @@
     }
     .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
     .topbar nav a svg{width:15px;height:15px;margin-right:5px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-    .topbar nav a:hover{opacity:1;background:rgba(56,189,248,.15);}
-    .topbar nav a.active{opacity:1;background:rgba(56,189,248,.18);border-bottom-color:var(--red);}
+    .topbar nav a:hover{opacity:1;background:rgba(207,17,36,.18);}
+    .topbar nav a.active{opacity:1;background:rgba(207,17,36,.24);border-bottom-color:var(--red);}
     .topbar nav a.dis{cursor:default;}
     .topbar nav a.dis:hover{background:transparent;opacity:.82;}
     .topbar .spacer{flex:1;}
@@ -105,11 +103,11 @@
     tr:hover td{background:#f8fafc;}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
-    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
+    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.15);}
     .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
     .btn:hover{background:var(--teal-600);}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
-    .card{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    .card{background:#fff;
       border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
     .kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
