@@ -1,0 +1,305 @@
+{% extends "clinic/base.html" %}
+{% block title %}{{ p.patient.first_name }} {{ p.patient.surname }} — Pathway{% endblock %}
+{% block content %}
+<style>
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .back:hover{text-decoration:underline;}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .t-elective{background:#eef2ff;color:#3730a3;} .t-emergency{background:#fef3f2;color:#b42318;}
+  .t-old_case{background:#f1f5f9;color:#475569;} .t-fistula{background:#fffaeb;color:#b54708;}
+  .s-inpatient{background:#ecfdf3;color:#067647;} .s-followup,.s-outpatient{background:#eff6ff;color:#1d4ed8;}
+  .s-siting_scheduled{background:#fdf4ff;color:#a21caf;} .s-awaiting_surgery{background:#fffaeb;color:#b54708;}
+  .s-discharged,.s-closed{background:#f1f5f9;color:#475569;}
+
+  /* ---- visual pathway (stepper) ---- */
+  .rail{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 18px 16px;margin:16px 0;
+        display:flex;align-items:flex-start;overflow-x:auto;}
+  .rail .st{flex:1 0 130px;position:relative;text-align:center;padding:0 4px;}
+  /* connecting line between steps */
+  .rail .st::before{content:"";position:absolute;top:17px;left:-50%;width:100%;height:3px;background:#e2e8f0;z-index:0;}
+  .rail .st:first-child::before{display:none;}
+  .rail .st.done::before,.rail .st.now::before{background:#16a34a;}
+  .rail .dot{position:relative;z-index:1;width:36px;height:36px;border-radius:50%;margin:0 auto 8px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;
+    background:#e2e8f0;color:#64748b;border:3px solid #fff;box-shadow:0 0 0 2px #e2e8f0;}
+  .rail .st.done .dot{background:#16a34a;color:#fff;box-shadow:0 0 0 2px #16a34a;}
+  .rail .st.now .dot{background:#cf1124;color:#fff;box-shadow:0 0 0 2px #cf1124;animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 2px #cf1124;}50%{box-shadow:0 0 0 6px rgba(207,17,36,.25);}}
+  .rail .k{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:800;}
+  .rail .v{font-size:12.5px;font-weight:700;margin-top:2px;color:var(--ink);}
+  .rail .st.done .v{color:#067647;} .rail .st.now .v{color:#cf1124;}
+  .rail .st.todo .v{color:#94a3b8;font-weight:600;}
+  .pw-route{font-size:12px;color:var(--muted);margin:-6px 0 14px;}
+
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 18px;}
+  .kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+  .kv .v{font-weight:600;font-size:13.5px;}
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  .f-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  input[type=text],input[type=date],textarea,select{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;font-family:inherit;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;margin-right:16px;}
+  .chk input{width:17px;height:17px;}
+
+  .tl{border-left:2px solid var(--border);margin-left:8px;padding-left:16px;}
+  .tl .ev{position:relative;padding:10px 0;border-bottom:1px solid var(--border);}
+  .tl .ev:last-child{border-bottom:none;}
+  .tl .ev::before{content:"";position:absolute;left:-23px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--teal);}
+  .tl .ev .d{font-size:12px;color:var(--muted);}
+  .tl .ev .t{font-weight:700;font-size:13.5px;}
+  .pill2{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:var(--teal-50);color:var(--teal);margin-left:6px;}
+  .late{background:#fef3f2;color:#b42318;}
+</style>
+
+<a href="{% url 'clinic:pathways' %}" class="back">
+  <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+  Care Pathways
+</a>
+
+<h1 style="margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  {{ p.patient.first_name|default:"" }} {{ p.patient.surname|default:"" }}
+  <span class="tag t-{{ p.pathway_type }}">{{ p.get_pathway_type_display }}</span>
+  <span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span>
+</h1>
+<p class="muted" style="font-size:13px;">{{ stage_label }}{% if p.patient.id_card %} · ID {{ p.patient.id_card }}{% endif %}</p>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+{% if p.first_review_was_late %}
+  <div class="esrf-msg warning">
+    First post-operative review was on <strong>day {{ p.first_review_delay_days }}</strong>, not day 1
+    (surgery {{ p.surgery_date|date:"d/m/Y" }}, first seen {{ p.first_review_date|date:"d/m/Y" }}).
+  </div>
+{% endif %}
+
+<!-- Visual pathway -->
+<div class="pw-route">
+  {% if p.pathway_type == 'elective' %}Elective route: siting session → surgery → daily post-op reviews → discharge → follow-up
+  {% elif p.pathway_type == 'emergency' %}Emergency route: surgery → post-op reviews (first ideally day 1) → discharge → follow-up
+  {% elif p.pathway_type == 'old_case' %}Old case: stoma formed elsewhere → reviews {% if p.care_setting == 'outpatient' %}by appointment{% else %}as inpatient{% endif %} → follow-up
+  {% else %}Fistula: inpatient reviews → discharge (follow-up rarely needed)
+  {% endif %}
+</div>
+<div class="rail">
+  <div class="st done">
+    <div class="dot">✓</div>
+    <div class="k">Referred</div>
+    <div class="v">{{ p.created_at|date:"d/m/Y" }}</div>
+  </div>
+  {% if p.needs_siting %}
+    <div class="st {% if p.siting_done_date %}done{% elif p.status == 'siting_scheduled' %}now{% else %}todo{% endif %}">
+      <div class="dot">{% if p.siting_done_date %}✓{% else %}1{% endif %}</div>
+      <div class="k">Siting</div>
+      <div class="v">{% if p.siting_done_date %}{{ p.siting_done_date|date:"d/m/Y" }}{% elif p.siting_scheduled_date %}{{ p.siting_scheduled_date|date:"d/m/Y" }}{% else %}Not set{% endif %}</div>
+    </div>
+  {% endif %}
+  {% if p.pathway_type != 'fistula' %}
+    <div class="st {% if p.surgery_date %}done{% elif p.status == 'awaiting_surgery' %}now{% else %}todo{% endif %}">
+      <div class="dot">{% if p.surgery_date %}✓{% else %}2{% endif %}</div>
+      <div class="k">Surgery</div>
+      <div class="v">{{ p.surgery_date|date:"d/m/Y"|default:"—" }}</div>
+    </div>
+  {% endif %}
+  <div class="st {% if p.first_review_date %}done{% elif p.status == 'inpatient' or p.status == 'outpatient' %}now{% else %}todo{% endif %}">
+    <div class="dot">{% if p.first_review_date %}✓{% else %}3{% endif %}</div>
+    <div class="k">1st review</div>
+    <div class="v">{{ p.first_review_date|date:"d/m/Y"|default:"—" }}</div>
+  </div>
+  <div class="st {% if p.discharge_date %}done{% elif p.status == 'inpatient' %}now{% else %}todo{% endif %}">
+    <div class="dot">{% if p.discharge_date %}✓{% else %}4{% endif %}</div>
+    <div class="k">Discharge</div>
+    <div class="v">{{ p.discharge_date|date:"d/m/Y"|default:"—" }}</div>
+  </div>
+  {% if p.expects_followup %}
+    <div class="st {% if p.status == 'followup' or p.status == 'outpatient' %}now{% elif p.status == 'closed' %}done{% else %}todo{% endif %}">
+      <div class="dot">5</div>
+      <div class="k">Follow-up</div>
+      <div class="v">{% if appointments %}{{ appointments|length }} booked{% else %}—{% endif %}</div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <div class="kv">
+    <div><div class="k">Stoma type</div><div class="v">{{ p.stoma_type|default:"—" }}</div></div>
+    <div><div class="k">Operation</div><div class="v">{{ p.operation|default:"—" }}</div></div>
+    {% if p.pathway_type == 'old_case' %}
+      <div><div class="k">Operated at</div><div class="v">{{ p.referral_source|default:"—" }}</div></div>
+      <div><div class="k">Seen as</div><div class="v">{{ p.get_care_setting_display|default:"—" }}</div></div>
+    {% endif %}
+    <div><div class="k">Reviews recorded</div><div class="v">{{ events|length }}</div></div>
+  </div>
+  {% if p.notes %}<p class="muted" style="font-size:13px;margin-top:12px;">{{ p.notes }}</p>{% endif %}
+</div>
+
+<!-- ============ Stage actions ============ -->
+
+{% if p.needs_siting and not p.siting_done_date %}
+<div class="card">
+  <div class="sec-t">Stoma siting session</div>
+  <div class="sec-s">{% if p.siting_scheduled_date %}Scheduled for {{ p.siting_scheduled_date|date:"d/m/Y" }} — you can move it if the patient is postponed.{% else %}Schedule the session before surgery.{% endif %}</div>
+  <form method="post" style="margin-bottom:18px;">{% csrf_token %}
+    <input type="hidden" name="action" value="schedule_siting">
+    <div class="f-row" style="align-items:end;">
+      <div><label class="lbl">{% if p.siting_scheduled_date %}Move to{% else %}Scheduled date{% endif %}</label>
+        <input type="date" name="siting_scheduled_date" value="{{ p.siting_scheduled_date|date:'Y-m-d' }}"></div>
+      <div><button class="btn" type="submit">{% if p.siting_scheduled_date %}Reschedule{% else %}Schedule{% endif %}</button></div>
+    </div>
+  </form>
+
+  {% if p.siting_scheduled_date %}
+  <details {% if p.siting_scheduled_date <= today %}open{% endif %}>
+    <summary style="cursor:pointer;font-weight:700;font-size:13.5px;color:var(--teal);">Open siting session &amp; record the chart</summary>
+    <form method="post" style="margin-top:14px;">{% csrf_token %}
+      <input type="hidden" name="action" value="complete_siting">
+      <div class="f-row">
+        <div><label class="lbl">Session date</label><input type="date" name="siting_done_date" value="{{ today|date:'Y-m-d' }}"></div>
+        <div><label class="lbl">Planned stoma type</label><input type="text" name="chart_stoma_type" placeholder="e.g. Ileostomy"></div>
+        <div><label class="lbl">Site marked</label>
+          <select name="chart_site_marked"><option value="">—</option><option>Left iliac fossa</option><option>Right iliac fossa</option><option>Upper quadrant</option><option>Other</option></select></div>
+        <div><label class="lbl">Abdomen</label>
+          <select name="chart_abdomen"><option value="">—</option><option>Flat</option><option>Rounded</option><option>Scarred</option><option>Skin folds / creases</option></select></div>
+        <div><label class="lbl">Mobility</label>
+          <select name="chart_mobility"><option value="">—</option><option>Independent</option><option>Walking aid</option><option>Wheelchair</option><option>Bed-bound</option></select></div>
+        <div><label class="lbl">Eyesight / dexterity</label>
+          <select name="chart_dexterity"><option value="">—</option><option>No difficulty</option><option>Reduced eyesight</option><option>Reduced dexterity</option><option>Both</option></select></div>
+      </div>
+      <div style="margin-top:12px;"><label class="lbl">Notes</label><textarea name="chart_notes" rows="2" placeholder="Findings, patient concerns, teaching given…"></textarea></div>
+      <label class="chk" style="margin-top:10px;"><input type="checkbox" name="chart_education"> Pre-operative education given</label>
+      <div style="margin-top:12px;"><button class="btn" type="submit">Save siting session</button></div>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if not p.surgery_date and p.pathway_type != 'old_case' and p.pathway_type != 'fistula' %}
+<div class="card">
+  <div class="sec-t">Record surgery</div>
+  <div class="sec-s">Once the operation is performed, post-operative reviews begin.</div>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="record_surgery">
+    <div class="f-row" style="align-items:end;">
+      <div><label class="lbl">Surgery date</label><input type="date" name="surgery_date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div><label class="lbl">Stoma type</label><input type="text" name="stoma_type" value="{{ p.stoma_type|default:'' }}"></div>
+      <div><label class="lbl">Operation</label><input type="text" name="operation" placeholder="e.g. Hartmann's"></div>
+      <div><button class="btn" type="submit">Record surgery</button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if not p.discharge_date and p.status != 'closed' %}
+<div class="card">
+  <div class="sec-t">{% if p.surgery_date %}Post-operative review{% else %}Review{% endif %}</div>
+  <div class="sec-s">
+    {% if p.surgery_date and not p.first_review_date %}Record the first review — ideally day 1 after surgery. A later first review is flagged.
+    {% elif p.surgery_date %}Add each day's review until the patient is discharged.
+    {% else %}Record each review of this patient.{% endif %}
+  </div>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="add_review">
+    <div class="f-row">
+      <div><label class="lbl">Date</label><input type="date" name="event_date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div style="grid-column:span 2;"><label class="lbl">Summary</label><input type="text" name="summary" placeholder="e.g. Stoma pink and functioning, output 400ml"></div>
+    </div>
+    <div style="margin-top:12px;"><label class="lbl">Notes</label><textarea name="notes" rows="2"></textarea></div>
+    <div style="margin-top:10px;">
+      <label class="chk"><input type="checkbox" name="education_given"> Patient education given</label>
+      <label class="chk"><input type="checkbox" name="supplies_given"> Supplies provided</label>
+    </div>
+    <div style="margin-top:12px;"><button class="btn" type="submit">Add review</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="sec-t">Discharge</div>
+  <div class="sec-s">
+    {% if p.expects_followup %}On discharge the patient becomes an “old stoma” and moves onto follow-up.
+    {% else %}Fistula patients are rarely followed up, so this closes the pathway.{% endif %}
+  </div>
+  <form method="post" onsubmit="return confirm('Discharge this patient?');">{% csrf_token %}
+    <input type="hidden" name="action" value="discharge">
+    <div class="f-row" style="align-items:end;">
+      <div><label class="lbl">Discharge date</label><input type="date" name="discharge_date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div><button class="btn" type="submit" style="background:#1e8f4e;">Discharge</button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{% if p.expects_followup and p.status != 'closed' %}
+<div class="card">
+  <div class="sec-t">Follow-up appointments</div>
+  <div class="sec-s">Plan the next outpatient review.</div>
+  {% if appointments %}
+    <table style="margin-bottom:14px;">
+      <thead><tr><th>Date</th><th>Time</th><th>Status</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr><td>{{ a.appt_date|date:"d/m/Y" }}</td><td>{{ a.appt_time|default:"—" }}</td>
+            <td>{{ a.get_status_display }}</td><td class="muted">{{ a.notes|default:"—" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="add_appointment">
+    <div class="f-row" style="align-items:end;">
+      <div><label class="lbl">Date</label><input type="date" name="appt_date"></div>
+      <div><label class="lbl">Time</label><input type="text" name="appt_time" placeholder="e.g. 09:30"></div>
+      <div><label class="lbl">Notes</label><input type="text" name="appt_notes"></div>
+      <div><button class="btn" type="submit">Book appointment</button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<!-- Timeline -->
+<div class="card">
+  <div class="sec-t">Episode timeline</div>
+  <div class="sec-s">Every event recorded on this episode, newest first.</div>
+  {% if events %}
+    <div class="tl">
+      {% for e in events %}
+      <div class="ev">
+        <div class="d">{{ e.event_date|date:"D d/m/Y" }}
+          {% if e.day_number != None %}<span class="pill2 {% if e.event_type == 'post_op_review' and e.day_number > 1 and forloop.last %}late{% endif %}">Day {{ e.day_number }}</span>{% endif %}
+        </div>
+        <div class="t">{{ e.get_event_type_display }}{% if e.summary %} — {{ e.summary }}{% endif %}</div>
+        {% if e.notes %}<div class="muted" style="font-size:12.5px;margin-top:3px;">{{ e.notes }}</div>{% endif %}
+        {% if e.education_given or e.supplies_given %}
+          <div style="margin-top:5px;">
+            {% if e.education_given %}<span class="pill2">Education</span>{% endif %}
+            {% if e.supplies_given %}<span class="pill2">Supplies</span>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted" style="font-size:13px;">No events yet.</p>
+  {% endif %}
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px;">
+  {% if p.status != 'closed' %}
+    <form method="post" onsubmit="return confirm('Close this pathway?');" style="margin:0;">{% csrf_token %}
+      <input type="hidden" name="action" value="close">
+      <button class="btn" type="submit" style="background:#64748b;">Close pathway</button>
+    </form>
+  {% else %}
+    <form method="post" style="margin:0;">{% csrf_token %}
+      <input type="hidden" name="action" value="reopen">
+      <button class="btn" type="submit">Reopen pathway</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

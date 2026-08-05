@@ -1,0 +1,81 @@
+{% extends "clinic/base.html" %}
+{% block title %}Care Pathways — MDH Stoma Care{% endblock %}
+{% block content %}
+<style>
+  .pw-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;}
+  .pw-head .ht{flex:1;min-width:220px;}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .t-elective{background:#eef2ff;color:#3730a3;}
+  .t-emergency{background:#fef3f2;color:#b42318;}
+  .t-old_case{background:#f1f5f9;color:#475569;}
+  .t-fistula{background:#fffaeb;color:#b54708;}
+  .s-inpatient{background:#ecfdf3;color:#067647;}
+  .s-followup{background:#eff6ff;color:#1d4ed8;}
+  .s-siting_scheduled{background:#fdf4ff;color:#a21caf;}
+  .s-awaiting_surgery{background:#fffaeb;color:#b54708;}
+  .s-outpatient{background:#eff6ff;color:#1d4ed8;}
+  .s-discharged,.s-closed{background:#f1f5f9;color:#475569;}
+  .late{background:#fef3f2;color:#b42318;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;}
+</style>
+
+<div class="pw-head">
+  <div class="ht">
+    <h1 style="margin-bottom:2px;">Care Pathways</h1>
+    <p class="muted" style="font-size:13px;">Every patient's journey — elective, emergency, old case and fistula — from referral through to follow-up.</p>
+  </div>
+  <a href="{% url 'clinic:pathway_new' %}" class="btn">+ New Patient &amp; Pathway</a>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<form method="get" class="controls" style="margin-top:14px;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search patient name or ID card…" style="min-width:240px;">
+  <select name="type">
+    <option value="">All pathways</option>
+    {% for val,label in type_choices %}<option value="{{ val }}" {% if type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="status">
+    <option value="">All stages</option>
+    {% for val,label in status_choices %}<option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if q or type or status %}<a class="btn" href="{% url 'clinic:pathways' %}" style="background:#64748b;">Clear</a>{% endif %}
+</form>
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    Pathways are temporarily unavailable (database not reachable).
+  </div>
+{% elif pathways %}
+  <table>
+    <thead>
+      <tr><th>Patient</th><th>Pathway</th><th>Stage</th><th>Surgery</th><th>Next step</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in pathways %}
+      <tr>
+        <td><strong>{{ p.patient.first_name|default:"" }} {{ p.patient.surname|default:"" }}</strong>
+          {% if p.patient.id_card %}<div class="muted" style="font-size:11px;">{{ p.patient.id_card }}</div>{% endif %}</td>
+        <td><span class="tag t-{{ p.pathway_type }}">{{ p.get_pathway_type_display }}</span></td>
+        <td><span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span>
+          {% if p.first_review_was_late %}<div style="margin-top:4px;"><span class="late">1st review day {{ p.first_review_delay_days }}</span></div>{% endif %}</td>
+        <td>{{ p.surgery_date|date:"d/m/Y"|default:"—" }}</td>
+        <td class="muted" style="font-size:12px;">{{ p.stage_label }}</td>
+        <td><a href="{% url 'clinic:pathway_detail' pk=p.id %}">Open</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card" style="text-align:center;padding:38px 18px;">
+    <p class="muted" style="font-size:13px;margin-bottom:16px;">
+      {% if q or type or status %}No pathways match those filters.{% else %}No pathways yet — add a patient to start one.{% endif %}
+    </p>
+    <a href="{% url 'clinic:pathway_new' %}" class="btn">+ New Patient &amp; Pathway</a>
+  </div>
+{% endif %}
+{% endblock %}

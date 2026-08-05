@@ -394,6 +394,203 @@ class OrderingDocument(UUIDModel):
         )
 
 
+class CarePathway(UUIDModel):
+    """A patient's stoma/fistula care episode, from referral to follow-up.
+
+    One pathway = one episode (e.g. an admission). It carries many
+    PathwayEvents (the day-by-day reviews, education and supplies given).
+    Managed by Django, so it does not disturb the Supabase-owned tables.
+    """
+
+    ELECTIVE = "elective"
+    EMERGENCY = "emergency"
+    OLD_CASE = "old_case"
+    FISTULA = "fistula"
+    TYPE_CHOICES = [
+        (ELECTIVE, "Elective"),
+        (EMERGENCY, "Emergency"),
+        (OLD_CASE, "Old case (operated elsewhere)"),
+        (FISTULA, "Fistula"),
+    ]
+
+    # Stages a pathway moves through.
+    SITING_SCHEDULED = "siting_scheduled"
+    AWAITING_SURGERY = "awaiting_surgery"
+    INPATIENT = "inpatient"
+    OUTPATIENT = "outpatient"
+    DISCHARGED = "discharged"
+    FOLLOWUP = "followup"
+    CLOSED = "closed"
+    STATUS_CHOICES = [
+        (SITING_SCHEDULED, "Siting scheduled"),
+        (AWAITING_SURGERY, "Awaiting surgery"),
+        (INPATIENT, "Inpatient — under review"),
+        (OUTPATIENT, "Outpatient"),
+        (DISCHARGED, "Discharged"),
+        (FOLLOWUP, "Follow-up (old stoma)"),
+        (CLOSED, "Closed"),
+    ]
+
+    INPATIENT_SETTING = "inpatient"
+    OUTPATIENT_SETTING = "outpatient"
+    SETTING_CHOICES = [
+        (INPATIENT_SETTING, "Inpatient"),
+        (OUTPATIENT_SETTING, "Outpatient appointment"),
+    ]
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, db_constraint=False,
+        related_name="care_pathways",
+    )
+    pathway_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+
+    # Old case: where the stoma was formed, and how we see them.
+    referral_source = models.CharField(max_length=200, blank=True, null=True)
+    care_setting = models.CharField(
+        max_length=20, choices=SETTING_CHOICES, blank=True, null=True,
+    )
+
+    # Elective: the stoma siting session (reschedulable).
+    siting_scheduled_date = models.DateField(blank=True, null=True)
+    siting_done_date = models.DateField(blank=True, null=True)
+    siting_chart = models.JSONField(default=dict, blank=True)
+
+    # Surgery.
+    surgery_date = models.DateField(blank=True, null=True)
+    stoma_type = models.CharField(max_length=120, blank=True, null=True)
+    operation = models.CharField(max_length=200, blank=True, null=True)
+
+    # Post-operative course.
+    first_review_date = models.DateField(blank=True, null=True)
+    discharge_date = models.DateField(blank=True, null=True)
+
+    notes = models.TextField(blank=True, null=True)
+    created_by_username = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "care_pathways"
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"{self.get_pathway_type_display()} — {self.patient}"
+
+    # -- derived helpers -------------------------------------------------
+    @property
+    def needs_siting(self):
+        """Only elective patients get a planned stoma siting session."""
+        return self.pathway_type == self.ELECTIVE
+
+    @property
+    def expects_followup(self):
+        """Fistulas are rarely followed up after discharge."""
+        return self.pathway_type != self.FISTULA
+
+    @property
+    def first_review_delay_days(self):
+        """Days between surgery and the first post-op review (None if n/a)."""
+        if not self.surgery_date or not self.first_review_date:
+            return None
+        return (self.first_review_date - self.surgery_date).days
+
+    @property
+    def first_review_was_late(self):
+        """True when the first post-op review wasn't day 1 — flagged so
+        delayed reviews are visible rather than hidden."""
+        d = self.first_review_delay_days
+        return d is not None and d > 1
+
+    @property
+    def is_active(self):
+        return self.status not in {self.CLOSED}
+
+
+class PathwayEvent(UUIDModel):
+    """A single event within a pathway — usually a daily post-op review."""
+
+    SITING = "siting"
+    SURGERY = "surgery"
+    POST_OP_REVIEW = "post_op_review"
+    REVIEW = "review"
+    DISCHARGE = "discharge"
+    FOLLOWUP = "followup"
+    NOTE = "note"
+    TYPE_CHOICES = [
+        (SITING, "Stoma siting session"),
+        (SURGERY, "Surgery"),
+        (POST_OP_REVIEW, "Post-operative review"),
+        (REVIEW, "Review"),
+        (DISCHARGE, "Discharge"),
+        (FOLLOWUP, "Follow-up review"),
+        (NOTE, "Note"),
+    ]
+
+    pathway = models.ForeignKey(
+        CarePathway, on_delete=models.CASCADE, related_name="events",
+    )
+    event_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=REVIEW)
+    event_date = models.DateField()
+    day_number = models.IntegerField(blank=True, null=True)  # post-op day
+    summary = models.CharField(max_length=250, blank=True, null=True)
+    education_given = models.BooleanField(default=False)
+    supplies_given = models.BooleanField(default=False)
+    notes = models.TextField(blank=True, null=True)
+    data = models.JSONField(default=dict, blank=True)
+    recorded_by = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "pathway_events"
+        ordering = ["-event_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} — {self.event_date}"
+
+
+class FollowUpAppointment(UUIDModel):
+    """A planned follow-up / outpatient appointment for a pathway."""
+
+    SCHEDULED = "scheduled"
+    ATTENDED = "attended"
+    POSTPONED = "postponed"
+    CANCELLED = "cancelled"
+    DNA = "dna"
+    STATUS_CHOICES = [
+        (SCHEDULED, "Scheduled"),
+        (ATTENDED, "Attended"),
+        (POSTPONED, "Postponed"),
+        (CANCELLED, "Cancelled"),
+        (DNA, "Did not attend"),
+    ]
+
+    pathway = models.ForeignKey(
+        CarePathway, on_delete=models.CASCADE, related_name="followup_appointments",
+        blank=True, null=True,
+    )
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, db_constraint=False,
+        related_name="followup_appointments_new",
+    )
+    appt_date = models.DateField()
+    appt_time = models.CharField(max_length=20, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=SCHEDULED)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "followup_appointments"
+        ordering = ["appt_date", "appt_time"]
+
+    def __str__(self):
+        return f"{self.appt_date} — {self.patient}"
+
+
 class TenderEvaluation(UUIDModel):
     """A CPSU tender evaluation the user can open, work on and close.
 

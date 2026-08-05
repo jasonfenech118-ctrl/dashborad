@@ -699,6 +699,315 @@ def tender_delete(request, pk):
     return redirect("clinic:cpsu_tenders")
 
 
+# ------------------------------------------------------------------ pathways
+
+
+def _parse_date(value, default=None):
+    try:
+        return datetime.date.fromisoformat((value or "").strip())
+    except ValueError:
+        return default
+
+
+def _pathway_stage_label(p):
+    """Short human summary of what happens next on this pathway."""
+    P = models.CarePathway
+    if p.status == P.SITING_SCHEDULED:
+        return "Awaiting stoma siting session"
+    if p.status == P.AWAITING_SURGERY:
+        return "Siting done — awaiting surgery"
+    if p.status == P.INPATIENT:
+        return "Inpatient — reviewing daily until discharge"
+    if p.status == P.OUTPATIENT:
+        return "Outpatient — seen by appointment"
+    if p.status == P.DISCHARGED:
+        return "Discharged"
+    if p.status == P.FOLLOWUP:
+        return "Old stoma — on follow-up"
+    return "Closed"
+
+
+@login_required
+def pathways(request):
+    """All care pathways, filterable by type and status."""
+    ptype = (request.GET.get("type") or "").strip()
+    status = (request.GET.get("status") or "").strip()
+    q = (request.GET.get("q") or "").strip()
+
+    items, db_ok = [], True
+    try:
+        qs = models.CarePathway.objects.select_related("patient").all()
+        if ptype:
+            qs = qs.filter(pathway_type=ptype)
+        if status:
+            qs = qs.filter(status=status)
+        if q:
+            qs = qs.filter(
+                Q(patient__first_name__icontains=q)
+                | Q(patient__surname__icontains=q)
+                | Q(patient__id_card__icontains=q)
+            )
+        items = list(qs[:300])
+    except Exception:
+        db_ok = False
+
+    for p in items:
+        p.stage_label = _pathway_stage_label(p)
+
+    return render(request, "clinic/pathways.html", {
+        "pathways": items, "db_ok": db_ok, "q": q,
+        "type": ptype, "status": status,
+        "type_choices": models.CarePathway.TYPE_CHOICES,
+        "status_choices": models.CarePathway.STATUS_CHOICES,
+    })
+
+
+@login_required
+def pathway_new(request):
+    """Create a new patient and start their care pathway in one step."""
+    P = models.CarePathway
+    if request.method == "POST":
+        form = forms.PatientForm(request.POST)
+        ptype = (request.POST.get("pathway_type") or "").strip()
+        if ptype not in dict(P.TYPE_CHOICES):
+            messages.error(request, "Choose a pathway for this patient.")
+        elif form.is_valid():
+            patient = form.save()
+            setting = (request.POST.get("care_setting") or "").strip()
+            siting = _parse_date(request.POST.get("siting_scheduled_date"))
+            surgery = _parse_date(request.POST.get("surgery_date"))
+
+            # Where the pathway starts depends on its type.
+            if ptype == P.ELECTIVE:
+                status = P.SITING_SCHEDULED if siting else P.AWAITING_SURGERY
+            elif ptype == P.EMERGENCY:
+                status = P.INPATIENT if surgery else P.AWAITING_SURGERY
+            elif ptype == P.OLD_CASE:
+                status = (P.OUTPATIENT if setting == P.OUTPATIENT_SETTING
+                          else P.INPATIENT)
+            else:  # fistula — always seen as an inpatient
+                status = P.INPATIENT
+
+            pathway = P(
+                patient=patient, pathway_type=ptype, status=status,
+                siting_scheduled_date=siting if ptype == P.ELECTIVE else None,
+                surgery_date=surgery,
+                stoma_type=(request.POST.get("stoma_type") or "").strip() or None,
+                referral_source=(request.POST.get("referral_source") or "").strip() or None,
+                care_setting=setting or None,
+                notes=(request.POST.get("pathway_notes") or "").strip() or None,
+                created_by_username=request.user.get_username(),
+            )
+            try:
+                pathway.save()
+            except Exception:
+                messages.error(request, "Patient saved, but the pathway could not be created.")
+                return redirect("clinic:patient_detail", patient_id=patient.id)
+
+            if surgery:
+                models.PathwayEvent.objects.create(
+                    pathway=pathway, event_type=models.PathwayEvent.SURGERY,
+                    event_date=surgery, summary="Surgery performed",
+                    recorded_by=request.user.get_username(),
+                )
+            messages.success(request, "Patient added and pathway started.")
+            return redirect("clinic:pathway_detail", pk=pathway.pk)
+    else:
+        form = forms.PatientForm()
+
+    return render(request, "clinic/pathway_new.html", {
+        "form": form, "type_choices": P.TYPE_CHOICES,
+        "today": datetime.date.today(),
+    })
+
+
+@login_required
+def pathway_detail(request, pk):
+    """A pathway's timeline, with the actions available at its current stage."""
+    pathway = get_object_or_404(models.CarePathway, pk=pk)
+    if request.method == "POST":
+        return _pathway_action(request, pathway)
+
+    events = list(pathway.events.all()[:200])
+    appts = list(pathway.followup_appointments.all()[:50])
+    return render(request, "clinic/pathway_detail.html", {
+        "p": pathway,
+        "events": events,
+        "appointments": appts,
+        "stage_label": _pathway_stage_label(pathway),
+        "today": datetime.date.today(),
+    })
+
+
+def _pathway_action(request, p):
+    """Handle a stage action posted from the pathway detail page."""
+    P = models.CarePathway
+    E = models.PathwayEvent
+    action = (request.POST.get("action") or "").strip()
+    who = request.user.get_username()
+    today = datetime.date.today()
+
+    try:
+        if action == "schedule_siting":
+            d = _parse_date(request.POST.get("siting_scheduled_date"))
+            if not d:
+                messages.error(request, "Enter a valid siting date.")
+            else:
+                was = p.siting_scheduled_date
+                p.siting_scheduled_date = d
+                if p.status in {P.SITING_SCHEDULED, P.AWAITING_SURGERY}:
+                    p.status = P.SITING_SCHEDULED
+                p.save()
+                messages.success(
+                    request,
+                    f"Siting session rescheduled to {d:%d/%m/%Y}." if was
+                    else f"Siting session scheduled for {d:%d/%m/%Y}.",
+                )
+
+        elif action == "complete_siting":
+            d = _parse_date(request.POST.get("siting_done_date"), today)
+            p.siting_done_date = d
+            p.siting_chart = {
+                "stoma_type": (request.POST.get("chart_stoma_type") or "").strip(),
+                "site_marked": (request.POST.get("chart_site_marked") or "").strip(),
+                "abdomen": (request.POST.get("chart_abdomen") or "").strip(),
+                "mobility": (request.POST.get("chart_mobility") or "").strip(),
+                "eyesight_dexterity": (request.POST.get("chart_dexterity") or "").strip(),
+                "education_given": bool(request.POST.get("chart_education")),
+                "notes": (request.POST.get("chart_notes") or "").strip(),
+            }
+            if p.status == P.SITING_SCHEDULED:
+                p.status = P.AWAITING_SURGERY
+            p.save()
+            E.objects.create(pathway=p, event_type=E.SITING, event_date=d,
+                             summary="Stoma siting session completed",
+                             education_given=bool(request.POST.get("chart_education")),
+                             notes=(request.POST.get("chart_notes") or "").strip() or None,
+                             data=p.siting_chart, recorded_by=who)
+            messages.success(request, "Siting session recorded.")
+
+        elif action == "record_surgery":
+            d = _parse_date(request.POST.get("surgery_date"), today)
+            p.surgery_date = d
+            p.stoma_type = (request.POST.get("stoma_type") or "").strip() or p.stoma_type
+            p.operation = (request.POST.get("operation") or "").strip() or p.operation
+            p.status = P.INPATIENT
+            p.save()
+            E.objects.create(pathway=p, event_type=E.SURGERY, event_date=d,
+                             summary="Surgery performed", recorded_by=who)
+            messages.success(request, "Surgery recorded — start post-operative reviews.")
+
+        elif action == "add_review":
+            d = _parse_date(request.POST.get("event_date"), today)
+            is_post_op = p.surgery_date is not None
+            day = (d - p.surgery_date).days if is_post_op else None
+            first = is_post_op and p.first_review_date is None
+            if first:
+                p.first_review_date = d
+                p.save(update_fields=["first_review_date", "updated_at"])
+            E.objects.create(
+                pathway=p,
+                event_type=E.POST_OP_REVIEW if is_post_op else E.REVIEW,
+                event_date=d, day_number=day,
+                summary=(request.POST.get("summary") or "").strip() or None,
+                education_given=bool(request.POST.get("education_given")),
+                supplies_given=bool(request.POST.get("supplies_given")),
+                notes=(request.POST.get("notes") or "").strip() or None,
+                recorded_by=who,
+            )
+            if first and p.first_review_was_late:
+                messages.warning(
+                    request,
+                    f"First post-op review was day {p.first_review_delay_days} "
+                    f"(not day 1) — flagged on this pathway.",
+                )
+            else:
+                messages.success(request, "Review recorded.")
+
+        elif action == "discharge":
+            d = _parse_date(request.POST.get("discharge_date"), today)
+            p.discharge_date = d
+            # Fistulas are rarely followed up; everyone else becomes an
+            # "old stoma" on follow-up once discharged.
+            p.status = P.FOLLOWUP if p.expects_followup else P.CLOSED
+            p.save()
+            E.objects.create(pathway=p, event_type=E.DISCHARGE, event_date=d,
+                             summary="Discharged", recorded_by=who)
+            messages.success(
+                request,
+                "Discharged — now on follow-up." if p.expects_followup
+                else "Discharged and closed.",
+            )
+
+        elif action == "add_appointment":
+            d = _parse_date(request.POST.get("appt_date"))
+            if not d:
+                messages.error(request, "Enter a valid appointment date.")
+            else:
+                models.FollowUpAppointment.objects.create(
+                    pathway=p, patient_id=p.patient_id, appt_date=d,
+                    appt_time=(request.POST.get("appt_time") or "").strip() or None,
+                    notes=(request.POST.get("appt_notes") or "").strip() or None,
+                )
+                messages.success(request, f"Appointment booked for {d:%d/%m/%Y}.")
+
+        elif action == "close":
+            p.status = P.CLOSED
+            p.save(update_fields=["status", "updated_at"])
+            messages.success(request, "Pathway closed.")
+
+        elif action == "reopen":
+            p.status = P.FOLLOWUP if p.discharge_date else P.INPATIENT
+            p.save(update_fields=["status", "updated_at"])
+            messages.success(request, "Pathway reopened.")
+
+        else:
+            messages.error(request, "Unknown action.")
+    except Exception:
+        messages.error(request, "That action could not be saved — please try again.")
+
+    return redirect("clinic:pathway_detail", pk=p.pk)
+
+
+@login_required
+def appointments(request):
+    """All planned follow-up / outpatient appointments."""
+    appts, db_ok = [], True
+    show = (request.GET.get("show") or "upcoming").strip()
+    try:
+        qs = models.FollowUpAppointment.objects.select_related("patient", "pathway")
+        if show == "upcoming":
+            qs = qs.filter(appt_date__gte=datetime.date.today())
+        appts = list(qs[:300])
+    except Exception:
+        db_ok = False
+
+    if request.method == "POST":
+        appt_id = (request.POST.get("appt_id") or "").strip()
+        action = (request.POST.get("action") or "").strip()
+        try:
+            a = models.FollowUpAppointment.objects.get(pk=appt_id)
+            if action == "reschedule":
+                d = _parse_date(request.POST.get("appt_date"))
+                if d:
+                    a.appt_date = d
+                    a.status = models.FollowUpAppointment.SCHEDULED
+                    a.save()
+                    messages.success(request, f"Moved to {d:%d/%m/%Y}.")
+            elif action in dict(models.FollowUpAppointment.STATUS_CHOICES):
+                a.status = action
+                a.save(update_fields=["status", "updated_at"])
+                messages.success(request, f"Marked as {a.get_status_display()}.")
+        except Exception:
+            messages.error(request, "Could not update that appointment.")
+        return redirect("clinic:appointments")
+
+    return render(request, "clinic/appointments.html", {
+        "appointments": appts, "db_ok": db_ok, "show": show,
+        "today": datetime.date.today(),
+    })
+
+
 @login_required
 def add_patient(request):
     """Dedicated page to add a new patient.
