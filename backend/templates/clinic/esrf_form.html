@@ -155,7 +155,7 @@
       <tr class="esrf-sign">
         <td colspan="3" class="sig">
           <div class="k">Name (Requesting Officer)</div>
-          <input class="ro" name="requested_by" value="{{ user_full_name }}" readonly>
+          <input name="requested_by" value="{{ user_full_name }}" placeholder="Full name">
         </td>
         <td class="esrf-lbl" style="text-align:center;font-weight:700;">DATE</td>
         <td class="sig"><input name="form_date" type="date" value="{{ today|date:'Y-m-d' }}"></td>
