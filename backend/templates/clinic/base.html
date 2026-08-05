@@ -218,19 +218,6 @@
           <a class="tb-ic" href="#" title="Messages" aria-label="Messages">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           </a>
-          {% if user.is_authenticated %}
-            <span class="who">{{ user.username }} <span class="car">▾</span></span>
-            <form method="post" action="{% url 'logout' %}" style="margin:0;display:inline;">
-              {% csrf_token %}
-              <button class="tb-ic" type="submit" title="Sign out" aria-label="Sign out">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-              </button>
-            </form>
-          {% else %}
-            <a class="tb-ic" href="{% url 'login' %}" title="Sign in" aria-label="Sign in">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-            </a>
-          {% endif %}
         </div>
       </div>
       {% endwith %}
