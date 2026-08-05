@@ -1,0 +1,85 @@
+{% extends "clinic/base.html" %}
+{% block title %}Appointments — MDH Stoma Care{% endblock %}
+{% block content %}
+<style>
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .st{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+  .st-scheduled{background:#eff6ff;color:#1d4ed8;} .st-attended{background:#ecfdf3;color:#067647;}
+  .st-postponed{background:#fffaeb;color:#b54708;} .st-cancelled,.st-dna{background:#fef3f2;color:#b42318;}
+  .row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+  .row-actions form{margin:0;display:flex;gap:6px;align-items:center;}
+  .mini{background:none;border:none;color:var(--teal);font-weight:600;font-size:12.5px;cursor:pointer;padding:0;font-family:inherit;}
+  .mini:hover{text-decoration:underline;}
+  .mini.gray{color:var(--muted);}
+  .row-actions input[type=date]{padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;}
+  .overdue{color:#b42318;font-weight:700;}
+</style>
+
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Appointments</h1>
+    <p class="muted" style="font-size:13px;">Follow-up and outpatient reviews planned from care pathways.</p>
+  </div>
+  <a href="{% url 'clinic:pathways' %}" class="btn">Care Pathways</a>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<div class="controls" style="margin-top:14px;">
+  <a class="btn" href="?show=upcoming" style="{% if show != 'upcoming' %}background:#64748b;{% endif %}">Upcoming</a>
+  <a class="btn" href="?show=all" style="{% if show == 'upcoming' %}background:#64748b;{% endif %}">All</a>
+</div>
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    Appointments are temporarily unavailable (database not reachable).
+  </div>
+{% elif appointments %}
+  <table>
+    <thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Pathway</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td class="{% if a.appt_date < today and a.status == 'scheduled' %}overdue{% endif %}">{{ a.appt_date|date:"d/m/Y" }}</td>
+        <td>{{ a.appt_time|default:"—" }}</td>
+        <td><strong>{{ a.patient.first_name|default:"" }} {{ a.patient.surname|default:"" }}</strong></td>
+        <td>{% if a.pathway %}<a href="{% url 'clinic:pathway_detail' pk=a.pathway.id %}">{{ a.pathway.get_pathway_type_display }}</a>{% else %}—{% endif %}</td>
+        <td><span class="st st-{{ a.status }}">{{ a.get_status_display }}</span></td>
+        <td>
+          <div class="row-actions">
+            {% if a.status == 'scheduled' %}
+              <form method="post">{% csrf_token %}
+                <input type="hidden" name="appt_id" value="{{ a.id }}">
+                <input type="hidden" name="action" value="attended">
+                <button class="mini" type="submit">Attended</button>
+              </form>
+              <form method="post">{% csrf_token %}
+                <input type="hidden" name="appt_id" value="{{ a.id }}">
+                <input type="hidden" name="action" value="dna">
+                <button class="mini gray" type="submit">DNA</button>
+              </form>
+            {% endif %}
+            <form method="post">{% csrf_token %}
+              <input type="hidden" name="appt_id" value="{{ a.id }}">
+              <input type="hidden" name="action" value="reschedule">
+              <input type="date" name="appt_date" value="{{ a.appt_date|date:'Y-m-d' }}">
+              <button class="mini" type="submit">Move</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card" style="text-align:center;padding:38px 18px;">
+    <p class="muted" style="font-size:13px;margin-bottom:16px;">
+      {% if show == 'upcoming' %}No upcoming appointments.{% else %}No appointments booked yet.{% endif %}
+      Book them from a patient's pathway once they're discharged.
+    </p>
+    <a href="{% url 'clinic:pathways' %}" class="btn">Go to Care Pathways</a>
+  </div>
+{% endif %}
+{% endblock %}
