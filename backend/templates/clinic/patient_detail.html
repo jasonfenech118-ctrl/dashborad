@@ -4,7 +4,6 @@
 <p style="margin:0 0 4px;"><a href="{% url 'clinic:patient_list' %}">← Back to patients</a></p>
 <h1>{{ patient.first_name|default:"" }} {{ patient.surname|default:"" }}
   {% if patient.followup_status %}<span class="pill">{{ patient.followup_status }}</span>{% endif %}
-  <a class="btn" style="float:right;" href="/admin/clinic/patient/{{ patient.id }}/change/">Edit in admin</a>
 </h1>
 
 <div class="card">

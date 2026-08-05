@@ -8,6 +8,7 @@
   :root{
     /* Brand palette: blue + light blue + red */
     --navy-900:#13294b; --blue-600:#cf1124; --teal-600:#a50e1d;
+    --btn:#3b82f6; --btn-600:#2563eb;
     --canvas:#f8fafc; --surface:#ffffff;
     --text-primary:#0f172a; --text-secondary:#64748b; --border:#e2e8f0;
     --success:#059669; --warning:#d97706; --danger:#dc2626; --focus:#cf1124;
@@ -106,9 +107,9 @@
   .head-search svg{width:19px;height:19px;flex:none;stroke:var(--text-secondary);fill:none;
     stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
   .head-search input{flex:1;min-width:0;border:none;outline:none;background:none;font-size:14px;color:var(--text-primary);}
-  .head-search .btn{flex:none;background:var(--blue-600);color:#fff;border:none;border-radius:8px;
+  .head-search .btn{flex:none;background:var(--btn);color:#fff;border:none;border-radius:8px;
     padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;}
-  .head-search .btn:hover{background:#a50e1d;}
+  .head-search .btn:hover{background:var(--btn-600);}
 
   /* tabs */
   .tabs{display:flex;gap:26px;border-bottom:1px solid var(--border);margin-top:26px;overflow-x:auto;}
@@ -286,14 +287,6 @@
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           <span>CPSU</span></a>
       </nav>
-      <div class="side-foot">
-        <div class="side-sep"></div>
-        <nav class="side-nav" aria-label="Admin">
-          <a href="/admin/">
-            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span>Admin</span></a>
-        </nav>
-      </div>
     </aside>
 
     <!-- ============ MAIN ============ -->
@@ -322,9 +315,6 @@
             </button>
             <div class="acct-menu" id="acct-menu" role="menu" aria-label="Account">
               <div class="who">Signed in as {{ user.get_username }}</div>
-              <a href="/admin/" role="menuitem">
-                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                Admin site</a>
             </div>
           </div>
         </div>
@@ -376,7 +366,7 @@
                 <span class="a-tx"><span class="a-t">Patients (Master List)</span><span class="a-s">Full register</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
               </a>
-              <a class="action" href="/admin/clinic/roster/">
+              <a class="action" href="{% url 'clinic:more_tools' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg></span>
                 <span class="a-tx"><span class="a-t">Rosters</span><span class="a-s">Nurse scheduling</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
