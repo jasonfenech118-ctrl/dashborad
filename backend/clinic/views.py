@@ -585,7 +585,7 @@ def ordering_forms(request):
     """
     forms = [
         {
-            "title": "Extra Supplies Requisition",
+            "title": "Extra Supplies Requisition ESRF",
             "desc": "",
             "url": "/ordering/esrf/",
         },
