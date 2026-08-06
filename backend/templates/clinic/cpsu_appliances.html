@@ -1,0 +1,113 @@
+{% extends "clinic/base.html" %}
+{% block title %}Appliance & Accessories — CPSU{% endblock %}
+{% block content %}
+<style>
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  .up-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;align-items:end;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  input[type=text],textarea,select{width:100%;padding:8px 10px;border:1.5px solid var(--border);
+    border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .chk input{width:16px;height:16px;accent-color:var(--teal);}
+  .cat{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
+  .kind{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+  .kind.appliance{background:#eef4ff;color:#2456c9;}
+  .kind.accessory{background:#f1f5f9;color:#475569;}
+  .code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#475569;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:800;}
+  .pill.on{background:#ecfdf3;color:#067647;}
+  .pill.off{background:#f1f5f9;color:#64748b;}
+  .del{color:#dc2626;font-weight:600;font-size:12.5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .del:hover{text-decoration:underline;}
+</style>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Appliance &amp; Accessories</h1>
+    <p class="muted" style="font-size:13px;">The catalogue of stoma appliances and accessories the unit procures.</p>
+  </div>
+  <a class="btn" href="{% url 'clinic:cpsu' %}" style="background:#64748b;color:#fff;">← CPSU</a>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- ===== Add ===== -->
+<div class="card">
+  <div class="sec-t">Add a product</div>
+  <div class="sec-s">Record an appliance or accessory with its brand, order code and size.</div>
+  <form method="post" action="{% url 'clinic:cpsu_appliances' %}">
+    {% csrf_token %}
+    <div class="up-grid">
+      <div><label class="lbl">Type</label>
+        <select name="item_type">{% for v,l in types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="lbl">Product name</label><input type="text" name="name" required placeholder="e.g. Drainable pouch"></div>
+      <div><label class="lbl">Brand / manufacturer</label><input type="text" name="brand" placeholder="e.g. Coloplast"></div>
+      <div><label class="lbl">Order code</label><input type="text" name="product_code" placeholder="e.g. 12345"></div>
+      <div><label class="lbl">Category</label><input type="text" name="category" placeholder="e.g. one-piece drainable"></div>
+      <div><label class="lbl">Size / flange</label><input type="text" name="size" placeholder="e.g. 10–70 mm cut-to-fit"></div>
+    </div>
+    <div style="margin-top:12px;"><label class="lbl">Description / notes</label>
+      <textarea name="description" rows="2" placeholder="Optional"></textarea></div>
+    <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <label class="chk"><input type="checkbox" name="on_contract" value="1"> Currently on contract</label>
+      <button class="btn" type="submit">Add to catalogue</button>
+    </div>
+  </form>
+</div>
+
+<!-- ===== Catalogue ===== -->
+<div class="card">
+  <div class="sec-t">Catalogue</div>
+  <div class="sec-s">{{ items|length }} item{{ items|length|pluralize }} listed.</div>
+
+  <form method="get" class="controls" style="margin-bottom:14px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search name, brand, code or category…" style="min-width:240px;">
+    <select name="type">
+      <option value="">All types</option>
+      {% for v,l in types %}<option value="{{ v }}" {% if type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">Search</button>
+    {% if q or type %}<a class="btn" href="{% url 'clinic:cpsu_appliances' %}" style="background:#64748b;color:#fff;">Clear</a>{% endif %}
+  </form>
+
+  {% if not db_ok %}
+    <div style="border:1px solid #fecdca;background:#fef3f2;color:#b42318;font-size:13px;border-radius:8px;padding:12px;">
+      The catalogue is temporarily unavailable (database not reachable).
+    </div>
+  {% elif items %}
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Product</th><th>Type</th><th>Brand</th><th>Order code</th><th>Category</th><th>Size</th><th>Contract</th><th></th></tr></thead>
+      <tbody>
+        {% for it in items %}
+        <tr>
+          <td><strong>{{ it.name }}</strong>{% if it.description %}<div class="muted" style="font-size:11.5px;">{{ it.description }}</div>{% endif %}</td>
+          <td><span class="kind {{ it.item_type }}">{{ it.get_item_type_display }}</span></td>
+          <td>{{ it.brand|default:"—" }}</td>
+          <td>{% if it.product_code %}<span class="code">{{ it.product_code }}</span>{% else %}—{% endif %}</td>
+          <td>{% if it.category %}<span class="cat">{{ it.category }}</span>{% else %}—{% endif %}</td>
+          <td>{{ it.size|default:"—" }}</td>
+          <td>{% if it.on_contract %}<span class="pill on">On contract</span>{% else %}<span class="pill off">—</span>{% endif %}</td>
+          <td style="text-align:right;">
+            <form method="post" action="{% url 'clinic:cpsu_appliance_delete' pk=it.id %}"
+                  onsubmit="return confirm('Remove “{{ it.name|escapejs }}” from the catalogue?');" style="margin:0;">
+              {% csrf_token %}<button class="del" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  {% else %}
+    <p class="muted" style="font-size:13px;">
+      {% if q or type %}No products match that search.{% else %}No products listed yet — add the first one above.{% endif %}
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

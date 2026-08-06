@@ -585,8 +585,8 @@ def ordering_forms(request):
     """
     forms = [
         {
-            "title": "Extra Supplies Requisition (ESRF STO-01)",
-            "desc": "Extra supplies requisition form for Stoma Care — Logistics Department, Mater Dei Hospital.",
+            "title": "Extra Supplies Requisition",
+            "desc": "",
             "url": "/ordering/esrf/",
         },
         {
@@ -1151,6 +1151,128 @@ def tender_delete(request, pk):
     except Exception:
         messages.error(request, "Could not delete the tender.")
     return redirect("clinic:cpsu_tenders")
+
+
+# ----------------------------------------------------- CPSU product catalogue
+
+
+@login_required
+def cpsu_appliances(request):
+    """Appliance & Accessories catalogue — list, search and add products."""
+    A = models.ApplianceCatalogueItem
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+        if not name:
+            messages.error(request, "Give the product a name.")
+        else:
+            try:
+                A.objects.create(
+                    item_type=(request.POST.get("item_type") or A.APPLIANCE),
+                    name=name,
+                    brand=(request.POST.get("brand") or "").strip() or None,
+                    product_code=(request.POST.get("product_code") or "").strip() or None,
+                    category=(request.POST.get("category") or "").strip() or None,
+                    size=(request.POST.get("size") or "").strip() or None,
+                    description=(request.POST.get("description") or "").strip() or None,
+                    on_contract=bool(request.POST.get("on_contract")),
+                    created_by_username=request.user.get_username(),
+                )
+                messages.success(request, f"“{name}” added to the catalogue.")
+            except Exception:
+                messages.error(request, "Could not save — the database is unavailable.")
+        return redirect("clinic:cpsu_appliances")
+
+    q = (request.GET.get("q") or "").strip()
+    kind = (request.GET.get("type") or "").strip()
+
+    def _load():
+        qs = A.objects.all()
+        if q:
+            qs = qs.filter(
+                Q(name__icontains=q) | Q(brand__icontains=q)
+                | Q(product_code__icontains=q) | Q(category__icontains=q))
+        if kind in (A.APPLIANCE, A.ACCESSORY):
+            qs = qs.filter(item_type=kind)
+        return list(qs[:400])
+
+    items = _safe_query(_load, None)
+    db_ok = items is not None
+    items = items or []
+    return render(request, "clinic/cpsu_appliances.html", {
+        "items": items, "db_ok": db_ok, "q": q, "type": kind,
+        "types": A.TYPE_CHOICES,
+    })
+
+
+@login_required
+def cpsu_appliance_delete(request, pk):
+    """Remove a catalogue item (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:cpsu_appliances")
+    item = get_object_or_404(models.ApplianceCatalogueItem, pk=pk)
+    name = item.name
+    try:
+        item.delete()
+        messages.success(request, f"“{name}” removed from the catalogue.")
+    except Exception:
+        messages.error(request, "Could not remove that item.")
+    return redirect("clinic:cpsu_appliances")
+
+
+@login_required
+def cpsu_specifications(request):
+    """Product specifications register — list, search and add specs."""
+    S = models.ProductSpecification
+    if request.method == "POST":
+        title = (request.POST.get("title") or "").strip()
+        if not title:
+            messages.error(request, "Give the specification a title.")
+        else:
+            try:
+                S.objects.create(
+                    title=title,
+                    product_group=(request.POST.get("product_group") or "").strip() or None,
+                    reference=(request.POST.get("reference") or "").strip() or None,
+                    specification=(request.POST.get("specification") or "").strip() or None,
+                    mandatory=bool(request.POST.get("mandatory")),
+                    created_by_username=request.user.get_username(),
+                )
+                messages.success(request, f"Specification “{title}” added.")
+            except Exception:
+                messages.error(request, "Could not save — the database is unavailable.")
+        return redirect("clinic:cpsu_specifications")
+
+    q = (request.GET.get("q") or "").strip()
+
+    def _load():
+        qs = S.objects.all()
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) | Q(product_group__icontains=q)
+                | Q(reference__icontains=q) | Q(specification__icontains=q))
+        return list(qs[:400])
+
+    specs = _safe_query(_load, None)
+    db_ok = specs is not None
+    specs = specs or []
+    return render(request, "clinic/cpsu_specifications.html", {
+        "specs": specs, "db_ok": db_ok, "q": q,
+    })
+
+
+@login_required
+def cpsu_specification_delete(request, pk):
+    """Remove a specification (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:cpsu_specifications")
+    spec = get_object_or_404(models.ProductSpecification, pk=pk)
+    title = spec.title
+    try:
+        spec.delete()
+        messages.success(request, f"Specification “{title}” removed.")
+    except Exception:
+        messages.error(request, "Could not remove that specification.")
+    return redirect("clinic:cpsu_specifications")
 
 
 # ------------------------------------------------------------------ pathways

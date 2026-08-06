@@ -28,5 +28,27 @@
     <a href="{% url 'clinic:cpsu_tenders' %}" class="btn" style="text-align:center;font-size:12px;">Tenders</a>
   </div>
 
+  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+      </span>
+      <strong style="font-size:14px;">Appliance &amp; Accessories</strong>
+    </div>
+    <p class="muted" style="font-size:12px;flex:1;">The catalogue of stoma appliances and accessories the unit procures — brand, order code, size and which are on contract. Search, add and keep it up to date.</p>
+    <a href="{% url 'clinic:cpsu_appliances' %}" class="btn" style="text-align:center;font-size:12px;">Appliance &amp; Accessories</a>
+  </div>
+
+  <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:36px;height:36px;border-radius:8px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+        <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="8" height="4" x="8" y="3" rx="1"/><path d="m9 14 2 2 4-4"/></svg>
+      </span>
+      <strong style="font-size:14px;">Product Specifications</strong>
+    </div>
+    <p class="muted" style="font-size:12px;flex:1;">The register of technical requirements a bid is judged against when a tender is adjudicated “up to spec”. Record each product group and its mandatory criteria.</p>
+    <a href="{% url 'clinic:cpsu_specifications' %}" class="btn" style="text-align:center;font-size:12px;">Product Specifications</a>
+  </div>
+
 </div>
 {% endblock %}
