@@ -15,12 +15,16 @@
   .navbtn{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;text-decoration:none;}
   .navbtn:hover{background:#f1f5f9;}
 
-  .addbox{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+  .addgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:14px;}
+  .addbox{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .addbox .addhdr{font-weight:800;font-size:13px;margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+  .addbox .addhdr .dot{width:10px;height:10px;border-radius:3px;flex:none;}
+  .addbox .addhdr .sub{font-weight:600;font-size:11.5px;color:var(--muted);}
   .addbox form{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
   .addbox .fld{display:flex;flex-direction:column;gap:3px;}
   .addbox label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;}
-  .addbox input,.addbox select{padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
-  .addbox input:focus,.addbox select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .addbox input{padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  .addbox input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
 
   .rost-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
   table.rost{border-collapse:separate;border-spacing:0;font-size:12px;}
@@ -64,17 +68,30 @@
   {% for c in codes %}<span><b style="background:{{ c.bg }};color:{{ c.fg }};">{{ c.code }}</b>{{ c.label }}</span>{% endfor %}
 </div>
 
-<!-- Add staff -->
-<div class="addbox">
-  <form method="post" action="{% url 'clinic:roster_staff_add' %}">
-    {% csrf_token %}
-    <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
-    <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:180px;"></div>
-    <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
-    <div class="fld"><label>Group</label>
-      <select name="category">{% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-    <button class="btn" type="submit">+ Add staff</button>
-  </form>
+<!-- Add staff — one form per group -->
+<div class="addgrid">
+  <div class="addbox">
+    <div class="addhdr"><span class="dot" style="background:#1f2937;"></span>Add core staff</div>
+    <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+      {% csrf_token %}
+      <input type="hidden" name="category" value="core">
+      <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+      <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+      <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
+      <button class="btn" type="submit">+ Add core</button>
+    </form>
+  </div>
+  <div class="addbox">
+    <div class="addhdr"><span class="dot" style="background:#f59e0b;"></span>Add overtime staff <span class="sub">(non-core)</span></div>
+    <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+      {% csrf_token %}
+      <input type="hidden" name="category" value="overtime">
+      <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+      <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+      <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. OT Nurse"></div>
+      <button class="btn" type="submit">+ Add overtime</button>
+    </form>
+  </div>
 </div>
 
 <!-- Month nav -->
@@ -101,7 +118,7 @@
       <tr class="band"><td colspan="{{ days|length|add:2 }}">Core Staff</td></tr>
       {% for row in core_rows %}{% include "clinic/_roster_row.html" %}{% endfor %}
       {% if not core_rows %}<tr><td colspan="{{ days|length|add:2 }}" style="padding:10px;color:#94a3b8;">No core staff yet — add someone above.</td></tr>{% endif %}
-      <tr class="band"><td colspan="{{ days|length|add:2 }}">Overtime Staff</td></tr>
+      <tr class="band"><td colspan="{{ days|length|add:2 }}">Overtime Staff (non-core)</td></tr>
       {% for row in ot_rows %}{% include "clinic/_roster_row.html" %}{% endfor %}
       {% if not ot_rows %}<tr><td colspan="{{ days|length|add:2 }}" style="padding:10px;color:#94a3b8;">No overtime staff yet.</td></tr>{% endif %}
     </tbody>

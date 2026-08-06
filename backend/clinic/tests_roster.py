@@ -36,6 +36,17 @@ class RosterTests(TestCase):
                          {"year": "2026", "month": "8"})
         self.assertFalse(models.RosterStaff.objects.filter(id=s.id).exists())
 
+    def test_add_overtime_non_core_staff(self):
+        self.client.post(reverse("clinic:roster_staff_add"), {
+            "full_name": "OT Helper", "role": "OT Nurse",
+            "category": "overtime", "year": "2026", "month": "8"}, follow=True)
+        s = models.RosterStaff.objects.get(full_name="OT Helper")
+        self.assertEqual(s.category, "overtime")
+        # and it renders under the overtime group with the non-core label
+        html = self.client.get(reverse("clinic:roster")).content.decode()
+        self.assertIn("Overtime Staff (non-core)", html)
+        self.assertIn("OT Helper", html)
+
     def test_add_requires_name(self):
         before = models.RosterStaff.objects.count()
         self.client.post(reverse("clinic:roster_staff_add"), {"full_name": ""})
