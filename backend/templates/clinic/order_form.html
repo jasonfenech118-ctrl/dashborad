@@ -1,0 +1,238 @@
+{% extends "clinic/base.html" %}
+{% load static %}
+{% load order_extras %}
+{% block title %}{{ form.title }} — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  /* ===== Pre-printed ward ordering form — faithful, fillable ===== */
+  .esrf-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  .esrf-head .ht{flex:1;min-width:220px;}
+  .esrf-head h1{margin:6px 0 2px;font-size:20px;}
+  .esrf-head .sub{color:var(--muted);font-size:13px;}
+  .esrf-head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .esrf-head .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .esrf-head .back:hover{text-decoration:underline;}
+  .btn-send{background:var(--btn) !important;color:var(--btn-ink) !important;}
+  .btn-send:hover{background:var(--btn-600) !important;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:#f1f5f9;}
+
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+
+  .esrf-paper{
+    background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;
+    width:900px;max-width:100%;margin:0 auto;padding:30px 34px 34px;
+    border:1px solid #d5dbe4;border-radius:10px;box-shadow:0 4px 20px rgba(15,23,42,.08);
+  }
+  .esrf-lh{display:flex;align-items:center;gap:20px;margin-bottom:16px;}
+  .esrf-lh .logo img{display:block;width:230px;height:auto;}
+  .esrf-lh .org{margin-left:auto;border:1px solid #000;padding:9px 16px;text-align:center;min-width:340px;}
+  .esrf-lh .org div{font-size:11px;line-height:1.55;}
+
+  .esrf-grid{border:1.5px solid #000;border-collapse:collapse;width:100%;}
+  .esrf-grid td,.esrf-grid th{border:1px solid #000;padding:0;vertical-align:middle;}
+  .esrf-title-cell{text-align:center;font-size:18px;letter-spacing:.4px;padding:9px 6px;font-weight:700;}
+  .esrf-email-cell{text-align:center;font-size:12px;padding:7px;}
+  .esrf-email-cell a{color:#000;text-decoration:none;}
+  .esrf-lbl{font-size:11px;padding:6px 8px;white-space:nowrap;font-weight:600;}
+  .esrf-fieldcell{padding:0;}
+  .esrf-fieldcell input{
+    width:100%;border:none;background:#fff;font-family:Arial,Helvetica,sans-serif;
+    font-size:12px;padding:6px 8px;text-align:center;color:#000;box-sizing:border-box;height:30px;display:block;
+  }
+  .esrf-fieldcell input:focus{outline:none;background:#fff7ed;}
+  .esrf-fieldcell input.ro{background:#f3f4f6;color:#111;cursor:default;font-weight:600;}
+  .esrf-grid th{
+    background:#fcd5b4;font-family:Calibri,Arial,sans-serif;font-weight:700;
+    font-size:11px;text-align:center;padding:7px 6px;color:#000;
+  }
+  .esrf-grid td.fill{background:#fff;}
+  .esrf-grid td.fill input:focus{background:#eef6ff;}
+  .esrf-grid tbody tr{height:29px;}
+  .esrf-grid tbody td{height:29px;}
+  .esrf-grid td.ro-cell input{text-align:center;}
+  .esrf-grid td.left input{text-align:left;padding-left:8px;}
+
+  .office{margin-top:16px;border:1px solid #000;padding:0;}
+  .office .oh{background:#f3f4f6;font-size:11px;font-weight:700;padding:6px 10px;border-bottom:1px solid #000;}
+  .office table{width:100%;border-collapse:collapse;}
+  .office td{border:1px solid #cbd5e1;padding:8px 10px;font-size:11px;vertical-align:bottom;}
+  .office .k{font-size:9px;color:#333;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:14px;}
+
+  .add-row-btn{
+    display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--teal);
+    cursor:pointer;border:1.5px dashed var(--border);border-radius:6px;padding:6px 14px;background:#fff;margin-top:14px;
+  }
+  .add-row-btn:hover{background:var(--teal-50);border-color:var(--teal);}
+
+  @media print{
+    .esrf-head .actions,.esrf-head .back,.add-row-btn,.esrf-msg{display:none !important;}
+    .esrf-paper{border:none;box-shadow:none;width:100%;max-width:none;padding:0;border-radius:0;}
+    .esrf-fieldcell input:focus{background:#fff !important;}
+    .esrf-grid th{background:#fcd5b4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{size:A4 portrait;margin:10mm;}
+  }
+</style>
+
+<div class="esrf-head">
+  <div class="ht">
+    <a href="{% url 'clinic:ordering_forms' %}" class="back">
+      <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Ordering Forms
+    </a>
+    <h1>{{ form.title }}</h1>
+    <div class="sub">{{ form.subtitle }}</div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" type="button" onclick="window.print()">Print / Save PDF</button>
+    <button class="btn btn-ghost" type="button" onclick="clearFillable()">Clear</button>
+    <button class="btn btn-send" type="submit" form="ord-form">Send to Disposables &amp; Supplies</button>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="esrf-msg {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" id="ord-form" action="{% url 'clinic:order_form' form.slug %}"
+      onsubmit="return confirm('Send this form to Disposables &amp; Supplies ({{ recipient }})?');">
+  {% csrf_token %}
+  <div class="esrf-paper">
+
+    <div class="esrf-lh">
+      <div class="logo"><img src="{% static 'images/mater_dei_logo.png' %}" alt="SPTAR Mater Dei"></div>
+      <div class="org">
+        <div>MATERIALS MANAGEMENT &amp; LOGISTICS DIRECTORATE</div>
+        <div>MATER DEI HOSPITAL MSIDA MSD 2090</div>
+      </div>
+    </div>
+
+    <table class="esrf-grid">
+      <colgroup>{% for c in columns %}<col style="width:{{ c.w }}">{% endfor %}</colgroup>
+      {% with ncol=columns|length %}
+
+      <tr><td class="esrf-title-cell" colspan="{{ ncol }}">{{ form.doc_title }}</td></tr>
+      <tr><td class="esrf-email-cell" colspan="{{ ncol }}">TO BE SENT FOR PROCESSING TO:
+        <a href="mailto:{{ recipient }}">{{ recipient }}</a></td></tr>
+
+      {% if form.slug == 'mmml-topup' %}
+      <tr>
+        <td class="esrf-lbl">SECTION / WARD:</td>
+        <td class="esrf-fieldcell" colspan="2"><input class="ro" value="{{ form.section_ward }}" readonly></td>
+        <td class="esrf-lbl">COST CENTRE:</td>
+        <td class="esrf-fieldcell"><input class="ro" value="{{ form.cost_centre }}" readonly></td>
+      </tr>
+      <tr>
+        <td class="esrf-lbl">{{ form.note_label }}:</td>
+        <td class="esrf-fieldcell" colspan="2"><input name="note" value="{{ form.note_default }}"></td>
+        <td class="esrf-lbl">LOCATION:</td>
+        <td class="esrf-fieldcell"><input class="ro" value="{{ form.location }}" readonly></td>
+      </tr>
+      <tr>
+        <td class="esrf-lbl">TEL / EXT:</td>
+        <td class="esrf-fieldcell" colspan="2"><input name="ext_no" value="{{ form.ext_default }}"></td>
+        <td class="esrf-lbl">DATE:</td>
+        <td class="esrf-fieldcell"><input name="form_date" type="date" value="{{ today|date:'Y-m-d' }}"></td>
+      </tr>
+      {% else %}
+      <tr>
+        <td class="esrf-lbl">WARD / SECTION:</td>
+        <td class="esrf-fieldcell" colspan="2"><input class="ro" value="{{ form.section_ward }}" readonly></td>
+        <td class="esrf-lbl">DATE:</td>
+        <td class="esrf-fieldcell"><input name="form_date" type="date" value="{{ today|date:'Y-m-d' }}"></td>
+      </tr>
+      <tr>
+        <td class="esrf-lbl">OFFICER I/C:</td>
+        <td class="esrf-fieldcell" colspan="2"><input name="requested_by" value="{{ user_full_name }}"></td>
+        <td class="esrf-lbl">EXT. NOS:</td>
+        <td class="esrf-fieldcell"><input name="ext_no" value="{{ form.ext_default }}"></td>
+      </tr>
+      <tr>
+        <td class="esrf-lbl">{{ form.note_label }}:</td>
+        <td class="esrf-fieldcell" colspan="2"><input name="note" value="{{ form.note_default }}"></td>
+        <td class="esrf-lbl">COST CENTRE:</td>
+        <td class="esrf-fieldcell"><input class="ro" value="{{ form.cost_centre }}" readonly></td>
+      </tr>
+      {% endif %}
+
+      <tr>{% for c in columns %}<th>{{ c.label }}</th>{% endfor %}</tr>
+
+      <tbody id="ord-tbody">
+        {% for it in form.items %}
+        <tr>
+          {% for c in columns %}
+            {% if c.fill %}
+              <td class="esrf-fieldcell fill"><input name="{{ c.key }}"></td>
+            {% else %}
+              <td class="esrf-fieldcell ro-cell {% if c.left %}left{% endif %}">
+                <input class="ro" name="{{ c.key }}" value="{{ it|dictkey:c.key }}" readonly></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endwith %}
+    </table>
+
+    <button class="add-row-btn" onclick="addRows(3)" type="button">
+      <svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      Add Rows
+    </button>
+
+    {% if form.office_use %}
+    <div class="office">
+      <div class="oh">For Office Use Only</div>
+      <table>
+        <tr>
+          <td style="width:33%"><span class="k">Prepared By</span></td>
+          <td style="width:33%"><span class="k">Issued By</span></td>
+          <td style="width:34%"><span class="k">Received By</span></td>
+        </tr>
+        <tr>
+          <td><span class="k">Authorising Officer / Dept.</span></td>
+          <td colspan="2"><span class="k">Signature</span></td>
+        </tr>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if form.slug == 'mmml-topup' %}
+    <table class="esrf-grid" style="margin-top:14px;">
+      <tr>
+        <td class="esrf-lbl" style="width:60%;">NAME (REQUESTING OFFICER):</td>
+        <td class="esrf-fieldcell"><input name="requested_by" value="{{ user_full_name }}"></td>
+      </tr>
+    </table>
+    {% endif %}
+  </div>
+</form>
+
+{{ columns|json_script:"ord-cols" }}
+<script>
+(function(){
+  var cols = JSON.parse(document.getElementById('ord-cols').textContent);
+  var tbody = document.getElementById('ord-tbody');
+
+  function cell(c){
+    var left = c.left ? ' style="text-align:left;padding-left:8px;"' : '';
+    var cls = c.fill ? 'esrf-fieldcell fill' : 'esrf-fieldcell';
+    return '<td class="'+cls+'"><input name="'+c.key+'"'+left+'></td>';
+  }
+  function addRow(){
+    var tr = document.createElement('tr');
+    tr.innerHTML = cols.map(cell).join('');
+    tbody.appendChild(tr);
+  }
+  window.addRows = function(k){ for(var i=0;i<(k||3);i++) addRow(); };
+  window.clearFillable = function(){
+    if(!confirm('Clear the quantities you have entered?')) return;
+    tbody.querySelectorAll('td.fill input').forEach(function(el){ el.value=''; });
+  };
+})();
+</script>
+{% endblock %}

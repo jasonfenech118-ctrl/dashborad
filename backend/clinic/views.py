@@ -20,7 +20,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from . import forms, models
+from . import forms, models, order_forms as order_form_defs
 
 
 def _safe_query(fn, default=None):
@@ -590,24 +590,16 @@ def ordering_forms(request):
             "url": "/ordering/esrf/",
         },
         {
-            "title": "Stoma Appliances",
-            "desc": "Pouches, baseplates and one-piece / two-piece systems.",
-            "url": "",
+            "title": "M.M.M.U. Top-Up List (Disposables)",
+            "desc": "STO-01 top-up stock list. Complete the quantities and send "
+                    "to Disposables & Supplies.",
+            "url": reverse("clinic:order_form", args=["mmml-topup"]),
         },
         {
-            "title": "Accessories & Supplies",
-            "desc": "Barrier rings, pastes, powders, adhesive removers and belts.",
-            "url": "",
-        },
-        {
-            "title": "Prescription Request",
-            "desc": "Request or renew a patient's appliance prescription.",
-            "url": "",
-        },
-        {
-            "title": "Ward / Stock Order",
-            "desc": "Replenish ward stock and clinic consumables.",
-            "url": "",
+            "title": "Cleaning Consumables Order",
+            "desc": "Cleaning consumables order list. Complete the quota / demand "
+                    "and send to Disposables & Supplies.",
+            "url": reverse("clinic:order_form", args=["cleaning"]),
         },
     ]
     return render(request, "clinic/ordering_forms.html", {"forms": forms})
@@ -624,10 +616,10 @@ def _email_configured():
     return "smtp" in (settings.EMAIL_BACKEND or "").lower()
 
 
-def _next_reference():
+def _next_reference(prefix="ESRF-STO01"):
     """Sequential per-day reference, e.g. ESRF-STO01-20260803-001."""
     today = datetime.date.today()
-    prefix = f"ESRF-STO01-{today:%Y%m%d}"
+    prefix = f"{prefix}-{today:%Y%m%d}"
     try:
         n = models.OrderingDocument.objects.filter(reference__startswith=prefix).count() + 1
         ref = f"{prefix}-{n:03d}"
@@ -843,13 +835,189 @@ def clinic_documents(request):
 
 @login_required
 def ordering_document_detail(request, pk):
-    """Read-only view of an archived requisition (printable)."""
+    """Read-only view of an archived ordering form (printable).
+
+    The ESRF and the pre-printed ward forms (top-up, cleaning) are all stored
+    as OrderingDocuments; the form's own layout is chosen from its form_type so
+    each one renders with its real columns.
+    """
     doc = get_object_or_404(models.OrderingDocument, pk=pk)
+    fdef = order_form_defs.def_for_form_type(doc.form_type)
+    if fdef:
+        return render(request, "clinic/order_form_document.html", {
+            "doc": doc, "form": fdef, "columns": fdef["columns"],
+            "mailto": _order_mailto_link(doc, fdef),
+            "is_sent": doc.status == models.OrderingDocument.STATUS_SENT,
+        })
     return render(request, "clinic/ordering_document.html", {
         "doc": doc,
         "mailto": _mailto_link(doc),
         "is_sent": doc.status == models.OrderingDocument.STATUS_SENT,
     })
+
+
+# ------------------------------------------------ pre-printed ward order forms
+
+
+def _parse_order_items(request, fdef):
+    """Pull the line-item arrays from POST into a clean list of dicts, keyed by
+    the form's own columns. Rows with neither a code nor a description drop."""
+    keys = [c["key"] for c in fdef["columns"]]
+    lists = {k: request.POST.getlist(k) for k in keys}
+    n = max((len(v) for v in lists.values()), default=0)
+    rows = []
+    for i in range(n):
+        row = {k: (lists[k][i].strip() if i < len(lists[k]) else "") for k in keys}
+        if not row.get("code") and not row.get("description"):
+            continue
+        rows.append(row)
+    return rows
+
+
+def _send_order_form_email(doc, fdef):
+    """Render and send a ward ordering form to its processing office. Raises on
+    failure so the caller can report it."""
+    subject = f"{fdef['title']} — {doc.section_ward} ({doc.reference})"
+    ctx = {"doc": doc, "form": fdef, "columns": fdef["columns"]}
+    html_body = render_to_string("clinic/email/order_form.html", ctx)
+    text_body = render_to_string("clinic/email/order_form.txt", ctx)
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[doc.recipient_email or fdef["recipient"]],
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
+
+def _order_mailto_link(doc, fdef):
+    """Fallback mailto: link so the user can send from their own client."""
+    keys = [c["key"] for c in fdef["columns"]]
+    lines = [fdef["title"], f"Reference: {doc.reference}",
+             f"Section/Ward: {doc.section_ward}", f"Cost Centre: {doc.cost_centre}",
+             f"Ext no.: {doc.ext_no or ''}"]
+    if doc.delivery_period:
+        lines.append(f"{fdef['note_label']}: {doc.delivery_period}")
+    lines += ["", "Items:"]
+    for it in (doc.items or []):
+        if it.get("code") or it.get("description"):
+            lines.append("  - " + "  ".join(str(it.get(k, "")) for k in keys if it.get(k, "")))
+    lines += ["", f"Requested by: {doc.requested_by_name or ''}", f"Date: {doc.form_date or ''}"]
+    body = "\r\n".join(lines)
+    subject = f"{fdef['title']} — {doc.section_ward} ({doc.reference})"
+    recipient = doc.recipient_email or fdef["recipient"]
+    return (f"mailto:{recipient}?subject={urllib.parse.quote(subject)}"
+            f"&body={urllib.parse.quote(body)}")
+
+
+@login_required
+def order_form(request, slug):
+    """A fillable pre-printed ward ordering form (top-up / cleaning).
+
+    GET renders the form with the pre-printed rows; POST saves it to Clinic
+    Documents, files a copy in the Library, and emails it to the processing
+    office (Disposables & Supplies).
+    """
+    fdef = order_form_defs.get_form_def(slug)
+    if not fdef:
+        raise Http404("Unknown ordering form.")
+    if request.method == "POST":
+        return _order_form_submit(request, fdef)
+    return render(request, fdef["template"], {
+        "form": fdef,
+        "columns": fdef["columns"],
+        "user_full_name": _user_full_name(request.user),
+        "today": datetime.date.today(),
+        "recipient": fdef["recipient"],
+    })
+
+
+def _order_form_submit(request, fdef):
+    items = _parse_order_items(request, fdef)
+    ctx_form = {
+        "form": fdef, "columns": fdef["columns"],
+        "user_full_name": _user_full_name(request.user),
+        "today": datetime.date.today(), "recipient": fdef["recipient"],
+    }
+    if not items:
+        messages.error(request, "Add at least one item before sending.")
+        return render(request, fdef["template"], ctx_form)
+
+    raw_date = (request.POST.get("form_date") or "").strip()
+    try:
+        form_date = datetime.date.fromisoformat(raw_date) if raw_date else datetime.date.today()
+    except ValueError:
+        form_date = datetime.date.today()
+
+    doc = models.OrderingDocument(
+        reference=_next_reference(fdef["ref_prefix"]),
+        form_type=fdef["form_type"],
+        section_ward=fdef["section_ward"],
+        cost_centre=fdef["cost_centre"],
+        ext_no=(request.POST.get("ext_no") or "").strip(),
+        # The single free header note — "Team / Day" or "Remarks" per form.
+        delivery_period=(request.POST.get("note") or "").strip(),
+        items=items,
+        requested_by_name=(request.POST.get("requested_by") or "").strip()
+                          or _user_full_name(request.user),
+        requested_by_username=request.user.get_username(),
+        form_date=form_date,
+        recipient_email=fdef["recipient"],
+        status=models.OrderingDocument.STATUS_SAVED,
+    )
+
+    email_ok, email_note = False, ""
+    if _email_configured():
+        try:
+            _send_order_form_email(doc, fdef)
+            email_ok = True
+        except Exception as exc:  # noqa: BLE001 — surface any send error to the user
+            email_note = f"Email could not be sent ({exc}). The form was saved."
+    else:
+        email_note = ("Email sending isn't set up yet, so the form was saved to "
+                      "Clinic Documents and the Library but not sent automatically.")
+
+    if email_ok:
+        doc.status = models.OrderingDocument.STATUS_SENT
+        doc.sent_at = timezone.now()
+
+    saved = True
+    try:
+        doc.save()
+    except Exception:
+        saved = False
+
+    # Keep a copy of the actual form in the Library, exactly like the ESRF.
+    if saved:
+        _file_in_library(
+            title=f"{fdef['title']} — {doc.reference}",
+            category=models.LibraryDocument.CORRESPONDENCE
+                     if email_ok else models.LibraryDocument.REQUISITION,
+            source=models.LibraryDocument.SOURCE_REQUISITION,
+            html=render_to_string("clinic/email/order_form.html",
+                                  {"doc": doc, "form": fdef, "columns": fdef["columns"]}),
+            reference=doc.reference,
+            description=(f"Sent to {doc.recipient_email} on {timezone.now():%d/%m/%Y}."
+                         if email_ok else "Prepared but not emailed."),
+            by=request.user.get_username(),
+        )
+
+    if email_ok:
+        messages.success(
+            request,
+            f"{fdef['title']} {doc.reference} sent to {doc.recipient_email}, and "
+            f"saved to Clinic Documents and the Library.")
+    elif saved:
+        messages.warning(request, email_note)
+    else:
+        messages.error(
+            request,
+            "The database is unavailable, so the form could not be saved. "
+            "Please try again shortly.")
+        return redirect("clinic:order_form", slug=fdef["slug"])
+
+    return redirect("clinic:ordering_document_detail", pk=doc.pk)
 
 
 # ---------------------------------------------------------------- library
