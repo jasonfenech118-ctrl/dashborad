@@ -55,6 +55,8 @@
   .tl .ev .t{font-weight:700;font-size:13.5px;}
   .pill2{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:var(--teal-50);color:var(--teal);margin-left:6px;}
   .late{background:#fef3f2;color:#b42318;}
+  .enc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;font-weight:700;color:var(--ink);
+       background:#f1f5f9;border-radius:5px;padding:1px 6px;}
 </style>
 
 <a href="{% url 'clinic:patient_detail' patient_id=p.patient_id %}" class="back">
@@ -67,7 +69,10 @@
   <span class="tag t-{{ p.pathway_type }}">{{ p.get_pathway_type_display }}</span>
   <span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span>
 </h1>
-<p class="muted" style="font-size:13px;">{{ stage_label }}{% if p.patient.id_card %} · ID {{ p.patient.id_card }}{% endif %}</p>
+<p class="muted" style="font-size:13px;">
+  {% if p.episode_number %}<strong style="color:var(--ink);font-family:ui-monospace,Menlo,monospace;">{{ p.episode_number }}</strong> · {% endif %}
+  {{ stage_label }}{% if p.patient.id_card %} · ID {{ p.patient.id_card }}{% endif %}
+</p>
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
 
@@ -270,7 +275,9 @@
     <div class="tl">
       {% for e in events %}
       <div class="ev">
-        <div class="d">{{ e.event_date|date:"D d/m/Y" }}
+        <div class="d">
+          {% if e.encounter_number %}<span class="enc">{{ e.encounter_number }}</span> · {% endif %}
+          {{ e.event_date|date:"D d/m/Y" }}
           {% if e.day_number != None %}<span class="pill2 {% if e.event_type == 'post_op_review' and e.day_number > 1 and forloop.last %}late{% endif %}">Day {{ e.day_number }}</span>{% endif %}
         </div>
         <div class="t">{{ e.get_event_type_display }}{% if e.summary %} — {{ e.summary }}{% endif %}</div>
