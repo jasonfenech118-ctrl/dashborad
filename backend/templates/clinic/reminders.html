@@ -1,7 +1,15 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Reminders — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
+  /* Reminders-only background image (overrides the plain app background). */
+  body::before{
+    background:
+      linear-gradient(rgba(248,250,252,.60), rgba(248,250,252,.78)),
+      url("{% static 'images/reminders_bg.jpg' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} }
   .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
   .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
   .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
