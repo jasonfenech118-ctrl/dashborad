@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,12 +20,25 @@ from django.utils import timezone
 from . import forms, models
 
 
+def _safe_query(fn, default=None):
+    """Run a query, tolerating a missing table or an unreachable database.
+
+    The atomic() block matters: on PostgreSQL a failed statement aborts the
+    whole transaction, so simply catching the error would leave the
+    connection poisoned and every later query in the request would fail too
+    (the response then dies mid-flight). Running inside a savepoint rolls
+    just this query back and leaves the connection usable.
+    """
+    try:
+        with transaction.atomic():
+            return fn()
+    except Exception:
+        return default
+
+
 def _safe_count(qs):
     """Return a count, or None if the table/DB isn't reachable yet."""
-    try:
-        return qs.count()
-    except Exception:
-        return None
+    return _safe_query(qs.count, None)
 
 
 @login_required
@@ -295,10 +309,8 @@ def discharge_letter(request, patient_id=None):
         patient = get_object_or_404(models.Patient, pk=patient_id)
         sex = (patient.sex or "").strip().lower()
         stoma = None
-        try:
-            stoma = patient.stomas.filter(status=models.Stoma.ACTIVE).first()
-        except Exception:
-            stoma = None
+        stoma = _safe_query(
+            lambda: patient.stomas.filter(status=models.Stoma.ACTIVE).first(), None)
         prefill = {
             "title": "Ms" if sex.startswith("f") else ("Mr" if sex.startswith("m") else ""),
             "first_name": patient.first_name or "",
@@ -324,9 +336,8 @@ def _apply_patient_status_rules(patient):
     A reversed stoma with nothing else in place makes the patient inactive
     (reversed); a deceased patient closes every open pathway.
     """
-    try:
-        stomas = list(patient.stomas.all())
-    except Exception:
+    stomas = _safe_query(lambda: list(patient.stomas.all()), None)
+    if stomas is None:
         return
     if not stomas:
         return
@@ -383,10 +394,7 @@ def encounter_new(request, pk):
 
 
 def _safe(fn, default=None):
-    try:
-        return fn()
-    except Exception:
-        return default
+    return _safe_query(fn, default)
 
 
 def _save_encounter(request, p):
@@ -793,8 +801,7 @@ def _esrf_submit(request):
 def clinic_documents(request):
     """Clinic Documents archive — every ordering form sent from the app."""
     q = (request.GET.get("q") or "").strip()
-    documents, db_ok = [], True
-    try:
+    def _load():
         qs = models.OrderingDocument.objects.all()
         if q:
             qs = qs.filter(
@@ -802,9 +809,11 @@ def clinic_documents(request):
                 | Q(requested_by_name__icontains=q)
                 | Q(section_ward__icontains=q)
             )
-        documents = list(qs[:200])
-    except Exception:
-        db_ok = False
+        return list(qs[:200])
+
+    documents = _safe_query(_load, None)
+    db_ok = documents is not None
+    documents = documents or []
     return render(request, "clinic/clinic_documents.html", {
         "documents": documents,
         "db_ok": db_ok,
@@ -854,16 +863,17 @@ def library(request):
 
     q = (request.GET.get("q") or "").strip()
     cat = (request.GET.get("category") or "").strip()
-    docs, db_ok = [], True
-    try:
+    def _load():
         qs = models.LibraryDocument.objects.all()
         if q:
             qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
         if cat:
             qs = qs.filter(category=cat)
-        docs = list(qs[:300])
-    except Exception:
-        db_ok = False
+        return list(qs[:300])
+
+    docs = _safe_query(_load, None)
+    db_ok = docs is not None
+    docs = docs or []
 
     return render(request, "clinic/library.html", {
         "documents": docs, "db_ok": db_ok, "q": q, "category": cat,
@@ -928,25 +938,22 @@ def _tender_summary(data):
 @login_required
 def cpsu_tenders(request):
     """Tenders hub — New Tender / Current Tenders / Closed Tenders."""
-    open_count = closed_count = None
-    db_ok = True
-    try:
-        T = models.TenderEvaluation
-        open_count = T.objects.filter(status=T.STATUS_OPEN).count()
-        closed_count = T.objects.filter(status=T.STATUS_CLOSED).count()
-    except Exception:
-        db_ok = False
+    T = models.TenderEvaluation
+    counts = _safe_query(
+        lambda: (T.objects.filter(status=T.STATUS_OPEN).count(),
+                 T.objects.filter(status=T.STATUS_CLOSED).count()), None)
+    db_ok = counts is not None
+    open_count, closed_count = counts if counts else (None, None)
     return render(request, "clinic/cpsu_tenders.html", {
         "open_count": open_count, "closed_count": closed_count, "db_ok": db_ok,
     })
 
 
 def _tender_list(request, status, title):
-    tenders, db_ok = [], True
-    try:
-        tenders = list(models.TenderEvaluation.objects.filter(status=status)[:300])
-    except Exception:
-        db_ok = False
+    tenders = _safe_query(
+        lambda: list(models.TenderEvaluation.objects.filter(status=status)[:300]), None)
+    db_ok = tenders is not None
+    tenders = tenders or []
     return render(request, "clinic/tender_list.html", {
         "tenders": tenders, "db_ok": db_ok, "status": status, "title": title,
         "is_closed": status == models.TenderEvaluation.STATUS_CLOSED,
@@ -1230,15 +1237,17 @@ def _pathway_action(request, p):
 @login_required
 def appointments(request):
     """All planned follow-up / outpatient appointments."""
-    appts, db_ok = [], True
     show = (request.GET.get("show") or "upcoming").strip()
-    try:
+
+    def _load():
         qs = models.FollowUpAppointment.objects.select_related("patient", "pathway")
         if show == "upcoming":
             qs = qs.filter(appt_date__gte=datetime.date.today())
-        appts = list(qs[:300])
-    except Exception:
-        db_ok = False
+        return list(qs[:300])
+
+    appts = _safe_query(_load, None)
+    db_ok = appts is not None
+    appts = appts or []
 
     if request.method == "POST":
         appt_id = (request.POST.get("appt_id") or "").strip()
@@ -1431,12 +1440,8 @@ def patient_detail(request, patient_id):
         models.FollowupSeenEpisode.objects.filter(patient_id=patient_id)
         .order_by("-review_date")
     )
-    try:
-        care_pathways = list(
-            models.CarePathway.objects.filter(patient_id=patient_id)
-        )
-    except Exception:
-        care_pathways = []
+    care_pathways = _safe_query(
+        lambda: list(models.CarePathway.objects.filter(patient_id=patient_id)), []) or []
     return render(request, "clinic/patient_detail.html", {
         "patient": patient,
         "appointments": appointments,
