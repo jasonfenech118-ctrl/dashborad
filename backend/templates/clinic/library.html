@@ -1,0 +1,164 @@
+{% extends "clinic/base.html" %}
+{% block title %}Library — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+
+  /* quick access buttons */
+  .qa{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+  .qa a{display:flex;align-items:center;gap:11px;padding:13px 14px;border:1.5px solid var(--border);
+        border-radius:11px;background:#fff;color:var(--ink);transition:.15s;}
+  .qa a:hover{border-color:var(--teal);background:var(--teal-50);}
+  .qa .ic-box{width:34px;height:34px;border-radius:9px;background:var(--teal-50);flex:none;
+              display:flex;align-items:center;justify-content:center;}
+  .qa .ic-box svg{width:18px;height:18px;color:var(--teal);stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .qa .tx strong{display:block;font-size:13.5px;}
+  .qa .tx span{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;}
+
+  /* upload */
+  .up-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;align-items:end;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  input[type=text],input[type=file],textarea,select{width:100%;padding:8px 10px;border:1.5px solid var(--border);
+    border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+
+  .ftag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:800;
+        background:#f1f5f9;color:#475569;text-transform:uppercase;font-family:ui-monospace,Menlo,monospace;}
+  .cat{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
+  .del{color:#dc2626;font-weight:600;font-size:12.5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .del:hover{text-decoration:underline;}
+  .row-actions{display:flex;gap:14px;align-items:center;justify-content:flex-end;}
+  .row-actions form{margin:0;}
+</style>
+
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Library</h1>
+    <p class="muted" style="font-size:13px;">Every document in one place — stored files, plus quick access to all the platform's forms and records.</p>
+  </div>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- ===== Quick access to everything on the platform ===== -->
+<div class="card">
+  <div class="sec-t">Platform documents</div>
+  <div class="sec-s">Open or create any document the clinic produces.</div>
+  <div class="qa">
+    <a href="{% url 'clinic:esrf_form' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/></svg></span>
+      <span class="tx"><strong>New Requisition</strong><span>ESRF STO-01 to Logistics</span></span></a>
+
+    <a href="{% url 'clinic:ordering_forms' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
+      <span class="tx"><strong>Ordering Forms</strong><span>All supply forms</span></span></a>
+
+    <a href="{% url 'clinic:clinic_documents' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg></span>
+      <span class="tx"><strong>Sent Requisitions</strong><span>Clinic Documents archive</span></span></a>
+
+    <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg></span>
+      <span class="tx"><strong>Discharge Letter</strong><span>Generate a letter</span></span></a>
+
+    <a href="{% url 'clinic:cpsu_tenders' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+      <span class="tx"><strong>Tenders</strong><span>CPSU evaluations</span></span></a>
+
+    <a href="{% url 'clinic:add_patient' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg></span>
+      <span class="tx"><strong>Add Patient</strong><span>Start a care pathway</span></span></a>
+
+    <a href="{% url 'clinic:patient_list' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span>
+      <span class="tx"><strong>Patients</strong><span>Profiles &amp; records</span></span></a>
+
+    <a href="{% url 'clinic:appointments' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></span>
+      <span class="tx"><strong>Appointments</strong><span>Follow-up reviews</span></span></a>
+
+    <a href="{% url 'clinic:reports' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+      <span class="tx"><strong>Reports</strong><span>Activity &amp; statistics</span></span></a>
+
+    <a href="{% url 'clinic:ward' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
+      <span class="tx"><strong>Inpatient Visits</strong><span>Ward round</span></span></a>
+  </div>
+</div>
+
+<!-- ===== Upload ===== -->
+<div class="card">
+  <div class="sec-t">Add a document</div>
+  <div class="sec-s">Store protocols, guidelines, patient leaflets, forms and any other file the team needs.</div>
+  <form method="post" enctype="multipart/form-data" action="{% url 'clinic:library' %}">
+    {% csrf_token %}
+    <div class="up-grid">
+      <div><label class="lbl">Title</label><input type="text" name="title" placeholder="Leave blank to use the file name"></div>
+      <div><label class="lbl">Category</label>
+        <select name="category">{% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="lbl">File</label><input type="file" name="file" required></div>
+      <div><button class="btn" type="submit">Upload</button></div>
+    </div>
+    <div style="margin-top:12px;"><label class="lbl">Description</label>
+      <textarea name="description" rows="2" placeholder="What this document is for (optional)"></textarea></div>
+  </form>
+</div>
+
+<!-- ===== Stored documents ===== -->
+<div class="card">
+  <div class="sec-t">Stored documents</div>
+  <div class="sec-s">{{ documents|length }} document{{ documents|length|pluralize }} in the Library.</div>
+
+  <form method="get" class="controls" style="margin-bottom:14px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search title or description…" style="min-width:240px;">
+    <select name="category">
+      <option value="">All categories</option>
+      {% for v,l in categories %}<option value="{{ v }}" {% if category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">Search</button>
+    {% if q or category %}<a class="btn" href="{% url 'clinic:library' %}" style="background:#64748b;color:#fff;">Clear</a>{% endif %}
+  </form>
+
+  {% if not db_ok %}
+    <div style="border:1px solid #fecdca;background:#fef3f2;color:#b42318;font-size:13px;border-radius:8px;padding:12px;">
+      The Library is temporarily unavailable (database not reachable).
+    </div>
+  {% elif documents %}
+    <table>
+      <thead><tr><th>Document</th><th>Category</th><th>Type</th><th>Size</th><th>Added</th><th></th></tr></thead>
+      <tbody>
+        {% for d in documents %}
+        <tr>
+          <td>
+            <a href="{% url 'clinic:library_file' pk=d.id %}" target="_blank" rel="noopener"><strong>{{ d.title }}</strong></a>
+            {% if d.description %}<div class="muted" style="font-size:11.5px;">{{ d.description }}</div>{% endif %}
+          </td>
+          <td><span class="cat">{{ d.get_category_display }}</span></td>
+          <td>{% if d.extension %}<span class="ftag">{{ d.extension }}</span>{% else %}—{% endif %}</td>
+          <td>{{ d.size_display }}</td>
+          <td>{{ d.created_at|date:"d/m/Y" }}</td>
+          <td>
+            <div class="row-actions">
+              <a href="{% url 'clinic:library_file' pk=d.id %}" target="_blank" rel="noopener">Open</a>
+              <form method="post" action="{% url 'clinic:library_delete' pk=d.id %}"
+                    onsubmit="return confirm('Remove “{{ d.title|escapejs }}” from the Library?');">
+                {% csrf_token %}<button class="del" type="submit">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted" style="font-size:13px;">
+      {% if q or category %}No documents match that search.{% else %}No documents stored yet — upload the first one above.{% endif %}
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

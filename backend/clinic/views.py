@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -820,6 +821,86 @@ def ordering_document_detail(request, pk):
         "mailto": _mailto_link(doc),
         "is_sent": doc.status == models.OrderingDocument.STATUS_SENT,
     })
+
+
+# ---------------------------------------------------------------- library
+
+
+@login_required
+def library(request):
+    """The clinic Library: stored documents plus quick access to every
+    document-producing tool on the platform."""
+    if request.method == "POST":
+        upload = request.FILES.get("file")
+        title = (request.POST.get("title") or "").strip()
+        if not upload:
+            messages.error(request, "Choose a file to upload.")
+        else:
+            try:
+                doc = models.LibraryDocument(
+                    title=title or upload.name,
+                    category=(request.POST.get("category") or models.LibraryDocument.OTHER),
+                    description=(request.POST.get("description") or "").strip() or None,
+                    file=upload,
+                    original_name=upload.name,
+                    size_bytes=getattr(upload, "size", 0) or 0,
+                    uploaded_by=request.user.get_username(),
+                )
+                doc.save()
+                messages.success(request, f"“{doc.title}” added to the Library.")
+            except Exception:
+                messages.error(request, "That file could not be saved. Please try again.")
+        return redirect("clinic:library")
+
+    q = (request.GET.get("q") or "").strip()
+    cat = (request.GET.get("category") or "").strip()
+    docs, db_ok = [], True
+    try:
+        qs = models.LibraryDocument.objects.all()
+        if q:
+            qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
+        if cat:
+            qs = qs.filter(category=cat)
+        docs = list(qs[:300])
+    except Exception:
+        db_ok = False
+
+    return render(request, "clinic/library.html", {
+        "documents": docs, "db_ok": db_ok, "q": q, "category": cat,
+        "categories": models.LibraryDocument.CATEGORY_CHOICES,
+    })
+
+
+@login_required
+def library_file(request, pk):
+    """Serve a stored document (inline for PDFs/images, else download)."""
+    doc = get_object_or_404(models.LibraryDocument, pk=pk)
+    try:
+        fh = doc.file.open("rb")
+    except Exception:
+        raise Http404("File is no longer available.")
+    inline = doc.extension in {"pdf", "png", "jpg", "jpeg", "gif", "webp", "svg", "txt"}
+    response = FileResponse(fh, as_attachment=not inline,
+                            filename=doc.original_name or doc.file.name.rsplit("/", 1)[-1])
+    return response
+
+
+@login_required
+def library_delete(request, pk):
+    if request.method != "POST":
+        return redirect("clinic:library")
+    doc = get_object_or_404(models.LibraryDocument, pk=pk)
+    title = doc.title
+    try:
+        doc.file.delete(save=False)
+    except Exception:
+        pass
+    try:
+        doc.delete()
+        messages.success(request, f"“{title}” removed from the Library.")
+    except Exception:
+        messages.error(request, "Could not remove that document.")
+    return redirect("clinic:library")
 
 
 @login_required
