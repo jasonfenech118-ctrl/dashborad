@@ -590,15 +590,13 @@ def ordering_forms(request):
             "url": "/ordering/esrf/",
         },
         {
-            "title": "M.M.M.U. Top-Up List (Disposables)",
-            "desc": "STO-01 top-up stock list. Complete the quantities and send "
-                    "to Disposables & Supplies.",
+            "title": "MML Part 1",
+            "desc": "",
             "url": reverse("clinic:order_form", args=["mmml-topup"]),
         },
         {
-            "title": "Cleaning Consumables Order",
-            "desc": "Cleaning consumables order list. Complete the quota / demand "
-                    "and send to Disposables & Supplies.",
+            "title": "MML Part 2",
+            "desc": "",
             "url": reverse("clinic:order_form", args=["cleaning"]),
         },
     ]
