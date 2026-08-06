@@ -129,6 +129,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Uploaded Library documents. Served through a Django view (see clinic.views
+# .library_file) so no extra web-server mapping is needed on PythonAnywhere.
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 

@@ -857,6 +857,58 @@ class FollowUpAppointment(UUIDModel):
         return f"{self.appt_date} — {self.patient}"
 
 
+class LibraryDocument(UUIDModel):
+    """A document stored in the clinic Library (protocols, leaflets, forms…)."""
+
+    PROTOCOL = "protocol"
+    GUIDELINE = "guideline"
+    PATIENT_INFO = "patient_info"
+    FORM = "form"
+    AUDIT = "audit"
+    EDUCATION = "education"
+    OTHER = "other"
+    CATEGORY_CHOICES = [
+        (PROTOCOL, "Protocol"),
+        (GUIDELINE, "Guideline"),
+        (PATIENT_INFO, "Patient information"),
+        (FORM, "Form / template"),
+        (AUDIT, "Audit & compliance"),
+        (EDUCATION, "Education & training"),
+        (OTHER, "Other"),
+    ]
+
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default=OTHER)
+    description = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to="library/%Y/%m/")
+    original_name = models.CharField(max_length=255, blank=True, null=True)
+    size_bytes = models.BigIntegerField(default=0)
+    uploaded_by = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "library_documents"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def extension(self):
+        name = (self.original_name or self.file.name or "").lower()
+        return name.rsplit(".", 1)[-1] if "." in name else ""
+
+    @property
+    def size_display(self):
+        n = self.size_bytes or 0
+        if n < 1024:
+            return f"{n} B"
+        if n < 1024 * 1024:
+            return f"{n / 1024:.0f} KB"
+        return f"{n / (1024 * 1024):.1f} MB"
+
+
 class TenderEvaluation(UUIDModel):
     """A CPSU tender evaluation the user can open, work on and close.
 
