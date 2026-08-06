@@ -133,6 +133,9 @@ CLEANING_ITEMS = [
     {"code": "15APRON015", "description": "WHITE DISPOSABLE APRONS FOR DISPENSERS", "unit": "Number"},
     {"code": "01WRING005", "description": "WRINGERS PLASTIC 4100P", "unit": "Number"},
     {"code": "15APRON020", "description": "YELLOW DISPOSABLE APRONS FOR DISPENSERS", "unit": "Number"},
+    # The two standing-quota rows printed at the foot of the form.
+    {"code": "15APRON015", "description": "WHITE DISPOSABLE APRONS FOR DISPENSERS", "unit": "NUMBER", "quota": "100"},
+    {"code": "15TOWEL005", "description": "INTERFOLD HAND TOWELS", "unit": "NUMBER", "quota": "200"},
 ]
 
 

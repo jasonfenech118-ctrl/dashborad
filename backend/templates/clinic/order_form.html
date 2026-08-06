@@ -167,7 +167,7 @@
         <tr>
           {% for c in columns %}
             {% if c.fill %}
-              <td class="esrf-fieldcell fill"><input name="{{ c.key }}"></td>
+              <td class="esrf-fieldcell fill"><input name="{{ c.key }}" value="{{ it|dictkey:c.key }}"></td>
             {% else %}
               <td class="esrf-fieldcell ro-cell {% if c.left %}left{% endif %}">
                 <input class="ro" name="{{ c.key }}" value="{{ it|dictkey:c.key }}" readonly></td>

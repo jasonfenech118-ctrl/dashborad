@@ -12,8 +12,8 @@ from . import models, order_forms, views
 class OrderFormTests(TestCase):
     def test_ordering_page_lists_both_new_forms(self):
         html = self.client.get(reverse("clinic:ordering_forms")).content.decode()
-        self.assertIn("M.M.M.U. Top-Up List", html)
-        self.assertIn("Cleaning Consumables Order", html)
+        self.assertIn("MML Part 1", html)
+        self.assertIn("MML Part 2", html)
         self.assertIn(reverse("clinic:order_form", args=["mmml-topup"]), html)
         self.assertIn(reverse("clinic:order_form", args=["cleaning"]), html)
 
@@ -39,6 +39,19 @@ class OrderFormTests(TestCase):
 
     def test_unknown_slug_404(self):
         self.assertEqual(self.client.get("/ordering/form/nope/").status_code, 404)
+
+    def test_cleaning_form_matches_source_including_quota_rows(self):
+        """Part 2 is a 1:1 match of the file: 92 rows, with the two standing
+        quota rows (100 / 200) pre-filled at the foot."""
+        self.assertEqual(len(order_forms.CLEANING_ITEMS), 92)
+        html = self.client.get(reverse("clinic:order_form", args=["cleaning"])).content.decode()
+        self.assertIn('value="100"', html)
+        self.assertIn('value="200"', html)
+
+    def test_back_button_on_inner_pages_not_main(self):
+        for name in ("clinic:ordering_forms", "clinic:cpsu", "clinic:library"):
+            self.assertIn('class="btn-back"',
+                          self.client.get(reverse(name)).content.decode(), name)
 
     def test_submit_saves_document_and_files_in_library(self):
         url = reverse("clinic:order_form", args=["mmml-topup"])
