@@ -7,9 +7,11 @@ When the app is fully migrated off Supabase, flip `managed = True` in the
 Meta classes and let Django own the schema.
 """
 
+import datetime
+import time
 import uuid
 
-from django.db import models
+from django.db import IntegrityError, models, transaction
 
 
 class UUIDModel(models.Model):
@@ -438,6 +440,11 @@ class CarePathway(UUIDModel):
         (OUTPATIENT_SETTING, "Outpatient appointment"),
     ]
 
+    # Automatic episode reference, e.g. EP-2026-0007.
+    episode_number = models.CharField(
+        max_length=30, unique=True, blank=True, null=True, db_index=True,
+    )
+
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, db_constraint=False,
         related_name="care_pathways",
@@ -476,7 +483,42 @@ class CarePathway(UUIDModel):
         ordering = ["-updated_at"]
 
     def __str__(self):
-        return f"{self.get_pathway_type_display()} — {self.patient}"
+        return f"{self.episode_number or 'Episode'} — {self.patient}"
+
+    # -- automatic episode numbering -------------------------------------
+    @staticmethod
+    def _next_episode_number():
+        """Next reference in the current year, e.g. EP-2026-0007."""
+        prefix = f"EP-{datetime.date.today().year}-"
+        last = (
+            CarePathway.objects.filter(episode_number__startswith=prefix)
+            .order_by("-episode_number").values_list("episode_number", flat=True).first()
+        )
+        n = 1
+        if last:
+            try:
+                n = int(str(last).rsplit("-", 1)[1]) + 1
+            except (IndexError, ValueError):
+                n = CarePathway.objects.filter(
+                    episode_number__startswith=prefix).count() + 1
+        return f"{prefix}{n:04d}"
+
+    def save(self, *args, **kwargs):
+        # Allocate an episode number on first save, retrying if two records
+        # are created at the same moment and collide on the unique index.
+        if not self.episode_number:
+            for _ in range(5):
+                self.episode_number = self._next_episode_number()
+                try:
+                    with transaction.atomic():
+                        return super().save(*args, **kwargs)
+                except IntegrityError:
+                    self.episode_number = None
+                    # force_insert would fail on the retry after a partial save
+                    kwargs.pop("force_insert", None)
+            # Fall back to a timestamp-unique reference rather than failing.
+            self.episode_number = f"EP-{datetime.date.today().year}-{int(time.time())}"
+        return super().save(*args, **kwargs)
 
     # -- derived helpers -------------------------------------------------
     @property
@@ -528,6 +570,10 @@ class PathwayEvent(UUIDModel):
         (NOTE, "Note"),
     ]
 
+    # Automatic encounter reference within the episode, e.g. EP-2026-0007-03.
+    encounter_number = models.CharField(max_length=40, blank=True, null=True, db_index=True)
+    sequence = models.IntegerField(default=0)
+
     pathway = models.ForeignKey(
         CarePathway, on_delete=models.CASCADE, related_name="events",
     )
@@ -545,10 +591,22 @@ class PathwayEvent(UUIDModel):
     class Meta:
         managed = True
         db_table = "pathway_events"
-        ordering = ["-event_date", "-created_at"]
+        ordering = ["-event_date", "-sequence", "-created_at"]
+
+    def save(self, *args, **kwargs):
+        # Number each encounter within its episode: EP-2026-0007-01, -02, …
+        if not self.encounter_number and self.pathway_id:
+            last = (
+                PathwayEvent.objects.filter(pathway_id=self.pathway_id)
+                .order_by("-sequence").values_list("sequence", flat=True).first()
+            )
+            self.sequence = (last or 0) + 1
+            episode = self.pathway.episode_number or "EP"
+            self.encounter_number = f"{episode}-{self.sequence:02d}"
+        return super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.get_event_type_display()} — {self.event_date}"
+        return f"{self.encounter_number or self.get_event_type_display()} — {self.event_date}"
 
 
 class FollowUpAppointment(UUIDModel):
