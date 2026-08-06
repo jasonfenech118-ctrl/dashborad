@@ -63,7 +63,10 @@ def dashboard(request):
         return "—" if v is None else v
 
     stats = {k: fmt(v) for k, v in outcome_counts.items()}
-    return render(request, "clinic/dashboard.html", {"stats": stats})
+    return render(request, "clinic/dashboard.html", {
+        "stats": stats,
+        "reminders_due": _reminders_due_today() or [],
+    })
 
 
 # Ordered list of the report metrics: (key, human label).
@@ -600,15 +603,7 @@ def ordering_forms(request):
             "url": reverse("clinic:order_form", args=["cleaning"]),
         },
     ]
-    # Weekly reminder: the MML orders are prepared for the Tuesday team, so a
-    # prompt shows on the Ordering Forms page every Saturday.
-    today = datetime.date.today()
-    return render(request, "clinic/ordering_forms.html", {
-        "forms": forms,
-        "saturday_reminder": today.weekday() == 5,  # Mon=0 … Sat=5
-        "mml1_url": reverse("clinic:order_form", args=["mmml-topup"]),
-        "mml2_url": reverse("clinic:order_form", args=["cleaning"]),
-    })
+    return render(request, "clinic/ordering_forms.html", {"forms": forms})
 
 
 def _user_full_name(user):
@@ -1447,6 +1442,158 @@ def cpsu_specification_delete(request, pk):
     except Exception:
         messages.error(request, "Could not remove that specification.")
     return redirect("clinic:cpsu_specifications")
+
+
+# ----------------------------------------------------------------- reminders
+
+
+def _reminders_due_today():
+    """Active reminders that fire today — for the dashboard. DB-safe (None on error)."""
+    today = datetime.date.today()
+    return _safe_query(
+        lambda: [r for r in models.Reminder.objects.filter(active=True) if r.is_due_on(today)],
+        None,
+    )
+
+
+def _parse_reminder_form(request):
+    """Turn the POST into reminder fields, or None if there's no title."""
+    R = models.Reminder
+    title = (request.POST.get("title") or "").strip()
+    if not title:
+        return None
+    freq = (request.POST.get("frequency") or R.WEEKLY).strip()
+    if freq not in dict(R.FREQUENCY_CHOICES):
+        freq = R.WEEKLY
+
+    def _int(name):
+        try:
+            return int(request.POST.get(name))
+        except (TypeError, ValueError):
+            return None
+
+    on_date = None
+    if freq == R.ONCE:
+        try:
+            on_date = datetime.date.fromisoformat((request.POST.get("on_date") or "").strip())
+        except ValueError:
+            on_date = None
+    at_time = None
+    raw_time = (request.POST.get("at_time") or "").strip()
+    if raw_time:
+        try:
+            at_time = datetime.time.fromisoformat(raw_time)
+        except ValueError:
+            at_time = None
+
+    return {
+        "title": title,
+        "message": (request.POST.get("message") or "").strip() or None,
+        "recipient_email": (request.POST.get("recipient_email") or "").strip() or None,
+        "frequency": freq,
+        "weekday": _int("weekday") if freq == R.WEEKLY else None,
+        "day_of_month": _int("day_of_month") if freq == R.MONTHLY else None,
+        "on_date": on_date,
+        "at_time": at_time,
+    }
+
+
+@login_required
+def reminders(request):
+    """Reminders: a list of reminders, when each fires, a repeat (on/off)
+    toggle, who it's emailed to, and its timing."""
+    R = models.Reminder
+    if request.method == "POST":
+        fields = _parse_reminder_form(request)
+        if not fields:
+            messages.error(request, "Give the reminder a title.")
+        else:
+            try:
+                R.objects.create(created_by=request.user.get_username(), **fields)
+                messages.success(request, f"Reminder “{fields['title']}” added.")
+            except Exception:
+                messages.error(request, "Could not save — the database is unavailable.")
+        return redirect("clinic:reminders")
+
+    items = _safe_query(lambda: list(R.objects.all()), None)
+    db_ok = items is not None
+    items = items or []
+    today = datetime.date.today()
+    return render(request, "clinic/reminders.html", {
+        "reminders": items,
+        "db_ok": db_ok,
+        "due_today": [r for r in items if r.is_due_on(today)],
+        "frequencies": R.FREQUENCY_CHOICES,
+        "weekdays": R.WEEKDAYS,
+        "email_ready": _email_configured(),
+    })
+
+
+@login_required
+def reminder_toggle(request, pk):
+    """Flip a reminder's repeat switch on or off (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:reminders")
+    r = get_object_or_404(models.Reminder, pk=pk)
+    r.active = not r.active
+    try:
+        r.save(update_fields=["active"])
+        messages.success(request, f"“{r.title}” {'repeating' if r.active else 'paused'}.")
+    except Exception:
+        messages.error(request, "Could not update that reminder.")
+    return redirect("clinic:reminders")
+
+
+@login_required
+def reminder_delete(request, pk):
+    """Delete a reminder (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:reminders")
+    r = get_object_or_404(models.Reminder, pk=pk)
+    title = r.title
+    try:
+        r.delete()
+        messages.success(request, f"“{title}” removed.")
+    except Exception:
+        messages.error(request, "Could not remove that reminder.")
+    return redirect("clinic:reminders")
+
+
+def _send_reminder_email(reminder):
+    """Email a single reminder to its recipient. Raises on failure."""
+    ctx = {"r": reminder, "today": datetime.date.today()}
+    html_body = render_to_string("clinic/email/reminder.html", ctx)
+    text_body = render_to_string("clinic/email/reminder.txt", ctx)
+    msg = EmailMultiAlternatives(
+        subject=f"Reminder: {reminder.title}",
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[reminder.recipient_email],
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
+
+
+@login_required
+def reminder_send(request, pk):
+    """Send a reminder's email right now (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:reminders")
+    r = get_object_or_404(models.Reminder, pk=pk)
+    if not r.recipient_email:
+        messages.error(request, f"“{r.title}” has no recipient email to send to.")
+    elif not _email_configured():
+        messages.warning(request, "Email sending isn't set up on the server yet, so "
+                                  "this reminder can't be emailed automatically.")
+    else:
+        try:
+            _send_reminder_email(r)
+            r.last_sent_at = timezone.now()
+            r.save(update_fields=["last_sent_at"])
+            messages.success(request, f"Reminder emailed to {r.recipient_email}.")
+        except Exception as exc:  # noqa: BLE001 — surface the send error
+            messages.error(request, f"Could not send ({exc}).")
+    return redirect("clinic:reminders")
 
 
 # ------------------------------------------------------------------ pathways

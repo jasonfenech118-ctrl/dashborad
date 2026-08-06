@@ -1,0 +1,10 @@
+MDH Stoma Care Clinic — Reminder
+
+{{ r.title }}
+{% if r.message %}
+{{ r.message }}
+{% endif %}
+Schedule: {{ r.schedule_display }}
+Date:     {{ today|date:"l, d/m/Y" }}
+
+Sent automatically by the MDH Stoma Care dashboard.
