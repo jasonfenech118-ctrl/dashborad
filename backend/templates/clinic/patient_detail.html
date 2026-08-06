@@ -6,6 +6,26 @@
   {% if patient.followup_status %}<span class="pill">{{ patient.followup_status }}</span>{% endif %}
 </h1>
 
+{% if pathways %}
+<div class="card" style="border-color:#f6a5ab;background:#fff;">
+  <h2 style="margin:0 0 10px;font-size:14px;">Care pathway</h2>
+  <table style="border:none;">
+    <thead><tr><th>Pathway</th><th>Stage</th><th>Surgery</th><th></th></tr></thead>
+    <tbody>
+      {% for cp in pathways %}
+      <tr>
+        <td><strong>{{ cp.get_pathway_type_display }}</strong></td>
+        <td>{{ cp.get_status_display }}{% if cp.first_review_was_late %}
+            <span class="pill" style="background:#fef3f2;color:#b42318;">1st review day {{ cp.first_review_delay_days }}</span>{% endif %}</td>
+        <td>{{ cp.surgery_date|date:"d/m/Y"|default:"—" }}</td>
+        <td><a href="{% url 'clinic:pathway_detail' pk=cp.id %}">Continue pathway →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 <div class="card">
   <div class="grid">
     <div class="kv"><div class="k">ID Card</div><div class="v">{{ patient.id_card|default:"—" }}</div></div>

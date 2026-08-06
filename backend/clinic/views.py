@@ -728,100 +728,6 @@ def _pathway_stage_label(p):
 
 
 @login_required
-def pathways(request):
-    """All care pathways, filterable by type and status."""
-    ptype = (request.GET.get("type") or "").strip()
-    status = (request.GET.get("status") or "").strip()
-    q = (request.GET.get("q") or "").strip()
-
-    items, db_ok = [], True
-    try:
-        qs = models.CarePathway.objects.select_related("patient").all()
-        if ptype:
-            qs = qs.filter(pathway_type=ptype)
-        if status:
-            qs = qs.filter(status=status)
-        if q:
-            qs = qs.filter(
-                Q(patient__first_name__icontains=q)
-                | Q(patient__surname__icontains=q)
-                | Q(patient__id_card__icontains=q)
-            )
-        items = list(qs[:300])
-    except Exception:
-        db_ok = False
-
-    for p in items:
-        p.stage_label = _pathway_stage_label(p)
-
-    return render(request, "clinic/pathways.html", {
-        "pathways": items, "db_ok": db_ok, "q": q,
-        "type": ptype, "status": status,
-        "type_choices": models.CarePathway.TYPE_CHOICES,
-        "status_choices": models.CarePathway.STATUS_CHOICES,
-    })
-
-
-@login_required
-def pathway_new(request):
-    """Create a new patient and start their care pathway in one step."""
-    P = models.CarePathway
-    if request.method == "POST":
-        form = forms.PatientForm(request.POST)
-        ptype = (request.POST.get("pathway_type") or "").strip()
-        if ptype not in dict(P.TYPE_CHOICES):
-            messages.error(request, "Choose a pathway for this patient.")
-        elif form.is_valid():
-            patient = form.save()
-            setting = (request.POST.get("care_setting") or "").strip()
-            siting = _parse_date(request.POST.get("siting_scheduled_date"))
-            surgery = _parse_date(request.POST.get("surgery_date"))
-
-            # Where the pathway starts depends on its type.
-            if ptype == P.ELECTIVE:
-                status = P.SITING_SCHEDULED if siting else P.AWAITING_SURGERY
-            elif ptype == P.EMERGENCY:
-                status = P.INPATIENT if surgery else P.AWAITING_SURGERY
-            elif ptype == P.OLD_CASE:
-                status = (P.OUTPATIENT if setting == P.OUTPATIENT_SETTING
-                          else P.INPATIENT)
-            else:  # fistula — always seen as an inpatient
-                status = P.INPATIENT
-
-            pathway = P(
-                patient=patient, pathway_type=ptype, status=status,
-                siting_scheduled_date=siting if ptype == P.ELECTIVE else None,
-                surgery_date=surgery,
-                stoma_type=(request.POST.get("stoma_type") or "").strip() or None,
-                referral_source=(request.POST.get("referral_source") or "").strip() or None,
-                care_setting=setting or None,
-                notes=(request.POST.get("pathway_notes") or "").strip() or None,
-                created_by_username=request.user.get_username(),
-            )
-            try:
-                pathway.save()
-            except Exception:
-                messages.error(request, "Patient saved, but the pathway could not be created.")
-                return redirect("clinic:patient_detail", patient_id=patient.id)
-
-            if surgery:
-                models.PathwayEvent.objects.create(
-                    pathway=pathway, event_type=models.PathwayEvent.SURGERY,
-                    event_date=surgery, summary="Surgery performed",
-                    recorded_by=request.user.get_username(),
-                )
-            messages.success(request, "Patient added and pathway started.")
-            return redirect("clinic:pathway_detail", pk=pathway.pk)
-    else:
-        form = forms.PatientForm()
-
-    return render(request, "clinic/pathway_new.html", {
-        "form": form, "type_choices": P.TYPE_CHOICES,
-        "today": datetime.date.today(),
-    })
-
-
-@login_required
 def pathway_detail(request, pk):
     """A pathway's timeline, with the actions available at its current stage."""
     pathway = get_object_or_404(models.CarePathway, pk=pk)
@@ -1010,21 +916,67 @@ def appointments(request):
 
 @login_required
 def add_patient(request):
-    """Dedicated page to add a new patient.
+    """Add a new patient and start their care pathway.
 
-    Captures demographics, surgery details, clinical findings, medical and
-    social history, and a data-protection selection, then creates the record
-    and opens the new patient's detail page.
+    Captures the pathway (elective / emergency / old case / fistula) alongside
+    demographics, surgery details, clinical findings, history and consent,
+    then opens the patient's pathway so the journey continues from here.
     """
+    P = models.CarePathway
+    ptype = ""
     if request.method == "POST":
         form = forms.PatientForm(request.POST)
-        if form.is_valid():
+        ptype = (request.POST.get("pathway_type") or "").strip()
+        if ptype not in dict(P.TYPE_CHOICES):
+            messages.error(request, "Choose a pathway for this patient.")
+        elif form.is_valid():
             patient = form.save()
-            messages.success(request, "New patient added.")
-            return redirect("clinic:patient_detail", patient_id=patient.id)
+            setting = (request.POST.get("care_setting") or "").strip()
+            siting = _parse_date(request.POST.get("siting_scheduled_date"))
+            # Surgery may already be recorded on the patient record.
+            surgery = patient.surgery_date
+
+            # Where the pathway starts depends on its type.
+            if ptype == P.ELECTIVE:
+                status = P.SITING_SCHEDULED if siting else P.AWAITING_SURGERY
+            elif ptype == P.EMERGENCY:
+                status = P.INPATIENT if surgery else P.AWAITING_SURGERY
+            elif ptype == P.OLD_CASE:
+                status = (P.OUTPATIENT if setting == P.OUTPATIENT_SETTING
+                          else P.INPATIENT)
+            else:  # fistula — always seen as an inpatient
+                status = P.INPATIENT
+
+            pathway = P(
+                patient=patient, pathway_type=ptype, status=status,
+                siting_scheduled_date=siting if ptype == P.ELECTIVE else None,
+                surgery_date=surgery,
+                stoma_type=((request.POST.get("stoma_type") or "").strip()
+                            or (patient.stoma_type_summary or "").strip() or None),
+                operation=(patient.operation_performed or "").strip() or None,
+                referral_source=(request.POST.get("referral_source") or "").strip() or None,
+                care_setting=setting or None,
+                created_by_username=request.user.get_username(),
+            )
+            try:
+                pathway.save()
+            except Exception:
+                messages.success(request, "New patient added.")
+                return redirect("clinic:patient_detail", patient_id=patient.id)
+
+            if surgery:
+                models.PathwayEvent.objects.create(
+                    pathway=pathway, event_type=models.PathwayEvent.SURGERY,
+                    event_date=surgery, summary="Surgery performed",
+                    recorded_by=request.user.get_username(),
+                )
+            messages.success(request, "Patient added — pathway started.")
+            return redirect("clinic:pathway_detail", pk=pathway.pk)
     else:
         form = forms.PatientForm()
-    return render(request, "clinic/patient_form.html", {"form": form})
+    return render(request, "clinic/patient_form.html", {
+        "form": form, "pathway_type": ptype,
+    })
 
 
 @login_required
@@ -1127,10 +1079,17 @@ def patient_detail(request, patient_id):
         models.FollowupSeenEpisode.objects.filter(patient_id=patient_id)
         .order_by("-review_date")
     )
+    try:
+        care_pathways = list(
+            models.CarePathway.objects.filter(patient_id=patient_id)
+        )
+    except Exception:
+        care_pathways = []
     return render(request, "clinic/patient_detail.html", {
         "patient": patient,
         "appointments": appointments,
         "episodes": episodes,
         "encounters": encounters,
         "followups": followups,
+        "pathways": care_pathways,
     })
