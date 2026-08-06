@@ -59,9 +59,9 @@
        background:#f1f5f9;border-radius:5px;padding:1px 6px;}
 </style>
 
-<a href="{% url 'clinic:patient_detail' patient_id=p.patient_id %}" class="back">
+<a href="{% url 'clinic:patient_profile' patient_id=p.patient_id %}" class="back">
   <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-  Patient record
+  Patient profile
 </a>
 
 <h1 style="margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -208,6 +208,10 @@
     {% if p.surgery_date and not p.first_review_date %}Record the first review — ideally day 1 after surgery. A later first review is flagged.
     {% elif p.surgery_date %}Add each day's review until the patient is discharged.
     {% else %}Record each review of this patient.{% endif %}
+  </div>
+  <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+    <a class="btn" href="{% url 'clinic:encounter_new' pk=p.pk %}">+ Full encounter (assessment, appliance, report)</a>
+    <span class="muted" style="font-size:12.5px;margin-left:10px;">or record a quick review below</span>
   </div>
   <form method="post">{% csrf_token %}
     <input type="hidden" name="action" value="add_review">

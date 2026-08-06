@@ -609,6 +609,214 @@ class PathwayEvent(UUIDModel):
         return f"{self.encounter_number or self.get_event_type_display()} — {self.event_date}"
 
 
+class Stoma(UUIDModel):
+    """An individual stoma or mucous fistula, with its own reference.
+
+    A patient can carry several at once (e.g. an ileostomy plus a mucous
+    fistula). Each one is tracked through its own life: formed, refashioned,
+    resited, closed or reversed.
+    """
+
+    COLOSTOMY = "colostomy"
+    ILEOSTOMY = "ileostomy"
+    UROSTOMY = "urostomy"
+    JEJUNOSTOMY = "jejunostomy"
+    MUCOUS_FISTULA = "mucous_fistula"
+    OTHER = "other"
+    TYPE_CHOICES = [
+        (COLOSTOMY, "Colostomy"),
+        (ILEOSTOMY, "Ileostomy"),
+        (UROSTOMY, "Urostomy"),
+        (JEJUNOSTOMY, "Jejunostomy"),
+        (MUCOUS_FISTULA, "Mucous fistula"),
+        (OTHER, "Other"),
+    ]
+
+    ACTIVE = "active"
+    REFASHIONED = "refashioned"
+    RESITED = "resited"
+    CLOSED = "closed"
+    REVERSED = "reversed"
+    STATUS_CHOICES = [
+        (ACTIVE, "Active"),
+        (REFASHIONED, "Refashioned"),
+        (RESITED, "Resited"),
+        (CLOSED, "Closed"),
+        (REVERSED, "Reversed"),
+    ]
+
+    SITE_CHOICES = [
+        ("LIF", "Left iliac fossa"),
+        ("RIF", "Right iliac fossa"),
+        ("LUQ", "Left upper quadrant"),
+        ("RUQ", "Right upper quadrant"),
+        ("umbilical", "Umbilical"),
+        ("other", "Other"),
+    ]
+
+    stoma_ref = models.CharField(max_length=30, unique=True, blank=True, null=True, db_index=True)
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, db_constraint=False, related_name="stomas",
+    )
+    pathway = models.ForeignKey(
+        CarePathway, on_delete=models.SET_NULL, blank=True, null=True,
+        related_name="stomas",
+    )
+    stoma_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    site = models.CharField(max_length=20, choices=SITE_CHOICES, blank=True, null=True)
+    formed_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=ACTIVE)
+    ended_date = models.DateField(blank=True, null=True)  # closed / reversed on
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "stomas"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.stoma_ref or 'Stoma'} — {self.get_stoma_type_display()}"
+
+    @staticmethod
+    def _next_ref():
+        prefix = f"ST-{datetime.date.today().year}-"
+        last = (
+            Stoma.objects.filter(stoma_ref__startswith=prefix)
+            .order_by("-stoma_ref").values_list("stoma_ref", flat=True).first()
+        )
+        n = 1
+        if last:
+            try:
+                n = int(str(last).rsplit("-", 1)[1]) + 1
+            except (IndexError, ValueError):
+                n = Stoma.objects.filter(stoma_ref__startswith=prefix).count() + 1
+        return f"{prefix}{n:04d}"
+
+    def save(self, *args, **kwargs):
+        if not self.stoma_ref:
+            for _ in range(5):
+                self.stoma_ref = self._next_ref()
+                try:
+                    with transaction.atomic():
+                        return super().save(*args, **kwargs)
+                except IntegrityError:
+                    self.stoma_ref = None
+                    kwargs.pop("force_insert", None)
+            self.stoma_ref = f"ST-{datetime.date.today().year}-{int(time.time())}"
+        return super().save(*args, **kwargs)
+
+    @property
+    def is_open(self):
+        """Still in place (a refashioned or resited stoma is still present)."""
+        return self.status in {self.ACTIVE, self.REFASHIONED, self.RESITED}
+
+
+class StomaChange(UUIDModel):
+    """Something that happened to a stoma: refashioned, resited, closed…"""
+
+    REFASHIONED = "refashioned"
+    RESITED = "resited"
+    CLOSED = "closed"
+    REVERSED = "reversed"
+    REVISED = "revised"
+    TYPE_CHOICES = [
+        (REFASHIONED, "Refashioned"),
+        (RESITED, "Resited"),
+        (CLOSED, "Closed"),
+        (REVERSED, "Reversed"),
+        (REVISED, "Revised"),
+    ]
+
+    stoma = models.ForeignKey(Stoma, on_delete=models.CASCADE, related_name="changes")
+    change_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    change_date = models.DateField()
+    new_site = models.CharField(max_length=20, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    recorded_by = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "stoma_changes"
+        ordering = ["-change_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.get_change_type_display()} — {self.change_date}"
+
+
+class StomaAssessment(UUIDModel):
+    """The stoma assessment recorded at an encounter."""
+
+    stoma = models.ForeignKey(
+        Stoma, on_delete=models.CASCADE, related_name="assessments",
+        blank=True, null=True,
+    )
+    event = models.ForeignKey(
+        "PathwayEvent", on_delete=models.CASCADE, related_name="assessments",
+        blank=True, null=True,
+    )
+    assessed_on = models.DateField()
+    colour = models.CharField(max_length=40, blank=True, null=True)
+    output = models.CharField(max_length=80, blank=True, null=True)
+    output_ml = models.CharField(max_length=30, blank=True, null=True)
+    peristomal_skin = models.CharField(max_length=60, blank=True, null=True)
+    stoma_height = models.CharField(max_length=40, blank=True, null=True)
+    complications = models.CharField(max_length=200, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "stoma_assessments"
+        ordering = ["-assessed_on", "-created_at"]
+
+    def __str__(self):
+        return f"Assessment {self.assessed_on}"
+
+
+class ApplianceRecord(UUIDModel):
+    """An appliance used / changed for a stoma."""
+
+    ONE_PIECE = "one_piece"
+    TWO_PIECE = "two_piece"
+    APPLIANCE_CHOICES = [
+        (ONE_PIECE, "One-piece"),
+        (TWO_PIECE, "Two-piece"),
+    ]
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, db_constraint=False,
+        related_name="appliance_records",
+    )
+    stoma = models.ForeignKey(
+        Stoma, on_delete=models.SET_NULL, blank=True, null=True, related_name="appliances",
+    )
+    event = models.ForeignKey(
+        "PathwayEvent", on_delete=models.CASCADE, blank=True, null=True,
+        related_name="appliances",
+    )
+    used_on = models.DateField()
+    system = models.CharField(max_length=20, choices=APPLIANCE_CHOICES, blank=True, null=True)
+    pouch_type = models.CharField(max_length=60, blank=True, null=True)  # drainable / closed / urostomy
+    brand = models.CharField(max_length=120, blank=True, null=True)
+    product_code = models.CharField(max_length=80, blank=True, null=True)
+    size = models.CharField(max_length=60, blank=True, null=True)
+    accessories = models.CharField(max_length=250, blank=True, null=True)
+    changed = models.BooleanField(default=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "appliance_records"
+        ordering = ["-used_on", "-created_at"]
+
+    def __str__(self):
+        return f"{self.brand or 'Appliance'} — {self.used_on}"
+
+
 class FollowUpAppointment(UUIDModel):
     """A planned follow-up / outpatient appointment for a pathway."""
 
