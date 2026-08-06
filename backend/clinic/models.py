@@ -1039,3 +1039,94 @@ class ProductSpecification(UUIDModel):
 
     def __str__(self):
         return self.title
+
+
+# ----------------------------------------------------------------- reminders
+
+
+class Reminder(UUIDModel):
+    """A recurring or one-off reminder shown on the dashboard and, optionally,
+    emailed to someone on schedule.
+
+    Django-managed table, so it does not disturb the Supabase-owned tables.
+    The schedule is deliberately simple: a frequency plus one of a weekday, a
+    day-of-month or a fixed date, with an optional time of day.
+    """
+
+    ONCE = "once"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    FREQUENCY_CHOICES = [
+        (ONCE, "One-off"),
+        (DAILY, "Every day"),
+        (WEEKLY, "Every week"),
+        (MONTHLY, "Every month"),
+    ]
+    WEEKDAYS = [
+        (0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"),
+        (4, "Friday"), (5, "Saturday"), (6, "Sunday"),
+    ]
+    _WEEKDAY_NAMES = dict(WEEKDAYS)
+
+    title = models.CharField(max_length=200)
+    message = models.TextField(blank=True, null=True)
+    recipient_email = models.CharField(max_length=200, blank=True, null=True)
+
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default=WEEKLY)
+    weekday = models.IntegerField(choices=WEEKDAYS, blank=True, null=True)   # weekly
+    day_of_month = models.IntegerField(blank=True, null=True)                # monthly
+    on_date = models.DateField(blank=True, null=True)                        # one-off
+    at_time = models.TimeField(blank=True, null=True)                        # timing
+
+    # The "repeat" switch: when off, the reminder is paused and never fires.
+    active = models.BooleanField(default=True)
+
+    # Optional call-to-action shown on the reminder card.
+    action_url = models.CharField(max_length=300, blank=True, null=True)
+    action_label = models.CharField(max_length=80, blank=True, null=True)
+
+    created_by = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_sent_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "reminders"
+        ordering = ["-active", "weekday", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def is_due_on(self, d):
+        """True when the reminder should fire on date ``d``."""
+        if not self.active:
+            return False
+        if self.frequency == self.DAILY:
+            return True
+        if self.frequency == self.WEEKLY:
+            return self.weekday is not None and d.weekday() == self.weekday
+        if self.frequency == self.MONTHLY:
+            return self.day_of_month is not None and d.day == self.day_of_month
+        if self.frequency == self.ONCE:
+            return self.on_date == d
+        return False
+
+    @property
+    def is_repeating(self):
+        return self.frequency in (self.DAILY, self.WEEKLY, self.MONTHLY)
+
+    @property
+    def schedule_display(self):
+        """Human summary of when the reminder fires, e.g. 'Every Saturday at 08:00'."""
+        if self.frequency == self.DAILY:
+            base = "Every day"
+        elif self.frequency == self.WEEKLY:
+            base = f"Every {self._WEEKDAY_NAMES.get(self.weekday, '—')}"
+        elif self.frequency == self.MONTHLY:
+            base = f"Day {self.day_of_month} of each month" if self.day_of_month else "Monthly"
+        else:
+            base = f"On {self.on_date:%d/%m/%Y}" if self.on_date else "One-off"
+        if self.at_time:
+            base += f" at {self.at_time:%H:%M}"
+        return base
