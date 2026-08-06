@@ -866,8 +866,16 @@ class LibraryDocument(UUIDModel):
     FORM = "form"
     AUDIT = "audit"
     EDUCATION = "education"
+    CORRESPONDENCE = "correspondence"
+    DISCHARGE_LETTER = "discharge_letter"
+    REQUISITION = "requisition"
+    TENDER = "tender"
     OTHER = "other"
     CATEGORY_CHOICES = [
+        (CORRESPONDENCE, "Email correspondence"),
+        (REQUISITION, "Ordering form / requisition"),
+        (DISCHARGE_LETTER, "Discharge letter"),
+        (TENDER, "Tender evaluation"),
         (PROTOCOL, "Protocol"),
         (GUIDELINE, "Guideline"),
         (PATIENT_INFO, "Patient information"),
@@ -877,6 +885,19 @@ class LibraryDocument(UUIDModel):
         (OTHER, "Other"),
     ]
 
+    # Where the document came from — uploaded by hand, or filed automatically
+    # by the app when a form was sent, a letter produced, a tender closed.
+    SOURCE_UPLOAD = "upload"
+    SOURCE_REQUISITION = "requisition"
+    SOURCE_DISCHARGE = "discharge_letter"
+    SOURCE_TENDER = "tender"
+    SOURCE_CHOICES = [
+        (SOURCE_UPLOAD, "Uploaded"),
+        (SOURCE_REQUISITION, "Requisition sent"),
+        (SOURCE_DISCHARGE, "Discharge letter"),
+        (SOURCE_TENDER, "Tender closed"),
+    ]
+
     title = models.CharField(max_length=200)
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default=OTHER)
     description = models.TextField(blank=True, null=True)
@@ -884,6 +905,14 @@ class LibraryDocument(UUIDModel):
     original_name = models.CharField(max_length=255, blank=True, null=True)
     size_bytes = models.BigIntegerField(default=0)
     uploaded_by = models.CharField(max_length=200, blank=True, null=True)
+
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default=SOURCE_UPLOAD)
+    auto_filed = models.BooleanField(default=False)
+    reference = models.CharField(max_length=80, blank=True, null=True, db_index=True)
+    patient = models.ForeignKey(
+        Patient, on_delete=models.SET_NULL, db_constraint=False,
+        blank=True, null=True, related_name="library_documents",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
