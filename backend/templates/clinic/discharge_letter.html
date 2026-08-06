@@ -349,7 +349,7 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
       <button class="btn green" onclick="saveToSharePoint()">Save</button>
       <button class="btn" onclick="sendToEmail()">Send to Email</button>
-      <button class="btn" onclick="window.print()">Print</button>
+      <button class="btn" onclick="printAndFile()">Print</button>
       <button class="btn yellow" onclick="openWizard()" title="Step-by-step questions that fill in the letter">Fill in / Edit Letter</button>
       <button class="btn amber" onclick="clearForm()">Clear</button>
       <span class="format-tools" aria-label="Text formatting tools">
@@ -2702,6 +2702,63 @@
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', function(){ setTimeout(apply, 60); });
   } else { setTimeout(apply, 60); }
+})();
+</script>
+
+<!-- Keep a copy of every produced letter in the Library. -->
+{% csrf_token %}
+<script>
+(function(){
+  var filed = false;
+  function letterHTML(){
+    var el = document.getElementById('letter');
+    if(!el) return '';
+    // Snapshot the letter with the current field values baked in, so the
+    // stored copy reads exactly as printed.
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('input,select,textarea').forEach(function(f){
+      var span = document.createElement('span');
+      span.textContent = (f.tagName === 'SELECT')
+        ? (f.options[f.selectedIndex] ? f.options[f.selectedIndex].text : '')
+        : (f.value || '');
+      f.parentNode.replaceChild(span, f);
+    });
+    return '<!doctype html><html><head><meta charset="utf-8">'
+         + '<title>Discharge letter</title></head><body>'
+         + clone.innerHTML + '</body></html>';
+  }
+  function val(sel){ var e = document.querySelector(sel); return e ? (e.value||'').trim() : ''; }
+
+  window.fileLetterInLibrary = function(){
+    if(filed) return;                       // one copy per letter
+    var html = letterHTML();
+    if(!html) return;
+    var name = (val('.fld-fname') + ' ' + val('.fld-sname')).trim();
+    var token = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    var body = new FormData();
+    body.append('html', html);
+    body.append('patient_name', name);
+    body.append('id_card', val('.fld-id'));
+    var pf = document.getElementById('patient-prefill');
+    try{
+      var d = pf ? JSON.parse(pf.textContent) : null;
+      if(d && d.patient_id) body.append('patient_id', d.patient_id);
+    }catch(e){}
+    if(token) body.append('csrfmiddlewaretoken', token.value);
+    filed = true;
+    fetch('{% url "clinic:file_discharge_letter" %}', {
+      method:'POST', body:body, credentials:'same-origin'
+    }).catch(function(){ filed = false; });
+  };
+
+  window.printAndFile = function(){
+    try{ window.fileLetterInLibrary(); }catch(e){}
+    window.print();
+  };
+  // Also catch Ctrl+P / the browser's own print.
+  window.addEventListener('beforeprint', function(){
+    try{ window.fileLetterInLibrary(); }catch(e){}
+  });
 })();
 </script>
 </body>

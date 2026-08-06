@@ -1,8 +1,11 @@
 import calendar
 import datetime
 import json
+import re
 import time
 import urllib.parse
+
+from django.core.files.base import ContentFile
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,7 +14,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -312,6 +315,7 @@ def discharge_letter(request, patient_id=None):
         stoma = _safe_query(
             lambda: patient.stomas.filter(status=models.Stoma.ACTIVE).first(), None)
         prefill = {
+            "patient_id": str(patient.id),
             "title": "Ms" if sex.startswith("f") else ("Mr" if sex.startswith("m") else ""),
             "first_name": patient.first_name or "",
             "surname": patient.surname or "",
@@ -778,11 +782,27 @@ def _esrf_submit(request):
     except Exception:
         saved = False
 
+    # File a copy of the correspondence in the Library, so every requisition
+    # sent to Logistics is kept alongside the rest of the clinic's documents.
+    if saved:
+        _file_in_library(
+            title=f"Requisition {doc.reference} — {doc.section_ward}",
+            category=models.LibraryDocument.CORRESPONDENCE
+                     if email_ok else models.LibraryDocument.REQUISITION,
+            source=models.LibraryDocument.SOURCE_REQUISITION,
+            html=render_to_string("clinic/email/esrf_order.html", {"doc": doc}),
+            reference=doc.reference,
+            description=(f"Emailed to {doc.recipient_email} on "
+                         f"{timezone.now():%d/%m/%Y}." if email_ok
+                         else "Prepared but not emailed."),
+            by=request.user.get_username(),
+        )
+
     if email_ok:
         messages.success(
             request,
-            f"Requisition {doc.reference} sent to {doc.recipient_email} and "
-            f"saved to Clinic Documents.",
+            f"Requisition {doc.reference} sent to {doc.recipient_email}, and "
+            f"saved to Clinic Documents and the Library.",
         )
     elif saved:
         messages.warning(request, email_note)
@@ -835,6 +855,39 @@ def ordering_document_detail(request, pk):
 # ---------------------------------------------------------------- library
 
 
+def _file_in_library(*, title, category, source, html, reference=None,
+                     patient_id=None, description=None, by=None):
+    """Save a generated document into the Library automatically.
+
+    Used whenever the app produces something worth keeping — a requisition
+    emailed to Logistics, a discharge letter, a closed tender. Failures are
+    swallowed: filing a copy must never break the action that produced it.
+    """
+    try:
+        stamp = timezone.now().strftime("%Y%m%d-%H%M%S")
+        slug = re.sub(r"[^A-Za-z0-9]+", "-", (reference or title))[:60].strip("-")
+        name = f"{slug or 'document'}-{stamp}.html"
+        content = ContentFile(html.encode("utf-8"), name=name)
+        doc = models.LibraryDocument(
+            title=title,
+            category=category,
+            source=source,
+            auto_filed=True,
+            reference=reference,
+            patient_id=patient_id,
+            description=description,
+            original_name=name,
+            size_bytes=content.size,
+            uploaded_by=by,
+        )
+        doc.file.save(name, content, save=False)
+        with transaction.atomic():
+            doc.save()
+        return doc
+    except Exception:
+        return None
+
+
 @login_required
 def library(request):
     """The clinic Library: stored documents plus quick access to every
@@ -879,6 +932,34 @@ def library(request):
         "documents": docs, "db_ok": db_ok, "q": q, "category": cat,
         "categories": models.LibraryDocument.CATEGORY_CHOICES,
     })
+
+
+@login_required
+def file_discharge_letter(request):
+    """File a copy of a produced discharge letter in the Library.
+
+    Called by the letter page when it is printed or saved as a PDF — that is
+    the moment the letter actually exists, so a copy is kept automatically.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False}, status=405)
+    html = request.POST.get("html") or ""
+    if not html.strip():
+        return JsonResponse({"ok": False, "error": "empty"}, status=400)
+
+    name = (request.POST.get("patient_name") or "").strip()
+    pid = (request.POST.get("patient_id") or "").strip() or None
+    doc = _file_in_library(
+        title=f"Discharge letter — {name}" if name else "Discharge letter",
+        category=models.LibraryDocument.DISCHARGE_LETTER,
+        source=models.LibraryDocument.SOURCE_DISCHARGE,
+        html=html,
+        reference=(request.POST.get("id_card") or "").strip() or None,
+        patient_id=pid,
+        description=f"Produced on {timezone.now():%d/%m/%Y}.",
+        by=request.user.get_username(),
+    )
+    return JsonResponse({"ok": bool(doc), "id": str(doc.id) if doc else None})
 
 
 @login_required
@@ -1038,7 +1119,21 @@ def _tender_save(request, tender):
         return redirect("clinic:tender_edit", pk=tender.pk)
 
     if action == "close":
-        messages.success(request, f"Tender “{tender.title}” closed and saved.")
+        # Keep a copy of the completed evaluation in the Library.
+        _file_in_library(
+            title=f"Tender evaluation — {tender.title}",
+            category=models.LibraryDocument.TENDER,
+            source=models.LibraryDocument.SOURCE_TENDER,
+            html=render_to_string("clinic/tender_summary.html", {"t": tender}),
+            reference=tender.title,
+            description=(f"{tender.bidder_count} bidder(s)."
+                         + (f" Lowest €{tender.lowest_bid:.2f}"
+                            f"{' — ' + tender.lowest_bidder if tender.lowest_bidder else ''}."
+                            if tender.lowest_bid is not None else "")),
+            by=request.user.get_username(),
+        )
+        messages.success(
+            request, f"Tender “{tender.title}” closed, saved and filed in the Library.")
         return redirect("clinic:cpsu_tenders")
     messages.success(request, "Tender saved.")
     return redirect("clinic:tender_edit", pk=tender.pk)

@@ -16,6 +16,8 @@ urlpatterns = [
     path("documents/", views.clinic_documents, name="clinic_documents"),
     path("documents/<uuid:pk>/", views.ordering_document_detail, name="ordering_document_detail"),
     path("library/", views.library, name="library"),
+    path("library/file-discharge-letter/", views.file_discharge_letter,
+         name="file_discharge_letter"),
     path("library/<uuid:pk>/file/", views.library_file, name="library_file"),
     path("library/<uuid:pk>/delete/", views.library_delete, name="library_delete"),
     path("cpsu/", views.cpsu, name="cpsu"),
