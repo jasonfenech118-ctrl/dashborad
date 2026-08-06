@@ -1,0 +1,105 @@
+{% extends "clinic/base.html" %}
+{% block title %}Product Specifications — CPSU{% endblock %}
+{% block content %}
+<style>
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  .up-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;align-items:end;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  input[type=text],textarea,select{width:100%;padding:8px 10px;border:1.5px solid var(--border);
+    border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .chk input{width:16px;height:16px;accent-color:var(--teal);}
+  .cat{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
+  .code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#475569;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:800;}
+  .pill.req{background:#fef3f2;color:#b42318;}
+  .pill.opt{background:#f1f5f9;color:#64748b;}
+  .spec-cards{display:grid;gap:12px;}
+  .spec{border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;background:#fff;}
+  .spec h3{font-size:14.5px;margin:0 0 2px;}
+  .spec .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 8px;}
+  .spec p{font-size:13px;color:#334155;white-space:pre-wrap;margin:0;}
+  .spec .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;
+    padding-top:9px;border-top:1px solid var(--border);font-size:11.5px;color:var(--muted);}
+  .del{color:#dc2626;font-weight:600;font-size:12.5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .del:hover{text-decoration:underline;}
+</style>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Product Specifications</h1>
+    <p class="muted" style="font-size:13px;">The technical requirements a bid is adjudicated against — the “up to spec” criteria.</p>
+  </div>
+  <a class="btn" href="{% url 'clinic:cpsu' %}" style="background:#64748b;color:#fff;">← CPSU</a>
+</div>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- ===== Add ===== -->
+<div class="card">
+  <div class="sec-t">Add a specification</div>
+  <div class="sec-s">Describe one product group and the criteria a bid must meet.</div>
+  <form method="post" action="{% url 'clinic:cpsu_specifications' %}">
+    {% csrf_token %}
+    <div class="up-grid">
+      <div><label class="lbl">Title</label><input type="text" name="title" required placeholder="e.g. Closed colostomy pouch"></div>
+      <div><label class="lbl">Product group</label><input type="text" name="product_group" placeholder="e.g. colostomy appliances"></div>
+      <div><label class="lbl">Reference / spec code</label><input type="text" name="reference" placeholder="e.g. SPEC-COL-01"></div>
+    </div>
+    <div style="margin-top:12px;"><label class="lbl">Specification / criteria</label>
+      <textarea name="specification" rows="4" placeholder="e.g. Skin-friendly hydrocolloid flange; integral filter; CE-marked; cut-to-fit 10–70 mm; latex-free…"></textarea></div>
+    <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <label class="chk"><input type="checkbox" name="mandatory" value="1" checked> Mandatory requirement</label>
+      <button class="btn" type="submit">Add specification</button>
+    </div>
+  </form>
+</div>
+
+<!-- ===== Register ===== -->
+<div class="card">
+  <div class="sec-t">Specifications register</div>
+  <div class="sec-s">{{ specs|length }} specification{{ specs|length|pluralize }} recorded.</div>
+
+  <form method="get" class="controls" style="margin-bottom:14px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search title, group, code or text…" style="min-width:260px;">
+    <button class="btn" type="submit">Search</button>
+    {% if q %}<a class="btn" href="{% url 'clinic:cpsu_specifications' %}" style="background:#64748b;color:#fff;">Clear</a>{% endif %}
+  </form>
+
+  {% if not db_ok %}
+    <div style="border:1px solid #fecdca;background:#fef3f2;color:#b42318;font-size:13px;border-radius:8px;padding:12px;">
+      The register is temporarily unavailable (database not reachable).
+    </div>
+  {% elif specs %}
+    <div class="spec-cards">
+      {% for s in specs %}
+      <div class="spec">
+        <h3>{{ s.title }}</h3>
+        <div class="meta">
+          {% if s.mandatory %}<span class="pill req">Mandatory</span>{% else %}<span class="pill opt">Optional</span>{% endif %}
+          {% if s.product_group %}<span class="cat">{{ s.product_group }}</span>{% endif %}
+          {% if s.reference %}<span class="code">{{ s.reference }}</span>{% endif %}
+        </div>
+        {% if s.specification %}<p>{{ s.specification }}</p>{% else %}<p class="muted">No criteria recorded.</p>{% endif %}
+        <div class="foot">
+          <span>Added {{ s.created_at|date:"d/m/Y" }}{% if s.created_by_username %} · {{ s.created_by_username }}{% endif %}</span>
+          <form method="post" action="{% url 'clinic:cpsu_specification_delete' pk=s.id %}"
+                onsubmit="return confirm('Remove “{{ s.title|escapejs }}”?');" style="margin:0;">
+            {% csrf_token %}<button class="del" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted" style="font-size:13px;">
+      {% if q %}No specifications match that search.{% else %}No specifications recorded yet — add the first one above.{% endif %}
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

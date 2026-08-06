@@ -972,3 +972,70 @@ class TenderEvaluation(UUIDModel):
     @property
     def is_open(self):
         return self.status == self.STATUS_OPEN
+
+
+# --------------------------------------------------- CPSU product catalogue
+
+
+class ApplianceCatalogueItem(UUIDModel):
+    """A stoma appliance or accessory the unit procures.
+
+    A simple catalogue the CPSU keeps alongside its tenders: what products
+    are on the shelf, who makes them, their order code, and whether they
+    are currently on a supply contract. Managed by Django (its own table),
+    so it never touches the Supabase-owned clinical tables.
+    """
+
+    APPLIANCE = "appliance"
+    ACCESSORY = "accessory"
+    TYPE_CHOICES = [(APPLIANCE, "Appliance"), (ACCESSORY, "Accessory")]
+
+    item_type = models.CharField(max_length=12, choices=TYPE_CHOICES, default=APPLIANCE)
+    name = models.CharField(max_length=200)
+    brand = models.CharField(max_length=150, blank=True, null=True)
+    product_code = models.CharField(max_length=100, blank=True, null=True)
+    category = models.CharField(
+        max_length=120, blank=True, null=True,
+        help_text="e.g. one-piece drainable, urostomy, paste, belt",
+    )
+    size = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    on_contract = models.BooleanField(default=False)
+    created_by_username = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "appliance_catalogue"
+        ordering = ["item_type", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class ProductSpecification(UUIDModel):
+    """A product specification the unit adjudicates tenders against.
+
+    The master list of technical requirements a bid is judged 'up to spec'
+    on. Each entry describes one product group and the criteria that must
+    be met.
+    """
+
+    title = models.CharField(max_length=200)
+    product_group = models.CharField(
+        max_length=150, blank=True, null=True,
+        help_text="e.g. colostomy appliances, urostomy, accessories",
+    )
+    reference = models.CharField(max_length=100, blank=True, null=True)
+    specification = models.TextField(blank=True, null=True)
+    mandatory = models.BooleanField(default=True)
+    created_by_username = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "product_specifications"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title

@@ -11,7 +11,7 @@
       </span>
       <strong style="font-size:14px;">{{ f.title }}</strong>
     </div>
-    <p class="muted" style="font-size:12px;flex:1;">{{ f.desc }}</p>
+    {% if f.desc %}<p class="muted" style="font-size:12px;flex:1;">{{ f.desc }}</p>{% endif %}
     {% if f.url %}
       <a href="{{ f.url }}" class="btn" style="text-align:center;font-size:12px;">Open Form</a>
     {% else %}
