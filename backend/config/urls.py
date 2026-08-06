@@ -1,7 +1,11 @@
 from django.contrib.auth import views as auth_views
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    # The admin site was removed. Old bookmarks and home-screen shortcuts
+    # (/admin/, /admin/login/, …) land on the app instead of a dead 404.
+    re_path(r"^admin(?:/.*)?$", RedirectView.as_view(url="/", permanent=False)),
     # Access is direct (auto-login middleware). Anyone who lands on /login/
     # is already signed in as the shared account, so bounce them to the app.
     path(
