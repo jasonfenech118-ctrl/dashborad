@@ -31,6 +31,15 @@
   .pf-cancel{color:var(--muted);text-decoration:none;font-size:13.5px;padding:9px 14px;}
   .pf-cancel:hover{color:var(--teal);}
   .form-banner{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px;}
+  /* pathway picker */
+  .pw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .pw-opt{position:relative;}
+  .pw-opt input{position:absolute;opacity:0;inset:0;cursor:pointer;}
+  .pw-opt .box{display:block;border:2px solid var(--border);border-radius:12px;padding:13px;cursor:pointer;height:100%;background:#fff;}
+  .pw-opt input:checked + .box{border-color:var(--teal);background:var(--teal-50);}
+  .pw-opt .box strong{display:block;font-size:14px;margin-bottom:4px;}
+  .pw-opt .box span{color:var(--muted);font-size:12px;line-height:1.4;display:block;}
+  .cond{display:none;} .cond.on{display:flex;}
   @media(max-width:640px){ .pf-grid{grid-template-columns:1fr;} }
 </style>
 
@@ -47,6 +56,50 @@
     {% if form.non_field_errors %}<div class="form-banner">{{ form.non_field_errors }}</div>{% endif %}
 
     <div class="pf-card">
+    <section class="pf-sec">
+      <h2>Pathway</h2>
+      <p style="margin:-6px 0 12px;color:var(--muted);font-size:13px;">Which route is this patient on? The app then guides each stage — siting, surgery, daily reviews, discharge and follow-up.</p>
+      <div class="pw-grid">
+        <label class="pw-opt">
+          <input type="radio" name="pathway_type" value="elective" onchange="syncPathway()" {% if pathway_type == 'elective' %}checked{% endif %} required>
+          <span class="box"><strong>Elective</strong><span>Planned surgery, with a scheduled stoma siting session beforehand.</span></span>
+        </label>
+        <label class="pw-opt">
+          <input type="radio" name="pathway_type" value="emergency" onchange="syncPathway()" {% if pathway_type == 'emergency' %}checked{% endif %}>
+          <span class="box"><strong>Emergency</strong><span>No time for siting — straight to surgery, then post-operative reviews.</span></span>
+        </label>
+        <label class="pw-opt">
+          <input type="radio" name="pathway_type" value="old_case" onchange="syncPathway()" {% if pathway_type == 'old_case' %}checked{% endif %}>
+          <span class="box"><strong>Old case</strong><span>Stoma formed at another hospital. Seen as inpatient or by appointment.</span></span>
+        </label>
+        <label class="pw-opt">
+          <input type="radio" name="pathway_type" value="fistula" onchange="syncPathway()" {% if pathway_type == 'fistula' %}checked{% endif %}>
+          <span class="box"><strong>Fistula</strong><span>Seen as an inpatient and reviewed until discharge. Rarely followed up.</span></span>
+        </label>
+      </div>
+      <div class="pf-grid" style="margin-top:14px;">
+        <div class="pf-field cond" id="c-siting">
+          <label>Stoma siting session — scheduled date</label>
+          <input class="f-input" type="date" name="siting_scheduled_date">
+        </div>
+        <div class="pf-field cond" id="c-setting">
+          <label>How are they seen?</label>
+          <select class="f-input" name="care_setting">
+            <option value="inpatient">Inpatient</option>
+            <option value="outpatient">Outpatient appointment</option>
+          </select>
+        </div>
+        <div class="pf-field cond" id="c-referral">
+          <label>Operated at (hospital)</label>
+          <input class="f-input" type="text" name="referral_source" placeholder="e.g. St James Hospital">
+        </div>
+        <div class="pf-field cond" id="c-stoma">
+          <label>Stoma type</label>
+          <input class="f-input" type="text" name="stoma_type" placeholder="e.g. Ileostomy">
+        </div>
+      </div>
+    </section>
+
     <section class="pf-sec">
       <h2>Patient demographics</h2>
       <div class="pf-grid">
@@ -116,8 +169,20 @@
 
     <div class="pf-actions">
       <a class="pf-cancel" href="{% url 'clinic:patient_list' %}">Cancel</a>
-      <button class="btn" type="submit">Save patient</button>
+      <button class="btn" type="submit">Save patient &amp; start pathway</button>
     </div>
   </form>
 </div>
+
+<script>
+function syncPathway(){
+  var v = (document.querySelector('input[name="pathway_type"]:checked')||{}).value;
+  function show(id,on){ var e=document.getElementById(id); if(e) e.classList.toggle('on', !!on); }
+  show('c-siting',   v==='elective');
+  show('c-setting',  v==='old_case');
+  show('c-referral', v==='old_case');
+  show('c-stoma',    v!=='fistula');
+}
+syncPathway();
+</script>
 {% endblock %}

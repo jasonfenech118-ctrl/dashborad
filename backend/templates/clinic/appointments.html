@@ -22,7 +22,7 @@
     <h1 style="margin-bottom:2px;">Appointments</h1>
     <p class="muted" style="font-size:13px;">Follow-up and outpatient reviews planned from care pathways.</p>
   </div>
-  <a href="{% url 'clinic:pathways' %}" class="btn">Care Pathways</a>
+  <a href="{% url 'clinic:patient_list' %}" class="btn">Patients</a>
 </div>
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
@@ -79,7 +79,7 @@
       {% if show == 'upcoming' %}No upcoming appointments.{% else %}No appointments booked yet.{% endif %}
       Book them from a patient's pathway once they're discharged.
     </p>
-    <a href="{% url 'clinic:pathways' %}" class="btn">Go to Care Pathways</a>
+    <a href="{% url 'clinic:patient_list' %}" class="btn">Go to Patients</a>
   </div>
 {% endif %}
 {% endblock %}
