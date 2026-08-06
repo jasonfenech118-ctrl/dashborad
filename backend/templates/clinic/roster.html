@@ -1,0 +1,171 @@
+{% extends "clinic/base.html" %}
+{% block title %}Roster — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:12px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin:10px 0 14px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#334155;}
+  .legend b{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 5px;border-radius:5px;font-size:10.5px;font-weight:800;}
+
+  .rost-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .rost-bar .mlabel{font-size:16px;font-weight:800;margin:0 6px;}
+  .navbtn{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;text-decoration:none;}
+  .navbtn:hover{background:#f1f5f9;}
+
+  .addbox{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+  .addbox form{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+  .addbox .fld{display:flex;flex-direction:column;gap:3px;}
+  .addbox label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;}
+  .addbox input,.addbox select{padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  .addbox input:focus,.addbox select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+
+  .rost-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
+  table.rost{border-collapse:separate;border-spacing:0;font-size:12px;}
+  table.rost th,table.rost td{border-bottom:1px solid #eef1f5;border-right:1px solid #eef1f5;padding:0;}
+  table.rost thead th{position:sticky;top:0;z-index:3;background:#0f2540;color:#fff;height:40px;font-weight:700;text-align:center;}
+  th.rost-name,th.rost-role,td.rost-name,td.rost-role{position:sticky;background:#fff;z-index:2;text-align:left;}
+  th.rost-name,td.rost-name{left:0;min-width:168px;width:168px;padding:6px 8px 6px 10px;}
+  th.rost-role,td.rost-role{left:168px;min-width:118px;width:118px;padding:6px 8px;color:var(--muted);}
+  thead th.rost-name,thead th.rost-role{background:#0f2540;color:#fff;z-index:4;}
+  td.rost-name{border-right:2px solid #e2e8f0;}
+  .rost-day{min-width:34px;width:34px;}
+  .rost-day .wd{display:block;font-size:9px;opacity:.7;line-height:1;margin-top:4px;}
+  .rost-day .dn{display:block;font-size:12px;font-weight:700;line-height:1.3;}
+  .rost-day.we{background:#12385f;}
+  .rost-day.td{box-shadow:inset 0 -3px 0 #f6a5ab;}
+  td.rost-cell{width:34px;height:32px;text-align:center;vertical-align:middle;}
+  td.rost-cell.we{background:#f7f9fc;}
+  .cell{width:30px;height:26px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;font-size:11px;font-weight:800;cursor:pointer;padding:0;color:#94a3b8;font-family:inherit;}
+  .cell:hover{border-color:var(--teal);}
+  tr.band td{background:#f1f5f9;font-size:10.5px;font-weight:800;letter-spacing:.5px;color:#475569;text-transform:uppercase;padding:5px 10px;position:sticky;left:0;}
+  .nm{font-weight:700;}
+  .rm{border:none;background:none;color:#cbd5e1;cursor:pointer;font-size:15px;line-height:1;padding:0 0 0 4px;font-family:inherit;}
+  .rm:hover{color:#dc2626;}
+
+  .palette{position:absolute;z-index:80;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.18);padding:8px;}
+  .pal-grid{display:grid;grid-template-columns:repeat(4,auto);gap:5px;}
+  .pal{min-width:34px;height:28px;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;padding:0 6px;font-family:inherit;}
+  .pal.clear{grid-column:1/-1;background:#f1f5f9;color:#475569;}
+  .hint{font-size:12px;color:var(--muted);margin-bottom:6px;}
+
+  @media print{ .rost-bar .navbtn,.addbox,.rm,#palette{display:none !important;} }
+</style>
+
+<h1 style="margin-bottom:2px;">Monthly Roster</h1>
+<p class="muted" style="font-size:13px;">Click any day cell to set a shift. Add or remove staff below.</p>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- Legend -->
+<div class="legend">
+  {% for c in codes %}<span><b style="background:{{ c.bg }};color:{{ c.fg }};">{{ c.code }}</b>{{ c.label }}</span>{% endfor %}
+</div>
+
+<!-- Add staff -->
+<div class="addbox">
+  <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+    {% csrf_token %}
+    <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+    <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:180px;"></div>
+    <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
+    <div class="fld"><label>Group</label>
+      <select name="category">{% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+    <button class="btn" type="submit">+ Add staff</button>
+  </form>
+</div>
+
+<!-- Month nav -->
+<div class="rost-bar">
+  <a class="navbtn" href="?year={{ prev.year }}&month={{ prev.month }}">← Prev</a>
+  <span class="mlabel">{{ month_label }}</span>
+  <a class="navbtn" href="?year={{ next.year }}&month={{ next.month }}">Next →</a>
+  <a class="navbtn" href="?year={{ today.year }}&month={{ today.month }}">Today</a>
+</div>
+
+{% if not db_ok %}
+  <div class="esrf-msg error">The roster is temporarily unavailable (database not reachable).</div>
+{% else %}
+<div class="rost-wrap">
+  <table class="rost">
+    <thead>
+      <tr>
+        <th class="rost-name">Staff Member</th>
+        <th class="rost-role">Role</th>
+        {% for d in days %}<th class="rost-day {% if d.weekend %}we{% endif %} {% if d.today %}td{% endif %}"><span class="wd">{{ d.wd }}</span><span class="dn">{{ d.day }}</span></th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="band"><td colspan="{{ days|length|add:2 }}">Core Staff</td></tr>
+      {% for row in core_rows %}{% include "clinic/_roster_row.html" %}{% endfor %}
+      {% if not core_rows %}<tr><td colspan="{{ days|length|add:2 }}" style="padding:10px;color:#94a3b8;">No core staff yet — add someone above.</td></tr>{% endif %}
+      <tr class="band"><td colspan="{{ days|length|add:2 }}">Overtime Staff</td></tr>
+      {% for row in ot_rows %}{% include "clinic/_roster_row.html" %}{% endfor %}
+      {% if not ot_rows %}<tr><td colspan="{{ days|length|add:2 }}" style="padding:10px;color:#94a3b8;">No overtime staff yet.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Shift code palette (shown on cell click) -->
+<div id="palette" class="palette" style="display:none;">
+  <div class="pal-grid">
+    {% for c in codes %}<button class="pal" data-code="{{ c.code }}" style="background:{{ c.bg }};color:{{ c.fg }};" title="{{ c.label }}">{{ c.code }}</button>{% endfor %}
+    <button class="pal clear" data-code="">Clear</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CSRF = "{{ csrf_token }}";
+  var SET_URL = "{% url 'clinic:roster_shift_set' %}";
+  var palette = document.getElementById('palette');
+  var current = null;   // the <button.cell> being edited
+
+  function hide(){ palette.style.display='none'; current=null; }
+
+  document.querySelectorAll('.cell').forEach(function(cell){
+    cell.addEventListener('click', function(e){
+      e.stopPropagation();
+      current = cell;
+      var r = cell.getBoundingClientRect();
+      palette.style.display='block';
+      var top = r.bottom + window.scrollY + 4;
+      var left = r.left + window.scrollX;
+      left = Math.min(left, window.scrollX + document.documentElement.clientWidth - palette.offsetWidth - 10);
+      palette.style.top = top + 'px';
+      palette.style.left = Math.max(8, left) + 'px';
+    });
+  });
+
+  palette.querySelectorAll('.pal').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(!current) return;
+      var code = btn.getAttribute('data-code');
+      var body = new URLSearchParams({
+        staff_id: current.getAttribute('data-staff'),
+        date: current.getAttribute('data-date'),
+        code: code
+      });
+      fetch(SET_URL, {method:'POST', headers:{'X-CSRFToken':CSRF,'Content-Type':'application/x-www-form-urlencoded'}, body:body})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d && d.ok){
+            current.textContent = d.code || '';
+            current.style.background = d.bg || '#fff';
+            current.style.color = d.fg || '#94a3b8';
+          }
+          hide();
+        })
+        .catch(function(){ hide(); });
+    });
+  });
+
+  document.addEventListener('click', hide);
+  window.addEventListener('scroll', hide, true);
+})();
+</script>
+{% endblock %}

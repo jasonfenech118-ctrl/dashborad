@@ -1130,3 +1130,52 @@ class Reminder(UUIDModel):
         if self.at_time:
             base += f" at {self.at_time:%H:%M}"
         return base
+
+
+# ---------------------------------------------------------- roster / shifts
+
+
+class RosterStaff(UUIDModel):
+    """A person on the monthly roster. Kept in its own Django-managed table so
+    names can be added and removed freely without touching the Supabase-owned
+    ``staff`` table."""
+
+    CORE = "core"
+    OVERTIME = "overtime"
+    CATEGORY_CHOICES = [(CORE, "Core staff"), (OVERTIME, "Overtime staff")]
+
+    full_name = models.CharField(max_length=200)
+    role = models.CharField(max_length=120, blank=True, null=True)
+    category = models.CharField(max_length=12, choices=CATEGORY_CHOICES, default=CORE)
+    display_order = models.IntegerField(default=0)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "roster_staff"
+        ordering = ["category", "display_order", "full_name"]
+
+    def __str__(self):
+        return self.full_name
+
+
+class RosterShift(UUIDModel):
+    """One staff member's entry for one day — a shift code such as D (day),
+    R (rest), L (leave), OT (overtime)…  One entry per person per day."""
+
+    staff = models.ForeignKey(
+        RosterStaff, on_delete=models.CASCADE, related_name="shifts")
+    date = models.DateField()
+    code = models.CharField(max_length=10)
+    note = models.CharField(max_length=200, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "roster_shifts"
+        unique_together = [("staff", "date")]
+        ordering = ["date"]
+
+    def __str__(self):
+        return f"{self.staff_id} {self.date} {self.code}"
