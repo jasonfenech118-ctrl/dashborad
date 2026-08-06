@@ -1,0 +1,18 @@
+<tr>
+  <td class="rost-name">
+    <span class="nm">{{ row.staff.full_name }}</span>
+    <form method="post" action="{% url 'clinic:roster_staff_delete' pk=row.staff.id %}"
+          onsubmit="return confirm('Remove {{ row.staff.full_name|escapejs }} from the roster?');" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+      <button class="rm" type="submit" title="Remove from roster">&times;</button>
+    </form>
+  </td>
+  <td class="rost-role">{{ row.staff.role|default:"" }}</td>
+  {% for c in row.cells %}
+  <td class="rost-cell {% if c.weekend %}we{% endif %}">
+    <button class="cell" data-staff="{{ row.staff.id }}" data-date="{{ c.date }}"
+            {% if c.meta %}style="background:{{ c.meta.bg }};color:{{ c.meta.fg }};"{% endif %}>{{ c.code }}</button>
+  </td>
+  {% endfor %}
+</tr>

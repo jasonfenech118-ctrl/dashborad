@@ -1596,6 +1596,157 @@ def reminder_send(request, pk):
     return redirect("clinic:reminders")
 
 
+# -------------------------------------------------------------- roster / shifts
+
+
+# The shift codes shown in the roster legend, with their colours.
+ROSTER_CODES = [
+    {"code": "D", "label": "Day", "bg": "#1f2937", "fg": "#ffffff"},
+    {"code": "R", "label": "Rest/Off", "bg": "#e5e7eb", "fg": "#111827"},
+    {"code": "S", "label": "Sick", "bg": "#ef4444", "fg": "#ffffff"},
+    {"code": "M", "label": "Maternity", "bg": "#db2777", "fg": "#ffffff"},
+    {"code": "St", "label": "Study", "bg": "#3b82f6", "fg": "#ffffff"},
+    {"code": "OT", "label": "Overtime", "bg": "#f59e0b", "fg": "#111827"},
+    {"code": "L", "label": "Annual Leave", "bg": "#16a34a", "fg": "#ffffff"},
+    {"code": "TOL", "label": "TIL Off", "bg": "#7c3aed", "fg": "#ffffff"},
+    {"code": "TIL", "label": "TIL In", "bg": "#0d9488", "fg": "#ffffff"},
+    {"code": "COD-in", "label": "Change of duty in", "bg": "#0ea5e9", "fg": "#ffffff"},
+    {"code": "COD-off", "label": "Change of duty off", "bg": "#92400e", "fg": "#ffffff"},
+]
+ROSTER_CODE_MAP = {c["code"]: c for c in ROSTER_CODES}
+
+
+def _roster_redirect(request):
+    """Back to the roster, keeping the month the user was viewing."""
+    y, m = request.POST.get("year"), request.POST.get("month")
+    base = reverse("clinic:roster")
+    return f"{base}?year={y}&month={m}" if (y and m) else base
+
+
+@login_required
+def roster(request):
+    """Monthly roster grid — staff down the side, days across the top, a shift
+    code in each cell."""
+    today = datetime.date.today()
+    try:
+        year = int(request.GET.get("year") or today.year)
+        month = int(request.GET.get("month") or today.month)
+        datetime.date(year, month, 1)
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+
+    ndays = calendar.monthrange(year, month)[1]
+    days = []
+    for d in range(1, ndays + 1):
+        dt = datetime.date(year, month, d)
+        days.append({"day": d, "date": dt.isoformat(), "wd": dt.strftime("%a"),
+                     "weekend": dt.weekday() >= 5, "today": dt == today})
+
+    def _load():
+        staff = list(models.RosterStaff.objects.filter(active=True))
+        first, last = datetime.date(year, month, 1), datetime.date(year, month, ndays)
+        smap = {}
+        for sh in models.RosterShift.objects.filter(date__gte=first, date__lte=last):
+            smap[(sh.staff_id, sh.date.day)] = sh.code
+        return staff, smap
+
+    loaded = _safe_query(_load, None)
+    db_ok = loaded is not None
+    staff, smap = loaded if loaded else ([], {})
+
+    def build_rows(category):
+        rows = []
+        for st in staff:
+            if st.category != category:
+                continue
+            cells = [{
+                "date": datetime.date(year, month, d).isoformat(),
+                "code": smap.get((st.id, d), ""),
+                "meta": ROSTER_CODE_MAP.get(smap.get((st.id, d))),
+                "weekend": datetime.date(year, month, d).weekday() >= 5,
+            } for d in range(1, ndays + 1)]
+            rows.append({"staff": st, "cells": cells})
+        return rows
+
+    prev_m = datetime.date(year, month, 1) - datetime.timedelta(days=1)
+    next_m = datetime.date(year, month, ndays) + datetime.timedelta(days=1)
+    return render(request, "clinic/roster.html", {
+        "year": year, "month": month,
+        "month_label": datetime.date(year, month, 1).strftime("%B %Y"),
+        "days": days,
+        "core_rows": build_rows(models.RosterStaff.CORE),
+        "ot_rows": build_rows(models.RosterStaff.OVERTIME),
+        "codes": ROSTER_CODES,
+        "db_ok": db_ok,
+        "prev": {"year": prev_m.year, "month": prev_m.month},
+        "next": {"year": next_m.year, "month": next_m.month},
+        "today": {"year": today.year, "month": today.month},
+        "categories": models.RosterStaff.CATEGORY_CHOICES,
+    })
+
+
+@login_required
+def roster_staff_add(request):
+    """Add a person to the roster (POST)."""
+    if request.method == "POST":
+        name = (request.POST.get("full_name") or "").strip()
+        if not name:
+            messages.error(request, "Enter a name.")
+        else:
+            cat = request.POST.get("category")
+            if cat not in dict(models.RosterStaff.CATEGORY_CHOICES):
+                cat = models.RosterStaff.CORE
+            try:
+                order = _safe_count(models.RosterStaff.objects.filter(category=cat)) or 0
+                models.RosterStaff.objects.create(
+                    full_name=name,
+                    role=(request.POST.get("role") or "").strip() or None,
+                    category=cat, display_order=order)
+                messages.success(request, f"{name} added to the roster.")
+            except Exception:
+                messages.error(request, "Could not add — the database is unavailable.")
+    return redirect(_roster_redirect(request))
+
+
+@login_required
+def roster_staff_delete(request, pk):
+    """Remove a person (and their shifts) from the roster (POST)."""
+    if request.method == "POST":
+        st = get_object_or_404(models.RosterStaff, pk=pk)
+        name = st.full_name
+        try:
+            st.delete()
+            messages.success(request, f"{name} removed from the roster.")
+        except Exception:
+            messages.error(request, "Could not remove that person.")
+    return redirect(_roster_redirect(request))
+
+
+@login_required
+def roster_shift_set(request):
+    """Set or clear one cell's shift code. Returns JSON for the click UI."""
+    if request.method != "POST":
+        return JsonResponse({"ok": False}, status=405)
+    try:
+        d = datetime.date.fromisoformat((request.POST.get("date") or "").strip())
+    except (ValueError, TypeError):
+        return JsonResponse({"ok": False, "error": "bad date"}, status=400)
+    st = get_object_or_404(models.RosterStaff, pk=request.POST.get("staff_id"))
+    code = (request.POST.get("code") or "").strip()
+    try:
+        if not code:
+            models.RosterShift.objects.filter(staff=st, date=d).delete()
+            return JsonResponse({"ok": True, "code": "", "bg": "", "fg": ""})
+        if code not in ROSTER_CODE_MAP:
+            return JsonResponse({"ok": False, "error": "bad code"}, status=400)
+        models.RosterShift.objects.update_or_create(
+            staff=st, date=d, defaults={"code": code})
+        meta = ROSTER_CODE_MAP[code]
+        return JsonResponse({"ok": True, "code": code, "bg": meta["bg"], "fg": meta["fg"]})
+    except Exception:
+        return JsonResponse({"ok": False, "error": "db"}, status=500)
+
+
 # ------------------------------------------------------------------ pathways
 
 
