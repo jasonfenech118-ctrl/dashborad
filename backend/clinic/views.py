@@ -282,13 +282,284 @@ def ward(request):
 
 
 @login_required
-def discharge_letter(request):
-    """Standalone Stoma discharge-letter generator.
+def discharge_letter(request, patient_id=None):
+    """Stoma discharge-letter generator.
 
-    The template is a fully self-contained client-side tool (its own layout,
-    print styles and localStorage state), so it does not extend base.html.
+    The template is a self-contained client-side tool. When opened for a
+    specific patient their details (and current stoma) are handed to the page
+    so the letter starts pre-filled instead of blank.
     """
-    return render(request, "clinic/discharge_letter.html")
+    prefill = None
+    if patient_id:
+        patient = get_object_or_404(models.Patient, pk=patient_id)
+        sex = (patient.sex or "").strip().lower()
+        stoma = None
+        try:
+            stoma = patient.stomas.filter(status=models.Stoma.ACTIVE).first()
+        except Exception:
+            stoma = None
+        prefill = {
+            "title": "Ms" if sex.startswith("f") else ("Mr" if sex.startswith("m") else ""),
+            "first_name": patient.first_name or "",
+            "surname": patient.surname or "",
+            "id_card": patient.id_card or "",
+            "consultant": patient.consultant or "",
+            "stoma_type": (stoma.get_stoma_type_display() if stoma
+                           else (patient.stoma_type_summary or "")),
+            "operation": patient.operation_performed or "",
+            "surgery_date": patient.surgery_date.strftime("%d/%m/%Y") if patient.surgery_date else "",
+        }
+    return render(request, "clinic/discharge_letter.html", {
+        "prefill_json": json.dumps(prefill) if prefill else "null",
+    })
+
+
+# ------------------------------------------------------- stomas & encounters
+
+
+def _apply_patient_status_rules(patient):
+    """Keep the patient's status in step with their stomas.
+
+    A reversed stoma with nothing else in place makes the patient inactive
+    (reversed); a deceased patient closes every open pathway.
+    """
+    try:
+        stomas = list(patient.stomas.all())
+    except Exception:
+        return
+    if not stomas:
+        return
+
+    open_stomas = [s for s in stomas if s.is_open]
+    reversed_any = any(s.status == models.Stoma.REVERSED for s in stomas)
+
+    if not open_stomas and reversed_any:
+        if patient.followup_status != "reversed":
+            patient.followup_status = "reversed"
+            try:
+                patient.save(update_fields=["followup_status"])
+            except Exception:
+                pass
+        # The episode is finished once the stoma is reversed.
+        try:
+            models.CarePathway.objects.filter(patient_id=patient.id).exclude(
+                status=models.CarePathway.CLOSED
+            ).update(status=models.CarePathway.CLOSED)
+        except Exception:
+            pass
+
+
+def _close_case_for_deceased(patient, date_of_death=None):
+    """Mark a patient deceased and close their case automatically."""
+    patient.followup_status = "deceased"
+    if date_of_death:
+        patient.rip_date = date_of_death
+    try:
+        patient.save(update_fields=["followup_status", "rip_date"])
+    except Exception:
+        try:
+            patient.save()
+        except Exception:
+            pass
+    try:
+        models.CarePathway.objects.filter(patient_id=patient.id).exclude(
+            status=models.CarePathway.CLOSED
+        ).update(status=models.CarePathway.CLOSED)
+    except Exception:
+        pass
+
+
+@login_required
+def encounter_new(request, pk):
+    """Record a full encounter on a pathway: assessment, appliance, report."""
+    pathway = get_object_or_404(models.CarePathway, pk=pk)
+    if request.method == "POST":
+        return _save_encounter(request, pathway)
+    stomas = list(pathway.patient.stomas.all()) if _safe(lambda: pathway.patient) else []
+    return render(request, "clinic/encounter_form.html", {
+        "p": pathway, "stomas": stomas, "today": datetime.date.today(),
+    })
+
+
+def _safe(fn, default=None):
+    try:
+        return fn()
+    except Exception:
+        return default
+
+
+def _save_encounter(request, p):
+    E = models.PathwayEvent
+    who = request.user.get_username()
+    today = datetime.date.today()
+    d = _parse_date(request.POST.get("event_date"), today)
+
+    is_post_op = p.surgery_date is not None
+    day = (d - p.surgery_date).days if is_post_op else None
+    first = is_post_op and p.first_review_date is None
+    if first:
+        p.first_review_date = d
+        p.save(update_fields=["first_review_date", "updated_at"])
+
+    event = E.objects.create(
+        pathway=p,
+        event_type=E.POST_OP_REVIEW if is_post_op else E.REVIEW,
+        event_date=d, day_number=day,
+        summary=(request.POST.get("summary") or "").strip() or None,
+        education_given=bool(request.POST.get("education_given")),
+        supplies_given=bool(request.POST.get("supplies_given")),
+        notes=(request.POST.get("report") or "").strip() or None,
+        recorded_by=who,
+    )
+
+    # Stoma assessments — one per stoma the nurse filled in.
+    for sid in request.POST.getlist("assess_stoma"):
+        colour = (request.POST.get(f"colour_{sid}") or "").strip()
+        output = (request.POST.get(f"output_{sid}") or "").strip()
+        skin = (request.POST.get(f"skin_{sid}") or "").strip()
+        height = (request.POST.get(f"height_{sid}") or "").strip()
+        comps = (request.POST.get(f"comps_{sid}") or "").strip()
+        anote = (request.POST.get(f"anote_{sid}") or "").strip()
+        if not any([colour, output, skin, height, comps, anote]):
+            continue
+        try:
+            models.StomaAssessment.objects.create(
+                stoma_id=sid, event=event, assessed_on=d,
+                colour=colour or None, output=output or None,
+                output_ml=(request.POST.get(f"outml_{sid}") or "").strip() or None,
+                peristomal_skin=skin or None, stoma_height=height or None,
+                complications=comps or None, notes=anote or None,
+            )
+        except Exception:
+            pass
+
+    # Appliance used / changed.
+    if request.POST.get("appliance_used"):
+        try:
+            models.ApplianceRecord.objects.create(
+                patient_id=p.patient_id,
+                stoma_id=(request.POST.get("appliance_stoma") or None) or None,
+                event=event, used_on=d,
+                system=(request.POST.get("app_system") or "").strip() or None,
+                pouch_type=(request.POST.get("app_pouch") or "").strip() or None,
+                brand=(request.POST.get("app_brand") or "").strip() or None,
+                product_code=(request.POST.get("app_code") or "").strip() or None,
+                size=(request.POST.get("app_size") or "").strip() or None,
+                accessories=(request.POST.get("app_acc") or "").strip() or None,
+                changed=bool(request.POST.get("app_changed")),
+            )
+        except Exception:
+            pass
+
+    if request.POST.get("close_episode"):
+        p.discharge_date = p.discharge_date or d
+        p.status = (models.CarePathway.FOLLOWUP if p.expects_followup
+                    else models.CarePathway.CLOSED)
+        p.save()
+        E.objects.create(pathway=p, event_type=E.DISCHARGE, event_date=d,
+                         summary="Episode closed", recorded_by=who)
+        messages.success(request, f"Encounter {event.encounter_number} saved and episode closed.")
+        return redirect("clinic:pathway_detail", pk=p.pk)
+
+    if first and p.first_review_was_late:
+        messages.warning(
+            request,
+            f"Encounter {event.encounter_number} saved. First post-op review was "
+            f"day {p.first_review_delay_days} (not day 1) — flagged on this episode.",
+        )
+    else:
+        messages.success(request, f"Encounter {event.encounter_number} saved.")
+    return redirect("clinic:pathway_detail", pk=p.pk)
+
+
+@login_required
+def patient_profile(request, patient_id):
+    """At-a-glance profile: stomas, appliances, episodes and history."""
+    patient = get_object_or_404(models.Patient, pk=patient_id)
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip()
+        if action == "add_stoma":
+            try:
+                models.Stoma.objects.create(
+                    patient=patient,
+                    pathway_id=(request.POST.get("pathway") or None) or None,
+                    stoma_type=(request.POST.get("stoma_type") or "").strip(),
+                    site=(request.POST.get("site") or "").strip() or None,
+                    formed_date=_parse_date(request.POST.get("formed_date")),
+                    notes=(request.POST.get("notes") or "").strip() or None,
+                )
+                messages.success(request, "Stoma added.")
+            except Exception:
+                messages.error(request, "Could not add that stoma.")
+        elif action == "stoma_change":
+            try:
+                stoma = models.Stoma.objects.get(pk=request.POST.get("stoma_id"))
+                ctype = (request.POST.get("change_type") or "").strip()
+                cdate = _parse_date(request.POST.get("change_date"), datetime.date.today())
+                new_site = (request.POST.get("new_site") or "").strip() or None
+                models.StomaChange.objects.create(
+                    stoma=stoma, change_type=ctype, change_date=cdate,
+                    new_site=new_site,
+                    notes=(request.POST.get("change_notes") or "").strip() or None,
+                    recorded_by=request.user.get_username(),
+                )
+                # Reflect the change on the stoma itself.
+                if ctype in {models.Stoma.CLOSED, models.Stoma.REVERSED}:
+                    stoma.status = ctype
+                    stoma.ended_date = cdate
+                elif ctype == "resited":
+                    stoma.status = models.Stoma.RESITED
+                    if new_site:
+                        stoma.site = new_site
+                elif ctype == "refashioned":
+                    stoma.status = models.Stoma.REFASHIONED
+                stoma.save()
+                _apply_patient_status_rules(patient)
+                patient.refresh_from_db()
+                messages.success(request, f"{stoma.stoma_ref} marked {ctype}.")
+            except Exception:
+                messages.error(request, "Could not record that change.")
+        elif action == "mark_deceased":
+            _close_case_for_deceased(
+                patient, _parse_date(request.POST.get("rip_date"), datetime.date.today())
+            )
+            messages.success(request, "Patient marked deceased — case closed.")
+        return redirect("clinic:patient_profile", patient_id=patient.id)
+
+    stomas = _safe(lambda: list(patient.stomas.all()), []) or []
+    for s in stomas:
+        s.change_list = _safe(lambda s=s: list(s.changes.all()), []) or []
+        s.appliance_count = _safe(lambda s=s: s.appliances.count(), 0) or 0
+    pathways = _safe(
+        lambda: list(models.CarePathway.objects.filter(patient_id=patient.id)), []
+    ) or []
+    appliances = _safe(
+        lambda: list(models.ApplianceRecord.objects.filter(patient_id=patient.id)[:50]), []
+    ) or []
+    events = _safe(
+        lambda: list(models.PathwayEvent.objects.filter(
+            pathway__patient_id=patient.id).select_related("pathway")[:100]), []
+    ) or []
+
+    sex = (patient.sex or "").strip().lower()
+    silhouette = "female" if sex.startswith("f") else ("male" if sex.startswith("m") else "unknown")
+    active_case = (patient.followup_status or "") not in {"reversed", "deceased"}
+
+    return render(request, "clinic/patient_profile.html", {
+        "patient": patient,
+        "stomas": stomas,
+        "open_stomas": [s for s in stomas if s.is_open],
+        "pathways": pathways,
+        "appliances": appliances,
+        "events": events,
+        "silhouette": silhouette,
+        "active_case": active_case,
+        "stoma_types": models.Stoma.TYPE_CHOICES,
+        "site_choices": models.Stoma.SITE_CHOICES,
+        "change_types": models.StomaChange.TYPE_CHOICES,
+        "today": datetime.date.today(),
+    })
 
 
 @login_required

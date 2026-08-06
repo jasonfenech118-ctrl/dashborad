@@ -1,7 +1,11 @@
 {% extends "clinic/base.html" %}
 {% block title %}{{ patient }} — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
-<p style="margin:0 0 4px;"><a href="{% url 'clinic:patient_list' %}">← Back to patients</a></p>
+<p style="margin:0 0 4px;">
+  <a href="{% url 'clinic:patient_list' %}">← Back to patients</a>
+  &nbsp;·&nbsp;<a href="{% url 'clinic:patient_profile' patient_id=patient.id %}">Patient profile</a>
+  &nbsp;·&nbsp;<a href="{% url 'clinic:discharge_letter_for' patient_id=patient.id %}" target="_blank" rel="noopener">Discharge letter</a>
+</p>
 <h1>{{ patient.first_name|default:"" }} {{ patient.surname|default:"" }}
   {% if patient.followup_status %}<span class="pill">{{ patient.followup_status }}</span>{% endif %}
 </h1>

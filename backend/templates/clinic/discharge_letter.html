@@ -2670,5 +2670,39 @@
   autosizePatientFlds();
   openWizard();
 </script>
+
+<!-- Pre-fill from the patient record when opened for a specific patient. -->
+<script id="patient-prefill" type="application/json">{{ prefill_json|safe }}</script>
+<script>
+(function(){
+  var data = null;
+  try{ data = JSON.parse(document.getElementById('patient-prefill').textContent); }catch(e){}
+  if(!data) return;
+  function set(sel, val){
+    if(!val) return;
+    var el = document.querySelector(sel);
+    if(!el) return;
+    if(el.tagName === 'SELECT'){
+      var hit = Array.prototype.slice.call(el.options).filter(function(o){
+        return (o.value||o.text).trim().toLowerCase() === String(val).trim().toLowerCase();
+      })[0];
+      if(hit){ el.value = hit.value || hit.text; }
+    } else {
+      el.value = val;
+    }
+    el.dispatchEvent(new Event('input', {bubbles:true}));
+    el.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+  function apply(){
+    set('.fld-title',  data.title);
+    set('.fld-fname',  data.first_name);
+    set('.fld-sname',  data.surname);
+    set('.fld-id',     data.id_card);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(apply, 60); });
+  } else { setTimeout(apply, 60); }
+})();
+</script>
 </body>
 </html>
