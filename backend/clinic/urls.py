@@ -13,6 +13,7 @@ urlpatterns = [
     path("reports/", views.reports, name="reports"),
     path("ordering/", views.ordering_forms, name="ordering_forms"),
     path("ordering/esrf/", views.esrf_form, name="esrf_form"),
+    path("ordering/form/<slug:slug>/", views.order_form, name="order_form"),
     path("documents/", views.clinic_documents, name="clinic_documents"),
     path("documents/<uuid:pk>/", views.ordering_document_detail, name="ordering_document_detail"),
     path("library/", views.library, name="library"),
