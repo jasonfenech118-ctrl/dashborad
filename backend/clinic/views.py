@@ -589,26 +589,6 @@ def ordering_forms(request):
             "desc": "",
             "url": "/ordering/esrf/",
         },
-        {
-            "title": "Stoma Appliances",
-            "desc": "Pouches, baseplates and one-piece / two-piece systems.",
-            "url": "",
-        },
-        {
-            "title": "Accessories & Supplies",
-            "desc": "Barrier rings, pastes, powders, adhesive removers and belts.",
-            "url": "",
-        },
-        {
-            "title": "Prescription Request",
-            "desc": "Request or renew a patient's appliance prescription.",
-            "url": "",
-        },
-        {
-            "title": "Ward / Stock Order",
-            "desc": "Replenish ward stock and clinic consumables.",
-            "url": "",
-        },
     ]
     return render(request, "clinic/ordering_forms.html", {"forms": forms})
 
