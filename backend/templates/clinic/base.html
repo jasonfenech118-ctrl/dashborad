@@ -9,8 +9,9 @@
       --teal:#cf1124;
       --teal-600:#a50e1d;
       --teal-50:#fdecee;
-      --btn:#3b82f6;
-      --btn-600:#2563eb;
+      --btn:#89cff0;          /* baby blue */
+      --btn-600:#6fc0e8;      /* baby blue, hover */
+      --btn-ink:#0f2b3d;      /* dark text keeps baby-blue buttons readable */
       --navy:#13294b;
       --navy2:#1e3a8a;
       --gold:#38bdf8;
@@ -106,8 +107,8 @@
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
     .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.15);}
-    .btn{background:var(--btn);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
-    .btn:hover{background:var(--btn-600);}
+    .btn{background:var(--btn);color:var(--btn-ink);border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
+    .btn:hover{background:var(--btn-600);color:var(--btn-ink);}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
     .card{background:#fff;
       border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
