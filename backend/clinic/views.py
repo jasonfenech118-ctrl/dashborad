@@ -600,7 +600,15 @@ def ordering_forms(request):
             "url": reverse("clinic:order_form", args=["cleaning"]),
         },
     ]
-    return render(request, "clinic/ordering_forms.html", {"forms": forms})
+    # Weekly reminder: the MML orders are prepared for the Tuesday team, so a
+    # prompt shows on the Ordering Forms page every Saturday.
+    today = datetime.date.today()
+    return render(request, "clinic/ordering_forms.html", {
+        "forms": forms,
+        "saturday_reminder": today.weekday() == 5,  # Mon=0 … Sat=5
+        "mml1_url": reverse("clinic:order_form", args=["mmml-topup"]),
+        "mml2_url": reverse("clinic:order_form", args=["cleaning"]),
+    })
 
 
 def _user_full_name(user):

@@ -109,6 +109,11 @@
     .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.15);}
     .btn{background:var(--btn);color:var(--btn-ink);border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
     .btn:hover{background:var(--btn-600);color:var(--btn-ink);}
+    .backbar{margin-bottom:16px;}
+    .btn-back{display:inline-flex;align-items:center;gap:7px;background:#fef9c3;color:#713f12;border:1.5px solid #fde047;
+      padding:8px 15px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;font-family:inherit;}
+    .btn-back:hover{background:#fef08a;color:#713f12;}
+    .btn-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
     .card{background:#fff;
       border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
@@ -135,7 +140,7 @@
 
     @media print{
       body::before{display:none !important;}
-      .topbar,.sidebar,.scrim,.menu-toggle{display:none !important;}
+      .topbar,.sidebar,.scrim,.menu-toggle,.backbar{display:none !important;}
       .app{grid-template-columns:1fr;}
       .wrap{max-width:none;padding:0;}
       a[href]:after{content:"";}
@@ -219,6 +224,12 @@
       </div>
       {% endwith %}
       <div class="wrap">
+        <div class="backbar">
+          <button type="button" class="btn-back" onclick="if(history.length>1){history.back()}else{location.href='/'}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Back
+          </button>
+        </div>
         {% block content %}{% endblock %}
       </div>
     </div>
