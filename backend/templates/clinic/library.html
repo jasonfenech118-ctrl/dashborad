@@ -1,7 +1,18 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Library — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.10), rgba(255,255,255,.20)),
+      url("{% static 'images/library_bg.jpg' %}") center center / cover no-repeat !important;
+  }
+  .card{background:rgba(255,255,255,.55) !important;border:1px solid rgba(255,255,255,.6) !important;
+    backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
+  table{background:rgba(255,255,255,.5) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  th{background:rgba(253,236,238,.72) !important;}
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
   .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
   .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
   .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}

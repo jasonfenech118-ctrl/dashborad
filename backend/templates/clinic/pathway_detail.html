@@ -1,7 +1,17 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}{{ p.patient.first_name }} {{ p.patient.surname }} — Pathway{% endblock %}
 {% block content %}
 <style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.12), rgba(255,255,255,.22)),
+      url("{% static 'images/followup_bg.jpg' %}") center center / cover no-repeat !important;
+  }
+  .card{background:rgba(255,255,255,.58) !important;border:1px solid rgba(255,255,255,.6) !important;
+    backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
+  table{background:rgba(255,255,255,.5) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
   .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
   .back:hover{text-decoration:underline;}
   .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
