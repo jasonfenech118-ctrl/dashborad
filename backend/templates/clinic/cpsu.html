@@ -1,8 +1,14 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}CPSU — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
-  body::before{display:none !important;}   /* clean surface */
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
+      url("{% static 'images/cpsu_bg.png' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
   .cpsu-hero{text-align:center;margin-bottom:18px;padding:10px 0;}
   .cpsu-hero img{max-width:min(400px,80%);height:auto;display:block;margin:0 auto;}
   .cpsu-hero .sub{color:var(--muted);font-size:13px;margin-top:14px;}
