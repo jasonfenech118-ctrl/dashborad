@@ -37,12 +37,12 @@
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
   }
-  /* Fixed Malta harbour background (screen only) to match the rest of the app.
+  /* Fixed discharge-themed background (screen only).
      Hidden on print so the discharge letter itself is unaffected. */
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
-      url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
+    background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.22)),
+      url("{% static 'images/discharge_bg.jpg' %}") center center / cover no-repeat;
   }
 
   /* ---------- Toolbar (screen only) ---------- */
