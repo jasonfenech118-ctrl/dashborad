@@ -1,28 +1,22 @@
-from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.generic import RedirectView
 
-admin.site.site_header = "MDH Stoma Care Clinic — Administration"
-admin.site.site_title = "MDH Stoma Care Clinic"
-admin.site.index_title = "Clinic data administration"
-
 urlpatterns = [
-    # App login/logout — lands on the home dashboard, not the admin site.
+    # The admin site was removed. Old bookmarks and home-screen shortcuts
+    # (/admin/, /admin/login/, …) land on the app instead of a dead 404.
+    re_path(r"^admin(?:/.*)?$", RedirectView.as_view(url="/", permanent=False)),
+    # Access is direct (auto-login middleware). Anyone who lands on /login/
+    # is already signed in as the shared account, so bounce them to the app.
     path(
         "login/",
-        auth_views.LoginView.as_view(template_name="registration/login.html"),
+        auth_views.LoginView.as_view(
+            template_name="registration/login.html",
+            redirect_authenticated_user=True,
+        ),
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
-    # Funnel the admin's own login through the app login so signing in always
-    # lands on the home dashboard (LOGIN_REDIRECT_URL="/"), not the admin index.
-    # The admin itself stays reachable once authenticated.
-    path(
-        "admin/login/",
-        RedirectView.as_view(url="/login/?next=/", query_string=False),
-    ),
-    path("admin/", admin.site.urls),
     path("api/", include("clinic.api_urls")),
     path("", include("clinic.urls")),
 ]

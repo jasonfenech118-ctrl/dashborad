@@ -1,0 +1,18 @@
+EXTRA SUPPLIES REQUISITION FORM
+Materials Management & Logistics Directorate — Mater Dei Hospital
+
+Reference:          {{ doc.reference }}
+Section / Ward:     {{ doc.section_ward }}
+Cost Centre:        {{ doc.cost_centre }}
+Ext no.:            {{ doc.ext_no|default:"-" }}
+Scheduled delivery: {{ doc.delivery_period|default:"-" }}
+
+ITEMS
+{% for it in doc.items %}- {{ it.code }} | {{ it.description }} | APP: {{ it.app }} | Reason: {{ it.reason }}
+{% endfor %}
+Requested by: {{ doc.requested_by_name }}
+Date:         {{ doc.form_date|date:"d/m/Y" }}
+
+--
+Sent from the MDH Stoma Care Clinic dashboard for processing by the
+Logistics Department (logisticsdept.mdh@gov.mt).

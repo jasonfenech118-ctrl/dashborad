@@ -80,7 +80,7 @@
         {% for p in page %}
         <tr>
           <td>
-            <a class="rowlink" href="{% url 'clinic:patient_detail' p.id %}">
+            <a class="rowlink" href="{% url 'clinic:patient_profile' patient_id=p.id %}">
               <span class="pt-name">
                 <span class="avatar">{{ p.surname|slice:":1" }}{{ p.first_name|slice:":1" }}</span>
                 <span>

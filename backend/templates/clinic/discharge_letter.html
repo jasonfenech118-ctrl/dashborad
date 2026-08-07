@@ -37,12 +37,12 @@
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
   }
-  /* Fixed Malta harbour background (screen only) to match the rest of the app.
+  /* Fixed discharge-themed background (screen only).
      Hidden on print so the discharge letter itself is unaffected. */
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
-      url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
+    background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.22)),
+      url("{% static 'images/discharge_bg.jpg' %}") right center / cover no-repeat;
   }
 
   /* ---------- Toolbar (screen only) ---------- */
@@ -68,7 +68,7 @@
   .btn.ghost:hover{background:rgba(255,255,255,.14);color:#fff}
   .btn.grey{background:#8a929c;color:#fff;border-color:#8a929c}
   .btn.grey:hover{background:#727a84;color:#fff;border-color:#727a84}
-  .btn.green{background:#1e8f4e;color:#fff;border-color:#1e8f4e}
+  .btn.green{background:#89cff0;color:#0f2b3d;border-color:#89cff0}
   .btn.green:hover{background:#176e3c;color:#fff;border-color:#176e3c}
   .btn.yellow{background:#f2c200;color:#3a2f00;border-color:#f2c200}
   .btn.yellow:hover{background:#d9ae00;color:#3a2f00;border-color:#d9ae00}
@@ -349,7 +349,7 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
       <button class="btn green" onclick="saveToSharePoint()">Save</button>
       <button class="btn" onclick="sendToEmail()">Send to Email</button>
-      <button class="btn" onclick="window.print()">Print</button>
+      <button class="btn" onclick="printAndFile()">Print</button>
       <button class="btn yellow" onclick="openWizard()" title="Step-by-step questions that fill in the letter">Fill in / Edit Letter</button>
       <button class="btn amber" onclick="clearForm()">Clear</button>
       <span class="format-tools" aria-label="Text formatting tools">
@@ -2669,6 +2669,97 @@
   })();
   autosizePatientFlds();
   openWizard();
+</script>
+
+<!-- Pre-fill from the patient record when opened for a specific patient. -->
+<script id="patient-prefill" type="application/json">{{ prefill_json|safe }}</script>
+<script>
+(function(){
+  var data = null;
+  try{ data = JSON.parse(document.getElementById('patient-prefill').textContent); }catch(e){}
+  if(!data) return;
+  function set(sel, val){
+    if(!val) return;
+    var el = document.querySelector(sel);
+    if(!el) return;
+    if(el.tagName === 'SELECT'){
+      var hit = Array.prototype.slice.call(el.options).filter(function(o){
+        return (o.value||o.text).trim().toLowerCase() === String(val).trim().toLowerCase();
+      })[0];
+      if(hit){ el.value = hit.value || hit.text; }
+    } else {
+      el.value = val;
+    }
+    el.dispatchEvent(new Event('input', {bubbles:true}));
+    el.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+  function apply(){
+    set('.fld-title',  data.title);
+    set('.fld-fname',  data.first_name);
+    set('.fld-sname',  data.surname);
+    set('.fld-id',     data.id_card);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(apply, 60); });
+  } else { setTimeout(apply, 60); }
+})();
+</script>
+
+<!-- Keep a copy of every produced letter in the Library. -->
+{% csrf_token %}
+<script>
+(function(){
+  var filed = false;
+  function letterHTML(){
+    var el = document.getElementById('letter');
+    if(!el) return '';
+    // Snapshot the letter with the current field values baked in, so the
+    // stored copy reads exactly as printed.
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('input,select,textarea').forEach(function(f){
+      var span = document.createElement('span');
+      span.textContent = (f.tagName === 'SELECT')
+        ? (f.options[f.selectedIndex] ? f.options[f.selectedIndex].text : '')
+        : (f.value || '');
+      f.parentNode.replaceChild(span, f);
+    });
+    return '<!doctype html><html><head><meta charset="utf-8">'
+         + '<title>Discharge letter</title></head><body>'
+         + clone.innerHTML + '</body></html>';
+  }
+  function val(sel){ var e = document.querySelector(sel); return e ? (e.value||'').trim() : ''; }
+
+  window.fileLetterInLibrary = function(){
+    if(filed) return;                       // one copy per letter
+    var html = letterHTML();
+    if(!html) return;
+    var name = (val('.fld-fname') + ' ' + val('.fld-sname')).trim();
+    var token = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    var body = new FormData();
+    body.append('html', html);
+    body.append('patient_name', name);
+    body.append('id_card', val('.fld-id'));
+    var pf = document.getElementById('patient-prefill');
+    try{
+      var d = pf ? JSON.parse(pf.textContent) : null;
+      if(d && d.patient_id) body.append('patient_id', d.patient_id);
+    }catch(e){}
+    if(token) body.append('csrfmiddlewaretoken', token.value);
+    filed = true;
+    fetch('{% url "clinic:file_discharge_letter" %}', {
+      method:'POST', body:body, credentials:'same-origin'
+    }).catch(function(){ filed = false; });
+  };
+
+  window.printAndFile = function(){
+    try{ window.fileLetterInLibrary(); }catch(e){}
+    window.print();
+  };
+  // Also catch Ctrl+P / the browser's own print.
+  window.addEventListener('beforeprint', function(){
+    try{ window.fileLetterInLibrary(); }catch(e){}
+  });
+})();
 </script>
 </body>
 </html>

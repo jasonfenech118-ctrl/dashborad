@@ -49,6 +49,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Direct access: auto-signs visitors in as a shared account (admin stays protected).
+    "clinic.middleware.AutoLoginMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -95,6 +97,24 @@ else:
         }
     }
 
+# --- Email ---------------------------------------------------------------
+# Defaults to the console backend so the app never crashes when SMTP isn't
+# set up (emails are printed to the server log). To send for real, set
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend plus the host /
+# user / password below (see .env.example). On PythonAnywhere, outbound SMTP
+# needs a paid account.
+EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", "")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@mdh-stoma.local")
+
+# Where ordering forms are sent for processing.
+LOGISTICS_EMAIL = env("LOGISTICS_EMAIL", "logisticsdept.mdh@gov.mt")
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -109,6 +129,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Uploaded Library documents. Served through a Django view (see clinic.views
+# .library_file) so no extra web-server mapping is needed on PythonAnywhere.
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 

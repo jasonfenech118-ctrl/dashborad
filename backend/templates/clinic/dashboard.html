@@ -7,23 +7,24 @@
 <style>
   :root{
     /* Brand palette: blue + light blue + red */
-    --navy-900:#13294b; --blue-600:#1d4ed8; --teal-600:#2563eb;
+    --navy-900:#13294b; --blue-600:#cf1124; --teal-600:#a50e1d;
+    --btn:#89cff0; --btn-600:#6fc0e8; --btn-ink:#0f2b3d;   /* baby blue buttons */
     --canvas:#f8fafc; --surface:#ffffff;
     --text-primary:#0f172a; --text-secondary:#64748b; --border:#e2e8f0;
-    --success:#059669; --warning:#d97706; --danger:#dc2626; --focus:#1d4ed8;
+    --success:#059669; --warning:#d97706; --danger:#dc2626; --focus:#cf1124;
     --sidebar:228px; --radius:10px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
   body{
     font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
-    color:var(--text-primary);font-size:14px;line-height:1.45;
+    color:var(--text-primary);font-size:14px;line-height:1.45;background:var(--canvas);
     min-height:100vh;position:relative;isolation:isolate;
   }
   /* Fixed Malta harbour background with a soft white overlay for legibility. */
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
+    background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),
       url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
   }
   a{text-decoration:none;color:inherit;}
@@ -59,7 +60,7 @@
   .side-nav a.active{background:var(--blue-600);color:#fff;font-weight:600;}
   .side-nav a.active::before{
     content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;
-    border-radius:0 3px 3px 0;background:#93c5fd;
+    border-radius:0 3px 3px 0;background:#f6a5ab;
   }
   .side-sep{height:1px;background:rgba(255,255,255,.12);margin:12px 20px;}
   .side-foot{margin-top:auto;padding:0 12px;}
@@ -98,9 +99,6 @@
   .page{padding:26px 30px 40px;max-width:1360px;width:100%;}
   .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;flex-wrap:wrap;}
   .page-head h1{font-size:27px;font-weight:800;color:var(--navy-900);letter-spacing:-.3px;}
-  /* touch of red — accent underline under the page title */
-  .page-head h1::after{content:"";display:block;width:54px;height:4px;border-radius:2px;
-    background:var(--danger);margin-top:10px;}
   .page-head p{margin-top:8px;color:var(--text-secondary);font-size:14px;max-width:560px;}
 
   /* page-head search section */
@@ -112,30 +110,21 @@
   .head-search svg{width:19px;height:19px;flex:none;stroke:var(--text-secondary);fill:none;
     stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
   .head-search input{flex:1;min-width:0;border:none;outline:none;background:none;font-size:14px;color:var(--text-primary);}
-  .head-search .btn{flex:none;background:var(--blue-600);color:#fff;border:none;border-radius:8px;
+  .head-search .btn{flex:none;background:var(--btn);color:var(--btn-ink);border:none;border-radius:8px;
     padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;}
-  .head-search .btn:hover{background:#1e40af;}
-
-  /* stats strip */
-  .stats{display:flex;align-items:stretch;background:rgba(255,255,255,.88);
-    backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid var(--border);
-    border-radius:var(--radius);margin-top:22px;overflow:hidden;}
-  .stat{flex:1;padding:18px 22px;text-align:center;border-left:1px solid var(--border);}
-  .stat:first-child{border-left:none;}
-  .stat .n{font-size:30px;font-weight:800;color:var(--navy-900);line-height:1;}
-  .stat .l{margin-top:7px;font-size:13px;color:var(--text-secondary);}
+  .head-search .btn:hover{background:var(--btn-600);}
 
   /* tabs */
   .tabs{display:flex;gap:26px;border-bottom:1px solid var(--border);margin-top:26px;overflow-x:auto;}
   .tabs [role=tab]{background:none;border:none;padding:12px 2px;font-size:14px;color:var(--text-secondary);
     cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px;font-weight:600;}
   .tabs [role=tab]:hover{color:var(--text-primary);}
-  .tabs [role=tab][aria-selected=true]{color:var(--blue-600);border-bottom-color:var(--blue-600);}
+  .tabs [role=tab][aria-selected=true]{color:var(--blue-600);border-bottom-color:var(--danger);}
 
   /* content regions */
   .cols{display:grid;grid-template-columns:68% 32%;gap:20px;margin-top:22px;align-items:start;}
-  .panel{background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
-    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .panel{background:rgba(255,255,255,.66);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+    border:1px solid rgba(255,255,255,.6);border-radius:var(--radius);overflow:hidden;}
   .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
   .panel-head h2{font-size:16px;font-weight:700;color:var(--navy-900);}
   .panel-head .meta{font-size:13px;color:var(--text-secondary);}
@@ -159,7 +148,7 @@
   .staff:first-of-type{border-top:none;}
   .staff:hover{background:var(--canvas);}
   .staff .ini{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
-    background:#eff6ff;color:var(--blue-600);font-weight:700;font-size:12.5px;}
+    background:#fdecee;color:var(--blue-600);font-weight:700;font-size:12.5px;}
   .staff .ini.shared{background:#dbeafe;color:var(--teal-600);}
   .staff .s-tx{min-width:0;flex:1;display:flex;flex-direction:column;}
   .staff .s-t{font-weight:600;font-size:14px;color:var(--navy-900);}
@@ -172,14 +161,50 @@
   .ic-red{color:var(--danger);}
   .ic-teal{color:var(--teal-600);}
 
-  /* section visibility driven by active tab */
+  /* outcomes / registers cell grid */
+  .outcomes{margin-top:0;}
+  .reg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px;align-items:stretch;}
+  .reg .cell{display:flex;align-items:center;gap:12px;padding:14px 16px;min-width:0;
+    border:1px solid var(--border);border-radius:10px;text-decoration:none;background:var(--surface);transition:.15s;}
+  .reg .cell:hover{background:var(--canvas);border-color:var(--blue-600);}
+  .reg .r-ic{display:grid;place-items:center;color:var(--navy-900);flex:none;}
+  .reg .r-t{flex:1;min-width:0;font-size:13.5px;font-weight:500;color:var(--navy-900);line-height:1.25;}
+  .reg .r-n{flex:none;font-weight:800;font-size:15px;color:var(--navy-900);}
+  .reg .chev{color:#94a3b8;}
+  .reg .cell:hover .chev{color:var(--blue-600);}
+
+  /* section visibility driven by active tab. Each tab shows a single region;
+     Overview shows only Clinical Actions (+ the stats strip). */
   .main[data-view="overview"] #region-workloads,
+  .main[data-view="overview"] #region-outcomes,
+  .main[data-view="overview"] #region-registers,
+  .main[data-view="overview"] #region-metrics,
   .main[data-view="clinical"] #region-workloads,
-  .main[data-view="workloads"] #region-actions{display:none;}
-  /* Nurse workloads is hidden on the Overview home screen (still available via
-     its tab), so Quick clinical actions spans the full width there. */
+  .main[data-view="clinical"] #region-outcomes,
+  .main[data-view="clinical"] #region-registers,
+  .main[data-view="clinical"] #region-metrics,
+  .main[data-view="workloads"] #region-actions,
+  .main[data-view="workloads"] #region-outcomes,
+  .main[data-view="workloads"] #region-registers,
+  .main[data-view="workloads"] #region-metrics,
+  .main[data-view="outcomes"] #region-actions,
+  .main[data-view="outcomes"] #region-workloads,
+  .main[data-view="outcomes"] #region-registers,
+  .main[data-view="outcomes"] #region-metrics,
+  .main[data-view="registers"] #region-actions,
+  .main[data-view="registers"] #region-workloads,
+  .main[data-view="registers"] #region-outcomes,
+  .main[data-view="registers"] #region-metrics,
+  .main[data-view="metrics"] #region-actions,
+  .main[data-view="metrics"] #region-workloads,
+  .main[data-view="metrics"] #region-outcomes,
+  .main[data-view="metrics"] #region-registers{display:none;}
   .main[data-view="overview"] .cols,
-  .main[data-view="workloads"] .cols{grid-template-columns:1fr;}
+  .main[data-view="clinical"] .cols,
+  .main[data-view="workloads"] .cols,
+  .main[data-view="outcomes"] .cols,
+  .main[data-view="registers"] .cols,
+  .main[data-view="metrics"] .cols{grid-template-columns:1fr;}
 
   /* tab-styled navigation links */
   .tabs a.tab-link{background:none;border:none;padding:12px 2px;font-size:14px;color:var(--text-secondary);
@@ -243,34 +268,41 @@
         <a href="{% url 'clinic:ward' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>
           <span>Inpatient Visits</span></a>
-        <a href="{% url 'clinic:more_tools' %}">
-          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.56 3.69a9 9 0 0 0-2.92 1.95"/><path d="M3.69 8.56A9 9 0 0 0 3 12"/><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92"/><path d="M8.56 20.31A9 9 0 0 0 12 21"/><path d="M15.44 20.31a9 9 0 0 0 2.92-1.95"/><path d="M20.31 15.44A9 9 0 0 0 21 12"/><path d="M20.31 8.56a9 9 0 0 0-1.95-2.92"/><path d="M15.44 3.69A9 9 0 0 0 12 3"/><circle cx="12" cy="12" r="2"/></svg>
-          <span>Outpatient Clinic</span></a>
         <a href="{% url 'clinic:patient_list' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Patients</span></a>
-        <a href="{% url 'clinic:more_tools' %}">
+        <a href="{% url 'clinic:appointments' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
           <span>Appointments</span></a>
+        <a href="{% url 'clinic:reminders' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span>Reminders</span></a>
+        <a href="{% url 'clinic:roster' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M9 4v16"/><path d="M15 4v16"/></svg>
+          <span>Roster</span></a>
         <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
           <span>Discharge Letters</span></a>
-        <a href="{% url 'clinic:patient_list' %}">
+        <a href="{% url 'clinic:reports' %}">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
           <span>Reports</span></a>
+        <a href="{% url 'clinic:ordering_forms' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+          <span>Ordering Forms</span></a>
+        <a href="{% url 'clinic:clinic_documents' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+          <span>Clinic Documents</span></a>
+        <a href="{% url 'clinic:cpsu' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>CPSU</span></a>
+        <a href="{% url 'clinic:library' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>
+          <span>Library</span></a>
       </nav>
-      <div class="side-foot">
-        <div class="side-sep"></div>
-        <nav class="side-nav" aria-label="Settings">
-          <a href="/admin/">
-            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span>Settings</span></a>
-        </nav>
-      </div>
     </aside>
 
     <!-- ============ MAIN ============ -->
-    <div class="main" id="main" data-view="overview">
+    <div class="main" id="main" data-view="clinical">
 
       <!-- top bar -->
       <header class="topbar">
@@ -288,13 +320,6 @@
           </form>
         </div>
         <div class="top-actions">
-          <button class="tbtn" type="button" title="Help" aria-label="Help">
-            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-            <span class="lbl">Help</span>
-          </button>
-          <button class="tbtn" type="button" title="Notifications" aria-label="Notifications">
-            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          </button>
           <div class="acct">
             <button class="avatar" type="button" id="acct-btn" aria-haspopup="true" aria-expanded="false"
                     onclick="var m=document.getElementById('acct-menu');var o=m.classList.toggle('open');this.setAttribute('aria-expanded',o);">
@@ -302,15 +327,6 @@
             </button>
             <div class="acct-menu" id="acct-menu" role="menu" aria-label="Account">
               <div class="who">Signed in as {{ user.get_username }}</div>
-              <a href="/admin/" role="menuitem">
-                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                Admin site</a>
-              <form method="post" action="{% url 'logout' %}" style="margin:0;">
-                {% csrf_token %}
-                <button type="submit" role="menuitem">
-                  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                  Sign out</button>
-              </form>
             </div>
           </div>
         </div>
@@ -333,27 +349,39 @@
           </div>
         </div>
 
-        <!-- statistics strip -->
-        <section class="stats" aria-label="Key statistics">
-          <div class="stat"><div class="n">{{ stats.active }}</div><div class="l">Active Patients</div></div>
-          <div class="stat"><div class="n">{{ stats.inpatient }}</div><div class="l">Inpatients</div></div>
-          <div class="stat"><div class="n">{{ stats.reviews_today }}</div><div class="l">Today's Reviews</div></div>
-          <div class="stat"><div class="n">{{ stats.followups_due }}</div><div class="l">Follow-ups Due</div></div>
-        </section>
+        {% if reminders_due %}
+        <div style="display:flex;align-items:flex-start;gap:12px;background:#fef9c3;border:1.5px solid #fde047;
+                    border-radius:12px;padding:14px 16px;margin-bottom:16px;color:#713f12;">
+          <svg viewBox="0 0 24 24" style="width:22px;height:22px;flex:none;stroke:#a16207;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-top:1px;">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <div style="flex:1;">
+            <strong style="display:block;font-size:14px;margin-bottom:4px;">Reminders due today</strong>
+            <ul style="margin:0;padding-left:18px;font-size:13px;">
+              {% for r in reminders_due %}
+              <li style="margin-bottom:3px;">
+                <strong>{{ r.title }}</strong>{% if r.message %} — {{ r.message }}{% endif %}
+                {% if r.action_url %}<a href="{{ r.action_url }}" style="color:#854d0e;font-weight:700;white-space:nowrap;">{{ r.action_label|default:"Open" }} →</a>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            <a href="{% url 'clinic:reminders' %}" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:#854d0e;">Manage reminders →</a>
+          </div>
+        </div>
+        {% endif %}
 
         <!-- contextual tabs -->
         <div class="tabs" role="tablist" aria-label="Dashboard views">
-          <button role="tab" id="tab-overview"  aria-selected="true"  aria-controls="main" data-view="overview"  tabindex="0">Overview</button>
-          <button role="tab" id="tab-clinical"  aria-selected="false" aria-controls="main" data-view="clinical"  tabindex="-1">Clinical Workspace</button>
+          <button role="tab" id="tab-clinical"  aria-selected="true"  aria-controls="main" data-view="clinical"  tabindex="0">Clinical Workspace</button>
           <button role="tab" id="tab-workloads" aria-selected="false" aria-controls="main" data-view="workloads" tabindex="-1">Nurse Workloads</button>
-          <a class="tab-link" href="{% url 'clinic:patient_list' %}?view=outcomes">Patient Outcomes</a>
-          <a class="tab-link" href="{% url 'clinic:patient_list' %}?view=registers">Registers</a>
+          <button role="tab" id="tab-outcomes"  aria-selected="false" aria-controls="main" data-view="outcomes"  tabindex="-1">Patient Outcomes</button>
+          <button role="tab" id="tab-registers" aria-selected="false" aria-controls="main" data-view="registers" tabindex="-1">Registers</button>
+          <button role="tab" id="tab-metrics"   aria-selected="false" aria-controls="main" data-view="metrics"   tabindex="-1">Performance Metrics</button>
         </div>
 
         <div class="cols">
-          <!-- CLINICAL WORKSPACE -->
-          <section class="panel" id="region-actions" aria-label="Clinical Workspace">
-            <div class="panel-head"><h2>Clinical Workspace</h2></div>
+          <!-- CLINICAL ACTIONS -->
+          <section class="panel" id="region-actions" aria-label="Clinical Actions">
+            <div class="panel-head"><h2>Clinical Actions</h2></div>
             <div class="actions">
               <a class="action" href="{% url 'clinic:add_patient' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg></span>
@@ -370,7 +398,7 @@
                 <span class="a-tx"><span class="a-t">Patients (Master List)</span><span class="a-s">Full register</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
               </a>
-              <a class="action" href="/admin/clinic/roster/">
+              <a class="action" href="{% url 'clinic:more_tools' %}">
                 <span class="a-ic"><svg class="ic ic-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg></span>
                 <span class="a-tx"><span class="a-t">Rosters</span><span class="a-s">Nurse scheduling</span></span>
                 <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
@@ -424,13 +452,62 @@
               </a>
             </div>
           </section>
+
+          <!-- PATIENT OUTCOMES -->
+          <section class="panel outcomes" id="region-outcomes" aria-label="Patient outcomes">
+            <div class="panel-head"><h2>Patient outcomes</h2><span class="meta">5 outcomes</span></div>
+            <div class="reg">
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=active">
+                <span class="r-ic ic-green"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
+                <span class="r-t">Active Patients</span><span class="r-n">{{ stats.active }}</span></a>
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=relocated_gozo">
+                <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg></span>
+                <span class="r-t">Discharged to Gozo</span><span class="r-n">{{ stats.gozo }}</span></a>
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=reversed">
+                <span class="r-ic ic-amber"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></svg></span>
+                <span class="r-t">Reversed</span><span class="r-n">{{ stats.reversed }}</span></a>
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=relocated_overseas">
+                <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                <span class="r-t">Relocated Overseas</span><span class="r-n">{{ stats.overseas }}</span></a>
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=deceased">
+                <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg></span>
+                <span class="r-t">Deceased</span><span class="r-n">{{ stats.deceased }}</span></a>
+            </div>
+          </section>
+
+          <!-- REGISTERS -->
+          <section class="panel outcomes" id="region-registers" aria-label="Registers">
+            <div class="panel-head"><h2>Registers</h2><span class="meta">3 registers</span></div>
+            <div class="reg">
+              <a class="cell" href="{% url 'clinic:patient_list' %}?status=inpatient">
+                <span class="r-ic ic-teal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg></span>
+                <span class="r-t">Inpatients</span><span class="r-n">{{ stats.inpatient }}</span></a>
+              <a class="cell" href="{% url 'clinic:more_tools' %}">
+                <span class="r-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                <span class="r-t">Discharges (Post Operative)</span>
+                <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
+              <a class="cell" href="{% url 'clinic:more_tools' %}">
+                <span class="r-ic ic-amber"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg></span>
+                <span class="r-t">Temporary Paused</span>
+                <span class="chev" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></a>
+            </div>
+          </section>
+
+          <!-- PERFORMANCE METRICS -->
+          <section class="panel" id="region-metrics" aria-label="Performance Metrics">
+            <div class="panel-head"><h2>Performance Metrics</h2></div>
+            <div style="padding:32px 18px;text-align:center;color:var(--text-secondary);font-size:14px;">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:36px;height:36px;margin-bottom:10px;color:#94a3b8;"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              <p style="margin:0 0 4px;font-weight:600;color:var(--navy-900);">Coming soon</p>
+              <p style="margin:0;font-size:13px;">Clinical performance metrics and analytics will appear here.</p>
+            </div>
+          </section>
         </div>
 
 
       </div>
 
       <footer>
-        <span>© MDH Nursing Stoma Care — internal clinical workspace</span>
         <span>Signed in as {{ user.get_username }}</span>
       </footer>
     </div>

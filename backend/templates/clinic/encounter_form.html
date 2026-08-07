@@ -1,0 +1,143 @@
+{% extends "clinic/base.html" %}
+{% block title %}New encounter — {{ p.patient.first_name }} {{ p.patient.surname }}{% endblock %}
+{% block content %}
+<style>
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .back:hover{text-decoration:underline;}
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .f-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 16px;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  input[type=text],input[type=date],textarea,select{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);background:#fff;font-family:inherit;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  textarea{resize:vertical;}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;margin-right:18px;}
+  .chk input{width:17px;height:17px;}
+  .stoma-block{border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:#fff;}
+  .stoma-block .hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .sref{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:800;background:#f1f5f9;border-radius:5px;padding:2px 7px;}
+  .stag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
+  .none{color:var(--muted);font-size:13px;}
+  .actions{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:30px;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:#f1f5f9;}
+  .danger-note{background:#fffaeb;border:1px solid #fedf89;color:#b54708;border-radius:8px;padding:10px 12px;font-size:12.5px;}
+</style>
+
+<a href="{% url 'clinic:pathway_detail' pk=p.pk %}" class="back">
+  <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+  Back to episode
+</a>
+
+<h1 style="margin-top:6px;">New encounter</h1>
+<p class="muted" style="font-size:13px;">
+  {{ p.patient.first_name|default:"" }} {{ p.patient.surname|default:"" }}
+  {% if p.episode_number %}· <strong style="font-family:ui-monospace,Menlo,monospace;color:var(--ink);">{{ p.episode_number }}</strong>{% endif %}
+  · {{ p.get_pathway_type_display }}
+</p>
+
+<form method="post" action="{% url 'clinic:encounter_new' pk=p.pk %}">
+  {% csrf_token %}
+
+  <!-- when -->
+  <div class="card">
+    <div class="sec-t">Encounter</div>
+    <div class="sec-s">When you saw the patient, and the headline of the visit.</div>
+    <div class="f-row">
+      <div><label class="lbl">Date</label><input type="date" name="event_date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div style="grid-column:span 2;"><label class="lbl">Summary</label>
+        <input type="text" name="summary" placeholder="e.g. Stoma reviewed, pouch changed, education given"></div>
+    </div>
+  </div>
+
+  <!-- stoma assessment -->
+  <div class="card">
+    <div class="sec-t">Stoma assessment</div>
+    <div class="sec-s">Assess each stoma seen at this encounter. Leave a stoma blank if it wasn't assessed.</div>
+    {% if stomas %}
+      {% for s in stomas %}
+      <div class="stoma-block">
+        <div class="hd">
+          <input type="checkbox" name="assess_stoma" value="{{ s.id }}" id="as-{{ s.id }}" style="width:17px;height:17px;">
+          <label for="as-{{ s.id }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
+            <span class="sref">{{ s.stoma_ref }}</span>
+            <strong style="font-size:13.5px;">{{ s.get_stoma_type_display }}</strong>
+            {% if s.site %}<span class="muted" style="font-size:12px;">{{ s.get_site_display }}</span>{% endif %}
+            <span class="stag">{{ s.get_status_display }}</span>
+          </label>
+        </div>
+        <div class="f-row">
+          <div><label class="lbl">Colour</label>
+            <select name="colour_{{ s.id }}"><option value="">—</option><option>Pink / healthy</option><option>Dusky</option><option>Pale</option><option>Dark / necrotic</option></select></div>
+          <div><label class="lbl">Function / output</label>
+            <select name="output_{{ s.id }}"><option value="">—</option><option>Functioning</option><option>Not functioning</option><option>Loose</option><option>Formed</option><option>High output</option></select></div>
+          <div><label class="lbl">Output (ml)</label><input type="text" name="outml_{{ s.id }}" placeholder="e.g. 400"></div>
+          <div><label class="lbl">Peristomal skin</label>
+            <select name="skin_{{ s.id }}"><option value="">—</option><option>Intact</option><option>Erythema</option><option>Excoriation</option><option>Ulceration</option><option>Fungal</option></select></div>
+          <div><label class="lbl">Stoma height</label>
+            <select name="height_{{ s.id }}"><option value="">—</option><option>Budded</option><option>Flush</option><option>Retracted</option><option>Prolapsed</option></select></div>
+          <div><label class="lbl">Complications</label><input type="text" name="comps_{{ s.id }}" placeholder="e.g. parastomal hernia"></div>
+        </div>
+        <div style="margin-top:10px;"><label class="lbl">Assessment notes</label>
+          <textarea name="anote_{{ s.id }}" rows="2"></textarea></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="none">No stomas recorded for this patient yet —
+        <a href="{% url 'clinic:patient_profile' patient_id=p.patient_id %}">add one on the patient profile</a>.</p>
+    {% endif %}
+  </div>
+
+  <!-- appliance -->
+  <div class="card">
+    <div class="sec-t">Appliance used</div>
+    <div class="sec-s">The appliance fitted or changed at this encounter.</div>
+    <label class="chk" style="margin-bottom:12px;"><input type="checkbox" name="appliance_used" onchange="document.getElementById('app-fields').style.display=this.checked?'':'none';"> Record an appliance</label>
+    <div id="app-fields" style="display:none;">
+      <div class="f-row">
+        {% if stomas %}
+        <div><label class="lbl">For stoma</label>
+          <select name="appliance_stoma"><option value="">—</option>{% for s in stomas %}<option value="{{ s.id }}">{{ s.stoma_ref }} — {{ s.get_stoma_type_display }}</option>{% endfor %}</select></div>
+        {% endif %}
+        <div><label class="lbl">System</label>
+          <select name="app_system"><option value="">—</option><option value="one_piece">One-piece</option><option value="two_piece">Two-piece</option></select></div>
+        <div><label class="lbl">Pouch type</label>
+          <select name="app_pouch"><option value="">—</option><option>Drainable</option><option>Closed</option><option>Urostomy</option></select></div>
+        <div><label class="lbl">Brand</label><input type="text" name="app_brand" placeholder="e.g. Coloplast"></div>
+        <div><label class="lbl">Product code</label><input type="text" name="app_code"></div>
+        <div><label class="lbl">Size / cut</label><input type="text" name="app_size" placeholder="e.g. 30mm"></div>
+      </div>
+      <div style="margin-top:12px;"><label class="lbl">Accessories</label>
+        <input type="text" name="app_acc" placeholder="e.g. barrier ring, adhesive remover, powder"></div>
+      <label class="chk" style="margin-top:10px;"><input type="checkbox" name="app_changed" checked> Appliance was changed at this visit</label>
+    </div>
+  </div>
+
+  <!-- report -->
+  <div class="card">
+    <div class="sec-t">Nursing report</div>
+    <div class="sec-s">Your written report for this encounter.</div>
+    <textarea name="report" rows="6" placeholder="Findings, care given, patient response, teaching, plan…"></textarea>
+    <div style="margin-top:12px;">
+      <label class="chk"><input type="checkbox" name="education_given"> Patient education given</label>
+      <label class="chk"><input type="checkbox" name="supplies_given"> Supplies provided</label>
+    </div>
+  </div>
+
+  <!-- close episode -->
+  <div class="card">
+    <div class="sec-t">Close episode</div>
+    <div class="sec-s">Tick this only if the patient is being discharged at this encounter.</div>
+    <label class="chk"><input type="checkbox" name="close_episode" onchange="document.getElementById('close-note').style.display=this.checked?'':'none';"> Close this episode</label>
+    <div id="close-note" class="danger-note" style="display:none;margin-top:12px;">
+      {% if p.expects_followup %}The episode will close and the patient moves onto follow-up as an old stoma.
+      {% else %}The episode will close. Fistula patients are rarely followed up.{% endif %}
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btn btn-ghost" href="{% url 'clinic:pathway_detail' pk=p.pk %}">Cancel</a>
+    <button class="btn" type="submit">Save encounter</button>
+  </div>
+</form>
+{% endblock %}

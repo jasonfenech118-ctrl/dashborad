@@ -1,0 +1,42 @@
+{% extends "clinic/base.html" %}
+{% block title %}Page not found — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .nf{max-width:720px;margin:20px auto;text-align:center;}
+  .nf .code{font-size:56px;font-weight:900;color:var(--teal);line-height:1;}
+  .nf h1{font-size:22px;margin:8px 0 6px;}
+  .nf p{color:var(--muted);font-size:14px;margin-bottom:6px;}
+  .nf .url{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:#f1f5f9;
+    border-radius:6px;padding:4px 9px;display:inline-block;margin:8px 0 18px;color:var(--ink);word-break:break-all;}
+  .nf-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px;text-align:left;}
+  .nf-links a{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border);
+    border-radius:11px;background:#fff;color:var(--ink);}
+  .nf-links a:hover{border-color:var(--teal);background:var(--teal-50);}
+  .nf-links .ic-box{width:32px;height:32px;border-radius:8px;background:var(--teal-50);flex:none;
+    display:flex;align-items:center;justify-content:center;}
+  .nf-links .ic-box svg{width:17px;height:17px;color:var(--teal);stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .nf-links strong{font-size:13.5px;}
+</style>
+
+<div class="nf">
+  <div class="code">404</div>
+  <h1>That page doesn't exist</h1>
+  <p>The address you opened isn't part of the app. It may be an old bookmark or shortcut.</p>
+  <div class="url">{{ request.path }}</div>
+
+  <div class="nf-links">
+    <a href="{% url 'clinic:dashboard' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg></span>
+      <strong>Home</strong></a>
+    <a href="{% url 'clinic:patient_list' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+      <strong>Patients</strong></a>
+    <a href="{% url 'clinic:library' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 6h8"/></svg></span>
+      <strong>Library</strong></a>
+    <a href="{% url 'clinic:ordering_forms' %}">
+      <span class="ic-box"><svg viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
+      <strong>Ordering Forms</strong></a>
+  </div>
+</div>
+{% endblock %}

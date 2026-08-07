@@ -6,72 +6,114 @@
   <title>{% block title %}MDH Stoma Care Clinic{% endblock %}</title>
   <style>
     :root{
-      /* Brand palette: blue + light blue + red. Legacy names kept so child
-         pages cascade: --teal is the blue primary, --navy the navy-blue nav. */
-      --teal:#1d4ed8;        /* blue-700    primary accent   */
-      --teal-600:#1e40af;    /* blue-800    hover            */
-      --teal-50:#eff6ff;     /* blue-50     tint             */
-      --navy:#13294b;        /* deep navy   nav / headings   */
-      --navy2:#1e3a8a;       /* blue-900    nav hover/active */
-      --gold:#38bdf8;        /* light blue  logo highlight   */
-      --red:#dc2626;         /* red         accent           */
-      --ink:#0f172a;         /* slate-900   body text        */
-      --border:#e2e8f0;      /* slate-200                    */
-      --muted:#64748b;       /* slate-500                    */
-      --bg:#f8fafc;          /* slate-50    page background  */
+      --teal:#cf1124;
+      --teal-600:#a50e1d;
+      --teal-50:#fdecee;
+      --btn:#89cff0;          /* baby blue */
+      --btn-600:#6fc0e8;      /* baby blue, hover */
+      --btn-ink:#0f2b3d;      /* dark text keeps baby-blue buttons readable */
+      --navy:#13294b;
+      --navy2:#1e3a8a;
+      --gold:#38bdf8;
+      --red:#dc2626;
+      --ink:#0f172a;
+      --border:#e2e8f0;
+      --muted:#64748b;
+      --bg:#f8fafc;
       --surface:#ffffff;
+      --sidebar:228px;
+      --radius:10px;
     }
-    *{box-sizing:border-box;}
-    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);margin:0;
-      min-height:100vh;position:relative;isolation:isolate;}
-    /* Fixed Malta harbour background with a soft white overlay for legibility.
-       Lives entirely in this pseudo-element — no opacity on body/content. */
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
+    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);
+      min-height:100vh;position:relative;isolation:isolate;font-size:14px;line-height:1.45;}
     body::before{
-      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-      background:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),
-        url("{% static 'images/app_background.png' %}") center center / cover no-repeat;
+      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--bg);
     }
-    /* App-shell top navigation (reference: Comarch-style ward EHR) */
+    a{text-decoration:none;color:inherit;}
+    button{font-family:inherit;}
+
+    .ic{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;
+        stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;}
+    .ic-lg{width:22px;height:22px;}
+
+    /* ---- layout ---- */
+    .app{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:100vh;}
+
+    /* ---- sidebar ---- */
+    .sidebar{
+      position:fixed;inset:0 auto 0 0;width:var(--sidebar);height:100vh;
+      background:var(--navy);color:#cbd5e1;display:flex;flex-direction:column;
+      padding:20px 0;z-index:60;
+    }
+    .side-brand{display:flex;align-items:center;gap:11px;padding:0 20px 20px;}
+    .side-brand .logo{width:34px;height:34px;border-radius:7px;background:#fff;
+       display:grid;place-items:center;color:var(--navy);flex:none;}
+    .side-brand .bt{font-weight:800;font-size:15px;color:#fff;line-height:1.1;}
+    .side-brand .bs{font-size:12px;color:#94a3b8;line-height:1.1;margin-top:2px;}
+
+    .side-nav{display:flex;flex-direction:column;gap:2px;padding:6px 12px;}
+    .side-nav a{
+      display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius);
+      color:#cbd5e1;font-size:14px;position:relative;min-height:44px;
+    }
+    .side-nav a:hover{background:rgba(255,255,255,.07);color:#fff;}
+    .side-nav a.active{background:var(--teal);color:#fff;font-weight:600;}
+    .side-nav a.active::before{
+      content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;
+      border-radius:0 3px 3px 0;background:#f6a5ab;
+    }
+    .side-sep{height:1px;background:rgba(255,255,255,.12);margin:12px 20px;}
+    .side-foot{margin-top:auto;padding:0 12px;}
+
+    /* ---- topbar ---- */
+    .main-area{grid-column:2;display:flex;flex-direction:column;min-width:0;}
     .topbar{
-      background:var(--navy);
-      color:#fff;padding:0 14px;display:flex;align-items:stretch;gap:2px;
+      position:sticky;top:0;z-index:50;
+      background:var(--navy);color:#fff;padding:0 14px;display:flex;align-items:stretch;gap:2px;
       min-height:46px;box-shadow:0 1px 3px rgba(15,23,42,.12);
       border-bottom:1px solid rgba(255,255,255,.06);
     }
-    .topbar .logo{font-weight:800;display:flex;align-items:center;padding:0 14px 0 4px;white-space:nowrap;font-size:14px;}
-    .topbar .logo span{color:var(--gold);}
     .topbar nav{display:flex;align-items:stretch;flex-wrap:wrap;}
     .topbar nav a{
       color:#fff;text-decoration:none;font-size:12.5px;font-weight:600;opacity:.82;
       display:flex;align-items:center;padding:0 11px;white-space:nowrap;
-      border-bottom:3px solid transparent;
+      border-bottom:3px solid transparent;transition:.15s;
     }
     .topbar nav a .car{opacity:.6;margin-left:4px;font-size:9px;}
     .topbar nav a svg{width:15px;height:15px;margin-right:5px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
-    .topbar nav a:hover{opacity:1;background:var(--navy2);}
-    .topbar nav a.active{opacity:1;border-bottom-color:var(--red);background:var(--navy2);}
+    .topbar nav a:hover{opacity:1;background:rgba(207,17,36,.18);}
+    .topbar nav a.active{opacity:1;background:rgba(207,17,36,.24);border-bottom-color:var(--red);}
     .topbar nav a.dis{cursor:default;}
     .topbar nav a.dis:hover{background:transparent;opacity:.82;}
     .topbar .spacer{flex:1;}
     .topbar .util{display:flex;align-items:center;gap:6px;padding-left:8px;}
-    .topbar .util .ic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;opacity:.85;text-decoration:none;color:#fff;border:none;background:none;cursor:pointer;padding:0;}
-    .topbar .util .ic:hover{background:var(--navy2);opacity:1;}
-    .topbar .util .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+    .topbar .util .tb-ic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;opacity:.85;text-decoration:none;color:#fff;border:none;background:none;cursor:pointer;padding:0;}
+    .topbar .util .tb-ic:hover{background:var(--navy2);opacity:1;}
+    .topbar .util .tb-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
     .topbar .util .who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:4px;}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
+
+    /* ---- page content ---- */
+    .wrap{width:100%;max-width:1100px;margin:0 auto;padding:24px 20px 60px;}
     h1{font-size:22px;margin:0 0 16px;}
     h2{font-size:16px;margin:24px 0 10px;color:var(--teal);}
     a{color:var(--teal);}
-    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
     th,td{text-align:left;padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);}
     th{background:var(--teal-50);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:#f8fafc;}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .controls input,.controls select{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--ink);}
-    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
-    .btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
-    .btn:hover{background:var(--teal-600);}
+    .controls input:focus,.controls select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.15);}
+    .btn{background:var(--btn);color:var(--btn-ink);border:none;padding:9px 16px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;}
+    .btn:hover{background:var(--btn-600);color:var(--btn-ink);}
+    .backbar{margin-bottom:16px;}
+    .btn-back{display:inline-flex;align-items:center;gap:7px;background:#fef9c3;color:#713f12;border:1.5px solid #fde047;
+      padding:8px 15px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px;font-family:inherit;}
+    .btn-back:hover{background:#fef08a;color:#713f12;}
+    .btn-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--teal-50);color:var(--teal);}
     .card{background:rgba(255,255,255,.80);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
       border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
@@ -81,47 +123,126 @@
     .muted{color:var(--muted);}
     .pager{margin-top:16px;display:flex;gap:8px;align-items:center;font-size:13px;}
     pre{white-space:pre-wrap;font-family:inherit;margin:0;font-size:12px;}
+
+    /* mobile */
+    .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55;}
+    .menu-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;
+      border:none;background:none;color:#fff;cursor:pointer;padding:0;}
+    .menu-toggle svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    @media(max-width:820px){
+      .app{grid-template-columns:1fr;}
+      .sidebar{transform:translateX(-100%);transition:transform .25s ease;}
+      body.nav-open .sidebar{transform:translateX(0);}
+      body.nav-open .scrim{display:block;}
+      .menu-toggle{display:inline-flex;}
+    }
+
+    @media print{
+      body::before{display:none !important;}
+      .topbar,.sidebar,.scrim,.menu-toggle,.backbar{display:none !important;}
+      .app{grid-template-columns:1fr;}
+      .wrap{max-width:none;padding:0;}
+      .card,table{background:#fff !important;backdrop-filter:none !important;}
+      a[href]:after{content:"";}
+    }
   </style>
 </head>
 <body>
-  {% with vn=request.resolver_match.url_name %}
-  <div class="topbar">
-    <span class="logo">MDH <span>Stoma</span></span>
-    <nav>
-      <a href="{% url 'clinic:dashboard' %}" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
-      <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
-      <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
-      <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
-      <a class="dis" href="#" title="Coming soon">Appointments</a>
-      <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
-      <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' %}active{% endif %}">Ordering Forms</a>
-      <a href="{% url 'clinic:more_tools' %}" class="{% if vn == 'more_tools' %}active{% endif %}">More Tools</a>
-      <a class="dis" href="#" title="Coming soon">Reports</a>
-      <a href="/admin/" title="Django admin">More <span class="car">▾</span></a>
-    </nav>
-    <span class="spacer"></span>
-    <div class="util">
-      <a class="ic" href="#" title="Messages" aria-label="Messages">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-      </a>
-      {% if user.is_authenticated %}
-        <span class="who">{{ user.username }} <span class="car">▾</span></span>
-        <form method="post" action="{% url 'logout' %}" style="margin:0;display:inline;">
-          {% csrf_token %}
-          <button class="ic" type="submit" title="Sign out" aria-label="Sign out">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+  <div class="scrim" onclick="document.body.classList.remove('nav-open')"></div>
+  <div class="app">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" aria-label="Primary">
+      <div class="side-brand">
+        <span class="logo" aria-hidden="true">
+          <svg class="ic ic-lg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        </span>
+        <span><span class="bt">MDH</span><br><span class="bs">Stoma Care</span></span>
+      </div>
+      {% with vn=request.resolver_match.url_name %}
+      <nav class="side-nav" aria-label="Sections">
+        <a href="{% url 'clinic:dashboard' %}" class="{% if vn == 'dashboard' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <span>Overview</span></a>
+        <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>
+          <span>Inpatient Visits</span></a>
+        <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Patients</span></a>
+        <a href="{% url 'clinic:appointments' %}" class="{% if vn == 'appointments' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+          <span>Appointments</span></a>
+        <a href="{% url 'clinic:reminders' %}" class="{% if vn == 'reminders' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span>Reminders</span></a>
+        <a href="{% url 'clinic:roster' %}" class="{% if vn == 'roster' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M9 4v16"/><path d="M15 4v16"/></svg>
+          <span>Roster</span></a>
+        <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer" class="{% if vn == 'discharge_letter' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+          <span>Discharge Letters</span></a>
+        <a href="{% url 'clinic:reports' %}" class="{% if vn == 'reports' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          <span>Reports</span></a>
+        <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' or vn == 'esrf_form' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+          <span>Ordering Forms</span></a>
+        <a href="{% url 'clinic:clinic_documents' %}" class="{% if vn == 'clinic_documents' or vn == 'ordering_document_detail' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+          <span>Clinic Documents</span></a>
+        <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tenders_current' or vn == 'tenders_closed' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>CPSU</span></a>
+        <a href="{% url 'clinic:library' %}" class="{% if vn == 'library' %}active{% endif %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>
+          <span>Library</span></a>
+      </nav>
+      {% endwith %}
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main-area">
+      {% with vn=request.resolver_match.url_name %}
+      <div class="topbar">
+        <button class="menu-toggle" aria-label="Open navigation" onclick="document.body.classList.toggle('nav-open')">
+          <svg viewBox="0 0 24 24"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        </button>
+        <nav>
+          <a href="{% url 'clinic:dashboard' %}" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>Home</a>
+          <a href="{% url 'clinic:ward' %}" class="{% if vn == 'ward' %}active{% endif %}">Inpatient Visits</a>
+          <a class="dis" href="#" title="Coming soon">Outpatient Clinic</a>
+          <a href="{% url 'clinic:patient_list' %}" class="{% if vn == 'patient_list' or vn == 'patient_detail' %}active{% endif %}">Patients</a>
+          <a href="{% url 'clinic:appointments' %}" class="{% if vn == 'appointments' %}active{% endif %}">Appointments</a>
+          <a href="{% url 'clinic:reminders' %}" class="{% if vn == 'reminders' %}active{% endif %}">Reminders</a>
+          <a href="{% url 'clinic:roster' %}" class="{% if vn == 'roster' %}active{% endif %}">Roster</a>
+          <a href="{% url 'clinic:discharge_letter' %}" target="_blank" rel="noopener noreferrer" class="{% if vn == 'discharge_letter' %}active{% endif %}">Discharge Letters</a>
+          <a href="{% url 'clinic:ordering_forms' %}" class="{% if vn == 'ordering_forms' or vn == 'esrf_form' %}active{% endif %}">Ordering Forms</a>
+          <a href="{% url 'clinic:clinic_documents' %}" class="{% if vn == 'clinic_documents' or vn == 'ordering_document_detail' %}active{% endif %}">Clinic Documents</a>
+          <a href="{% url 'clinic:cpsu' %}" class="{% if vn == 'cpsu' or vn == 'cpsu_tenders' or vn == 'tenders_current' or vn == 'tenders_closed' or vn == 'tender_edit' or vn == 'tender_new' %}active{% endif %}">CPSU</a>
+          <a href="{% url 'clinic:library' %}" class="{% if vn == 'library' %}active{% endif %}">Library</a>
+          <a href="{% url 'clinic:reports' %}" class="{% if vn == 'reports' %}active{% endif %}">Reports</a>
+        </nav>
+        <span class="spacer"></span>
+        <div class="util">
+          <a class="tb-ic" href="#" title="Messages" aria-label="Messages">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </a>
+        </div>
+      </div>
+      {% endwith %}
+      <div class="wrap">
+        <div class="backbar">
+          <button type="button" class="btn-back" onclick="if(history.length>1){history.back()}else{location.href='/'}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Back
           </button>
-        </form>
-      {% else %}
-        <a class="ic" href="{% url 'login' %}" title="Sign in" aria-label="Sign in">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-        </a>
-      {% endif %}
+        </div>
+        {% block content %}{% endblock %}
+      </div>
     </div>
-  </div>
-  {% endwith %}
-  <div class="wrap">
-    {% block content %}{% endblock %}
+
   </div>
 </body>
 </html>

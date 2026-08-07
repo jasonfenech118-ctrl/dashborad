@@ -104,3 +104,22 @@ class BankStaffAssignmentAdmin(admin.ModelAdmin):
 class PublicHolidayAdmin(admin.ModelAdmin):
     list_display = ("holiday_date", "name")
     date_hierarchy = "holiday_date"
+
+
+@admin.register(models.OrderingDocument)
+class OrderingDocumentAdmin(admin.ModelAdmin):
+    list_display = ("reference", "section_ward", "item_count", "requested_by_name",
+                    "form_date", "status", "sent_at")
+    list_filter = ("status", "form_type", "form_date")
+    search_fields = ("reference", "requested_by_name", "section_ward")
+    date_hierarchy = "form_date"
+    readonly_fields = ("created_at", "sent_at")
+
+
+@admin.register(models.TenderEvaluation)
+class TenderEvaluationAdmin(admin.ModelAdmin):
+    list_display = ("title", "status", "bidder_count", "lowest_bid", "lowest_bidder",
+                    "created_by_username", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("title", "lowest_bidder", "created_by_username")
+    readonly_fields = ("created_at", "updated_at")

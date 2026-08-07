@@ -3,121 +3,234 @@
 {% block content %}
 <style>
   .pf{max-width:960px;margin:0 auto;}
-  .pf-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
   .pf-head h1{margin:0;}
   .pf-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px;}
-  /* single card holding the whole form */
-  .pf-card{
-    background:rgba(255,255,255,.88);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
-    border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px;
-  }
-  .pf-sec{margin-bottom:24px;}
-  .pf-sec:last-child{margin-bottom:0;}
-  .pf-sec > h2{margin:0 0 14px;font-size:14px;font-weight:800;color:var(--teal);
-    text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);padding-bottom:9px;}
+  .pf-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px;}
+  .pf-sec > h2{margin:0 0 6px;font-size:14px;font-weight:800;color:var(--teal);
+    text-transform:uppercase;letter-spacing:.5px;}
+  .pf-sec > .hint{color:var(--muted);font-size:13px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
   .pf-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;}
   .pf-field{display:flex;flex-direction:column;gap:5px;min-width:0;}
   .pf-field.full{grid-column:1 / -1;}
   .pf-field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
-  .pf-field label .req{color:var(--red,#dc2626);margin-left:2px;}
-  .f-input{
-    width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;
-    font-size:14px;color:var(--ink);background:#fff;font-family:inherit;
-  }
-  .f-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,78,216,.15);}
+  .pf-field label .req{color:#dc2626;margin-left:2px;}
+  .f-input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;
+    font-size:14px;color:var(--ink);background:#fff;font-family:inherit;}
+  .f-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.15);}
   textarea.f-input{resize:vertical;min-height:56px;}
   .pf-err{color:#dc2626;font-size:12px;}
-  .pf-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:4px;}
-  .pf-cancel{color:var(--muted);text-decoration:none;font-size:13.5px;padding:9px 14px;}
-  .pf-cancel:hover{color:var(--teal);}
   .form-banner{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px;}
+
+  /* ---- wizard progress ---- */
+  .wiz{display:flex;align-items:flex-start;background:#fff;border:1px solid var(--border);
+       border-radius:12px;padding:18px 16px 14px;margin-bottom:16px;overflow-x:auto;}
+  .wiz .s{flex:1 0 120px;text-align:center;position:relative;padding:0 4px;}
+  .wiz .s::before{content:"";position:absolute;top:16px;left:-50%;width:100%;height:3px;background:#e2e8f0;z-index:0;}
+  .wiz .s:first-child::before{display:none;}
+  .wiz .s.done::before,.wiz .s.active::before{background:#16a34a;}
+  .wiz .dot{position:relative;z-index:1;width:34px;height:34px;border-radius:50%;margin:0 auto 7px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;
+    background:#e2e8f0;color:#64748b;border:3px solid #fff;box-shadow:0 0 0 2px #e2e8f0;}
+  .wiz .s.done .dot{background:#16a34a;color:#fff;box-shadow:0 0 0 2px #16a34a;}
+  .wiz .s.active .dot{background:#cf1124;color:#fff;box-shadow:0 0 0 2px #cf1124;}
+  .wiz .lbl{font-size:11.5px;font-weight:700;color:var(--muted);}
+  .wiz .s.active .lbl{color:#cf1124;} .wiz .s.done .lbl{color:#067647;}
+
+  /* ---- pathway picker ---- */
+  .pw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .pw-opt{position:relative;}
+  .pw-opt input{position:absolute;opacity:0;inset:0;cursor:pointer;}
+  .pw-opt .box{display:block;border:2px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;height:100%;background:#fff;}
+  .pw-opt .box:hover{border-color:#f6a5ab;}
+  .pw-opt input:checked + .box{border-color:var(--teal);background:var(--teal-50);}
+  .pw-opt .box strong{display:block;font-size:14px;margin-bottom:4px;}
+  .pw-opt .box span{color:var(--muted);font-size:12px;line-height:1.4;display:block;}
+  .cond{display:none;} .cond.on{display:flex;}
+
+  .step{display:none;} .step.on{display:block;}
+  .pf-actions{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:4px;}
+  .pf-actions .right{display:flex;gap:10px;align-items:center;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:#f1f5f9;}
+  .warn{color:#b42318;font-size:13px;font-weight:600;display:none;}
+  .warn.on{display:block;}
   @media(max-width:640px){ .pf-grid{grid-template-columns:1fr;} }
 </style>
 
 <div class="pf">
   <div class="pf-head">
-    <div>
-      <h1>Add New Patient</h1>
-      <p>Create a new patient record. First name and surname are required; everything else is optional.</p>
-    </div>
+    <h1>Add New Patient</h1>
+    <p>A short step-by-step: choose the pathway, then the patient's details.</p>
   </div>
 
-  <form method="post" action="{% url 'clinic:add_patient' %}" novalidate>
+  <!-- progress -->
+  <div class="wiz" id="wiz">
+    <div class="s" data-s="1"><div class="dot">1</div><div class="lbl">Pathway</div></div>
+    <div class="s" data-s="2"><div class="dot">2</div><div class="lbl">Patient details</div></div>
+    <div class="s" data-s="3"><div class="dot">3</div><div class="lbl">Surgery &amp; clinical</div></div>
+    <div class="s" data-s="4"><div class="dot">4</div><div class="lbl">History &amp; consent</div></div>
+  </div>
+
+  <form method="post" action="{% url 'clinic:add_patient' %}" novalidate id="pf-form">
     {% csrf_token %}
     {% if form.non_field_errors %}<div class="form-banner">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.errors %}<div class="form-banner">Please check the highlighted fields.</div>{% endif %}
 
-    <div class="pf-card">
-    <section class="pf-sec">
-      <h2>Patient demographics</h2>
-      <div class="pf-grid">
-        <div class="pf-field"><label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}<span class="req">*</span></label>{{ form.first_name }}{% if form.first_name.errors %}<span class="pf-err">{{ form.first_name.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field"><label for="{{ form.surname.id_for_label }}">{{ form.surname.label }}<span class="req">*</span></label>{{ form.surname }}{% if form.surname.errors %}<span class="pf-err">{{ form.surname.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field"><label for="{{ form.id_card.id_for_label }}">{{ form.id_card.label }}</label>{{ form.id_card }}{% if form.id_card.errors %}<span class="pf-err">{{ form.id_card.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field"><label for="{{ form.dob.id_for_label }}">{{ form.dob.label }}</label>{{ form.dob }}{% if form.dob.errors %}<span class="pf-err">{{ form.dob.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field"><label for="{{ form.sex.id_for_label }}">{{ form.sex.label }}</label>{{ form.sex }}{% if form.sex.errors %}<span class="pf-err">{{ form.sex.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field"><label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>{{ form.phone_number }}{% if form.phone_number.errors %}<span class="pf-err">{{ form.phone_number.errors|striptags }}</span>{% endif %}</div>
-        <div class="pf-field full"><label for="{{ form.locality.id_for_label }}">{{ form.locality.label }}</label>{{ form.locality }}{% if form.locality.errors %}<span class="pf-err">{{ form.locality.errors|striptags }}</span>{% endif %}</div>
-      </div>
-    </section>
+    <!-- ============ STEP 1 — pathway ============ -->
+    <div class="step on" data-step="1">
+      <div class="pf-card"><section class="pf-sec">
+        <h2>Step 1 — Pathway</h2>
+        <p class="hint">Which route is this patient on? The app then guides each stage — siting, surgery, the day-by-day reviews, discharge and follow-up.</p>
+        <div class="pw-grid">
+          <label class="pw-opt">
+            <input type="radio" name="pathway_type" value="elective" onchange="syncPathway()" {% if pathway_type == 'elective' %}checked{% endif %}>
+            <span class="box"><strong>Elective</strong><span>Planned surgery, with a scheduled stoma siting session beforehand.</span></span></label>
+          <label class="pw-opt">
+            <input type="radio" name="pathway_type" value="emergency" onchange="syncPathway()" {% if pathway_type == 'emergency' %}checked{% endif %}>
+            <span class="box"><strong>Emergency</strong><span>No time for siting — straight to surgery, then post-operative reviews.</span></span></label>
+          <label class="pw-opt">
+            <input type="radio" name="pathway_type" value="old_case" onchange="syncPathway()" {% if pathway_type == 'old_case' %}checked{% endif %}>
+            <span class="box"><strong>Old case</strong><span>Stoma formed at another hospital. Seen as inpatient or by appointment.</span></span></label>
+          <label class="pw-opt">
+            <input type="radio" name="pathway_type" value="fistula" onchange="syncPathway()" {% if pathway_type == 'fistula' %}checked{% endif %}>
+            <span class="box"><strong>Fistula</strong><span>Seen as an inpatient and reviewed until discharge. Rarely followed up.</span></span></label>
+        </div>
+        <div class="pf-grid" style="margin-top:16px;">
+          <div class="pf-field cond" id="c-siting"><label>Stoma siting session — scheduled date</label>
+            <input class="f-input" type="date" name="siting_scheduled_date"></div>
+          <div class="pf-field cond" id="c-setting"><label>How are they seen?</label>
+            <select class="f-input" name="care_setting"><option value="inpatient">Inpatient</option><option value="outpatient">Outpatient appointment</option></select></div>
+          <div class="pf-field cond" id="c-referral"><label>Operated at (hospital)</label>
+            <input class="f-input" type="text" name="referral_source" placeholder="e.g. St James Hospital"></div>
+          <div class="pf-field cond" id="c-stoma"><label>Stoma type</label>
+            <input class="f-input" type="text" name="stoma_type" placeholder="e.g. Ileostomy"></div>
+        </div>
+        <div class="warn" id="w1" style="margin-top:12px;">Choose a pathway to continue.</div>
+      </section></div>
+    </div>
 
-    <section class="pf-sec">
-      <h2>Surgery &amp; admission</h2>
-      <div class="pf-grid">
-        <div class="pf-field"><label for="{{ form.surgery_date.id_for_label }}">{{ form.surgery_date.label }}</label>{{ form.surgery_date }}</div>
-        <div class="pf-field"><label for="{{ form.planned_surgery_date.id_for_label }}">{{ form.planned_surgery_date.label }}</label>{{ form.planned_surgery_date }}</div>
-        <div class="pf-field"><label for="{{ form.surgery_type.id_for_label }}">{{ form.surgery_type.label }}</label>{{ form.surgery_type }}</div>
-        <div class="pf-field"><label for="{{ form.consultant.id_for_label }}">{{ form.consultant.label }}</label>{{ form.consultant }}</div>
-        <div class="pf-field"><label for="{{ form.admission_route.id_for_label }}">{{ form.admission_route.label }}</label>{{ form.admission_route }}</div>
-        <div class="pf-field"><label for="{{ form.inpatient_type.id_for_label }}">{{ form.inpatient_type.label }}</label>{{ form.inpatient_type }}</div>
-        <div class="pf-field full"><label for="{{ form.operation_performed.id_for_label }}">{{ form.operation_performed.label }}</label>{{ form.operation_performed }}</div>
-      </div>
-    </section>
+    <!-- ============ STEP 2 — demographics ============ -->
+    <div class="step" data-step="2">
+      <div class="pf-card"><section class="pf-sec">
+        <h2>Step 2 — Patient details</h2>
+        <p class="hint">First name and surname are required; everything else can be filled in later.</p>
+        <div class="pf-grid">
+          <div class="pf-field"><label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}<span class="req">*</span></label>{{ form.first_name }}{% if form.first_name.errors %}<span class="pf-err">{{ form.first_name.errors|striptags }}</span>{% endif %}</div>
+          <div class="pf-field"><label for="{{ form.surname.id_for_label }}">{{ form.surname.label }}<span class="req">*</span></label>{{ form.surname }}{% if form.surname.errors %}<span class="pf-err">{{ form.surname.errors|striptags }}</span>{% endif %}</div>
+          <div class="pf-field"><label for="{{ form.id_card.id_for_label }}">{{ form.id_card.label }}</label>{{ form.id_card }}</div>
+          <div class="pf-field"><label for="{{ form.dob.id_for_label }}">{{ form.dob.label }}</label>{{ form.dob }}</div>
+          <div class="pf-field"><label for="{{ form.sex.id_for_label }}">{{ form.sex.label }}</label>{{ form.sex }}</div>
+          <div class="pf-field"><label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>{{ form.phone_number }}</div>
+          <div class="pf-field full"><label for="{{ form.locality.id_for_label }}">{{ form.locality.label }}</label>{{ form.locality }}</div>
+        </div>
+        <div class="warn" id="w2" style="margin-top:12px;">Enter both a first name and a surname to continue.</div>
+      </section></div>
+    </div>
 
-    <section class="pf-sec">
-      <h2>Clinical findings</h2>
-      <div class="pf-grid">
-        <div class="pf-field full"><label for="{{ form.findings.id_for_label }}">{{ form.findings.label }}</label>{{ form.findings }}</div>
-        <div class="pf-field full"><label for="{{ form.stoma_type_summary.id_for_label }}">{{ form.stoma_type_summary.label }}</label>{{ form.stoma_type_summary }}</div>
-      </div>
-    </section>
+    <!-- ============ STEP 3 — surgery & clinical ============ -->
+    <div class="step" data-step="3">
+      <div class="pf-card"><section class="pf-sec">
+        <h2>Step 3 — Surgery &amp; clinical</h2>
+        <p class="hint">If the operation has already happened, record it here and the pathway starts at the post-operative reviews.</p>
+        <div class="pf-grid">
+          <div class="pf-field"><label for="{{ form.surgery_date.id_for_label }}">{{ form.surgery_date.label }}</label>{{ form.surgery_date }}</div>
+          <div class="pf-field"><label for="{{ form.planned_surgery_date.id_for_label }}">{{ form.planned_surgery_date.label }}</label>{{ form.planned_surgery_date }}</div>
+          <div class="pf-field"><label for="{{ form.surgery_type.id_for_label }}">{{ form.surgery_type.label }}</label>{{ form.surgery_type }}</div>
+          <div class="pf-field"><label for="{{ form.consultant.id_for_label }}">{{ form.consultant.label }}</label>{{ form.consultant }}</div>
+          <div class="pf-field"><label for="{{ form.admission_route.id_for_label }}">{{ form.admission_route.label }}</label>{{ form.admission_route }}</div>
+          <div class="pf-field"><label for="{{ form.inpatient_type.id_for_label }}">{{ form.inpatient_type.label }}</label>{{ form.inpatient_type }}</div>
+          <div class="pf-field full"><label for="{{ form.operation_performed.id_for_label }}">{{ form.operation_performed.label }}</label>{{ form.operation_performed }}</div>
+          <div class="pf-field full"><label for="{{ form.findings.id_for_label }}">{{ form.findings.label }}</label>{{ form.findings }}</div>
+          <div class="pf-field full"><label for="{{ form.stoma_type_summary.id_for_label }}">{{ form.stoma_type_summary.label }}</label>{{ form.stoma_type_summary }}</div>
+        </div>
+      </section></div>
+    </div>
 
-    <section class="pf-sec">
-      <h2>Medical history</h2>
-      <div class="pf-grid">
-        <div class="pf-field full"><label for="{{ form.past_medical_history.id_for_label }}">{{ form.past_medical_history.label }}</label>{{ form.past_medical_history }}</div>
-        <div class="pf-field full"><label for="{{ form.past_surgical_history.id_for_label }}">{{ form.past_surgical_history.label }}</label>{{ form.past_surgical_history }}</div>
-        <div class="pf-field full"><label for="{{ form.drug_history.id_for_label }}">{{ form.drug_history.label }}</label>{{ form.drug_history }}</div>
-        <div class="pf-field full"><label for="{{ form.medication_additional_notes.id_for_label }}">{{ form.medication_additional_notes.label }}</label>{{ form.medication_additional_notes }}</div>
-      </div>
-    </section>
-
-    <section class="pf-sec">
-      <h2>Social history</h2>
-      <div class="pf-grid">
-        <div class="pf-field full"><label for="{{ form.social_history.id_for_label }}">{{ form.social_history.label }}</label>{{ form.social_history }}</div>
-      </div>
-    </section>
-
-    <section class="pf-sec">
-      <h2>Data protection</h2>
-      <div class="pf-grid">
-        <div class="pf-field"><label for="{{ form.dpa_status.id_for_label }}">{{ form.dpa_status.label }}</label>{{ form.dpa_status }}</div>
-      </div>
-    </section>
-
-    <section class="pf-sec">
-      <h2>Follow-up</h2>
-      <div class="pf-grid">
-        <div class="pf-field"><label for="{{ form.followup_owner.id_for_label }}">{{ form.followup_owner.label }}</label>{{ form.followup_owner }}</div>
-        <div class="pf-field"><label for="{{ form.followup_status.id_for_label }}">{{ form.followup_status.label }}</label>{{ form.followup_status }}</div>
-      </div>
-    </section>
-    </div><!-- /pf-card -->
+    <!-- ============ STEP 4 — history & consent ============ -->
+    <div class="step" data-step="4">
+      <div class="pf-card"><section class="pf-sec">
+        <h2>Step 4 — History &amp; consent</h2>
+        <p class="hint">Last step — then the patient's pathway opens and you can carry on from there.</p>
+        <div class="pf-grid">
+          <div class="pf-field full"><label for="{{ form.past_medical_history.id_for_label }}">{{ form.past_medical_history.label }}</label>{{ form.past_medical_history }}</div>
+          <div class="pf-field full"><label for="{{ form.past_surgical_history.id_for_label }}">{{ form.past_surgical_history.label }}</label>{{ form.past_surgical_history }}</div>
+          <div class="pf-field full"><label for="{{ form.drug_history.id_for_label }}">{{ form.drug_history.label }}</label>{{ form.drug_history }}</div>
+          <div class="pf-field full"><label for="{{ form.medication_additional_notes.id_for_label }}">{{ form.medication_additional_notes.label }}</label>{{ form.medication_additional_notes }}</div>
+          <div class="pf-field full"><label for="{{ form.social_history.id_for_label }}">{{ form.social_history.label }}</label>{{ form.social_history }}</div>
+          <div class="pf-field"><label for="{{ form.dpa_status.id_for_label }}">{{ form.dpa_status.label }}</label>{{ form.dpa_status }}</div>
+          <div class="pf-field"><label for="{{ form.followup_owner.id_for_label }}">{{ form.followup_owner.label }}</label>{{ form.followup_owner }}</div>
+          <div class="pf-field"><label for="{{ form.followup_status.id_for_label }}">{{ form.followup_status.label }}</label>{{ form.followup_status }}</div>
+        </div>
+      </section></div>
+    </div>
 
     <div class="pf-actions">
-      <a class="pf-cancel" href="{% url 'clinic:patient_list' %}">Cancel</a>
-      <button class="btn" type="submit">Save patient</button>
+      <a class="btn btn-ghost" href="{% url 'clinic:patient_list' %}">Cancel</a>
+      <div class="right">
+        <button class="btn btn-ghost" type="button" id="btn-back" onclick="goStep(cur-1)" style="display:none;">← Back</button>
+        <button class="btn" type="button" id="btn-next" onclick="next()">Next →</button>
+        <button class="btn" type="submit" id="btn-save" style="display:none;">Save &amp; start pathway</button>
+      </div>
     </div>
   </form>
 </div>
+
+<script>
+var cur = 1, LAST = 4;
+
+function syncPathway(){
+  var v = (document.querySelector('input[name="pathway_type"]:checked')||{}).value;
+  function show(id,on){ var e=document.getElementById(id); if(e) e.classList.toggle('on', !!on); }
+  show('c-siting',   v==='elective');
+  show('c-setting',  v==='old_case');
+  show('c-referral', v==='old_case');
+  show('c-stoma',    v!=='fistula');
+  if(v) document.getElementById('w1').classList.remove('on');
+}
+
+function goStep(n){
+  if(n<1||n>LAST) return;
+  cur = n;
+  document.querySelectorAll('.step').forEach(function(s){
+    s.classList.toggle('on', +s.dataset.step === cur);
+  });
+  document.querySelectorAll('#wiz .s').forEach(function(s){
+    var i = +s.dataset.s;
+    s.classList.toggle('done', i < cur);
+    s.classList.toggle('active', i === cur);
+  });
+  document.getElementById('btn-back').style.display = cur>1 ? '' : 'none';
+  document.getElementById('btn-next').style.display = cur<LAST ? '' : 'none';
+  document.getElementById('btn-save').style.display = cur===LAST ? '' : 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function valid(step){
+  if(step===1){
+    var ok = !!document.querySelector('input[name="pathway_type"]:checked');
+    document.getElementById('w1').classList.toggle('on', !ok);
+    return ok;
+  }
+  if(step===2){
+    var f=document.getElementById('{{ form.first_name.id_for_label }}');
+    var s=document.getElementById('{{ form.surname.id_for_label }}');
+    var ok = f && s && f.value.trim() && s.value.trim();
+    document.getElementById('w2').classList.toggle('on', !ok);
+    return !!ok;
+  }
+  return true;
+}
+
+function next(){ if(valid(cur)) goStep(cur+1); }
+
+// Guard the final submit too.
+document.getElementById('pf-form').addEventListener('submit', function(e){
+  if(!valid(1)){ e.preventDefault(); goStep(1); return; }
+  if(!valid(2)){ e.preventDefault(); goStep(2); }
+});
+
+syncPathway();
+// If the server bounced the form back with errors, start where they are.
+goStep({% if form.errors %}2{% else %}1{% endif %});
+</script>
 {% endblock %}

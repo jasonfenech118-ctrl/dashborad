@@ -1,0 +1,17 @@
+{% load order_extras %}{{ form.title }}
+Materials Management & Logistics Directorate — Mater Dei Hospital
+
+Reference:     {{ doc.reference }}
+Section/Ward:  {{ doc.section_ward }}
+Cost Centre:   {{ doc.cost_centre }}
+Ext no.:       {{ doc.ext_no|default:"-" }}
+{% if doc.delivery_period %}{{ form.note_label }}:  {{ doc.delivery_period }}
+{% endif %}
+Items:
+{% for it in doc.items %}  - {% for c in columns %}{{ it|dictkey:c.key }}{% if not forloop.last %} | {% endif %}{% endfor %}
+{% endfor %}
+Requested by:  {{ doc.requested_by_name }}
+Date:          {{ doc.form_date|date:"d/m/Y" }}
+
+Sent from the MDH Stoma Care Clinic dashboard, to be processed by
+Disposables & Supplies ({{ doc.recipient_email }}).

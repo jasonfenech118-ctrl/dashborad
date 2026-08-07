@@ -1,0 +1,53 @@
+{% extends "clinic/base.html" %}
+{% block title %}Tenders — CPSU{% endblock %}
+{% block content %}
+<style>
+  body::before{display:none !important;}
+  .th-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .th-back:hover{text-decoration:underline;}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:16px;}
+  .hub .card{display:flex;flex-direction:column;gap:10px;text-align:center;align-items:center;padding:24px 18px;}
+  .hub .ico{width:52px;height:52px;border-radius:12px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;}
+  .hub .ico svg{width:26px;height:26px;color:var(--teal);}
+  .hub strong{font-size:15px;}
+  .hub .cnt{font-size:12px;color:var(--muted);}
+  .hub form{margin:0;width:100%;} .hub .btn{width:100%;}
+</style>
+
+<a href="{% url 'clinic:cpsu' %}" class="th-back">
+  <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+  CPSU
+</a>
+<h1 style="margin-top:6px;">Tenders</h1>
+<p class="muted" style="font-size:13px;">Start a new tender, or open the current or closed tenders.</p>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<div class="hub">
+
+  <div class="card">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+    <strong>New Tender</strong>
+    <div class="cnt">Start a new tender evaluation and rank bids automatically.</div>
+    <form method="post" action="{% url 'clinic:tender_new' %}">{% csrf_token %}<button class="btn" type="submit">New Tender</button></form>
+  </div>
+
+  <div class="card">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+    <strong>Current Tenders</strong>
+    <div class="cnt">{% if open_count != None %}{{ open_count }} open{% else %}open tenders{% endif %}</div>
+    <a class="btn" href="{% url 'clinic:tenders_current' %}">Current Tenders</a>
+  </div>
+
+  <div class="card">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+    <strong>Closed Tenders</strong>
+    <div class="cnt">{% if closed_count != None %}{{ closed_count }} closed{% else %}closed tenders{% endif %}</div>
+    <a class="btn" href="{% url 'clinic:tenders_closed' %}">Closed Tenders</a>
+  </div>
+
+</div>
+{% endblock %}

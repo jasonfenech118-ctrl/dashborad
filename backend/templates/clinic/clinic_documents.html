@@ -1,0 +1,67 @@
+{% extends "clinic/base.html" %}
+{% block title %}Clinic Documents — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;">
+  <div style="flex:1;min-width:220px;">
+    <h1 style="margin-bottom:2px;">Clinic Documents</h1>
+    <p class="muted" style="font-size:13px;">Ordering forms sent from the app are saved here automatically.</p>
+  </div>
+  <a href="{% url 'clinic:esrf_form' %}" class="btn">New Requisition</a>
+</div>
+
+<form method="get" class="controls" style="margin-top:14px;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search reference, requester or ward…" style="min-width:280px;">
+  <button class="btn" type="submit">Search</button>
+  {% if q %}<a class="btn" href="{% url 'clinic:clinic_documents' %}" style="background:#64748b;">Clear</a>{% endif %}
+</form>
+
+{% if not db_ok %}
+  <div class="card" style="border-color:#fecdca;background:#fef3f2;color:#b42318;font-size:13px;">
+    The documents archive is temporarily unavailable (database not reachable). Please try again shortly.
+  </div>
+{% elif documents %}
+  <table>
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Section / Ward</th>
+        <th>Items</th>
+        <th>Requested By</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in documents %}
+      <tr>
+        <td><strong>{{ d.reference }}</strong></td>
+        <td>{{ d.section_ward }}</td>
+        <td>{{ d.item_count }}</td>
+        <td>{{ d.requested_by_name|default:"—" }}</td>
+        <td>{{ d.form_date|date:"d/m/Y"|default:"—" }}</td>
+        <td>
+          {% if d.status == "sent" %}
+            <span class="pill" style="background:#ecfdf3;color:#067647;">Sent</span>
+          {% else %}
+            <span class="pill" style="background:#fffaeb;color:#b54708;">Saved</span>
+          {% endif %}
+        </td>
+        <td><a href="{% url 'clinic:ordering_document_detail' pk=d.id %}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card" style="text-align:center;padding:40px 18px;">
+    <div style="width:46px;height:46px;border-radius:10px;background:var(--teal-50);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+      <svg class="ic" viewBox="0 0 24 24" style="color:var(--teal);width:24px;height:24px;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+    </div>
+    <div style="font-weight:700;margin-bottom:4px;">No documents yet</div>
+    <p class="muted" style="font-size:13px;margin-bottom:16px;">
+      {% if q %}No documents match “{{ q }}”.{% else %}Ordering forms you send to Logistics will appear here automatically.{% endif %}
+    </p>
+    {% if not q %}<a href="{% url 'clinic:esrf_form' %}" class="btn">Create a Requisition</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

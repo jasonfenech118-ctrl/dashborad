@@ -1,0 +1,108 @@
+{% extends "clinic/base.html" %}
+{% load static %}
+{% load order_extras %}
+{% block title %}{{ doc.reference }} — Clinic Documents{% endblock %}
+{% block content %}
+<style>
+  .esrf-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  .esrf-head .ht{flex:1;min-width:220px;}
+  .esrf-head h1{margin:6px 0 2px;font-size:19px;}
+  .esrf-head .sub{color:var(--muted);font-size:13px;}
+  .esrf-head .back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--teal);}
+  .esrf-head .back:hover{text-decoration:underline;}
+  .esrf-head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-ghost:hover{background:#f1f5f9;}
+  .status{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+  .status.sent{background:#ecfdf3;color:#067647;}
+  .status.saved{background:#fffaeb;color:#b54708;}
+
+  .esrf-paper{
+    background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;
+    width:900px;max-width:100%;margin:0 auto;padding:30px 34px 34px;
+    border:1px solid #d5dbe4;border-radius:10px;box-shadow:0 4px 20px rgba(15,23,42,.08);
+  }
+  .esrf-lh{display:flex;align-items:center;gap:20px;margin-bottom:16px;}
+  .esrf-lh .logo img{display:block;width:230px;height:auto;}
+  .esrf-lh .org{margin-left:auto;border:1px solid #000;padding:9px 16px;text-align:center;min-width:340px;}
+  .esrf-lh .org div{font-size:11px;line-height:1.55;}
+
+  .esrf-grid{border:1.5px solid #000;border-collapse:collapse;width:100%;}
+  .esrf-grid td,.esrf-grid th{border:1px solid #000;padding:6px 8px;vertical-align:middle;font-size:12px;}
+  .esrf-title-cell{text-align:center;font-size:18px;letter-spacing:.4px;font-weight:700;}
+  .esrf-email-cell{text-align:center;font-size:12px;}
+  .esrf-email-cell a{color:#000;text-decoration:none;}
+  .esrf-lbl{font-size:11px;white-space:nowrap;font-weight:600;}
+  .val{text-align:center;font-size:12px;}
+  .val.left{text-align:left;}
+  .esrf-grid th{background:#fcd5b4;font-family:Calibri,Arial,sans-serif;font-weight:700;font-size:11px;text-align:center;color:#000;}
+
+  @media print{
+    .esrf-head .actions,.esrf-head .back,.esrf-head .sub,.print-note{display:none !important;}
+    .esrf-paper{border:none;box-shadow:none;width:100%;max-width:none;padding:0;border-radius:0;}
+    .esrf-grid th{background:#fcd5b4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{size:A4 portrait;margin:10mm;}
+  }
+</style>
+
+<div class="esrf-head">
+  <div class="ht">
+    <a href="{% url 'clinic:clinic_documents' %}" class="back">
+      <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Clinic Documents
+    </a>
+    <h1>{{ doc.reference }}
+      {% if is_sent %}<span class="status sent">Sent</span>{% else %}<span class="status saved">Saved · not emailed</span>{% endif %}
+    </h1>
+    <div class="sub">
+      {% if is_sent %}Sent to {{ doc.recipient_email }} on {{ doc.sent_at|date:"d/m/Y H:i" }}.
+      {% else %}Saved to the archive. Email wasn't sent automatically — use “Email this” below to send it from your own email app.{% endif %}
+    </div>
+  </div>
+  <div class="actions">
+    {% if not is_sent %}<a class="btn" href="{{ mailto }}">Email this</a>{% endif %}
+    <button class="btn btn-ghost" type="button" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</div>
+
+<div class="esrf-paper">
+  <div class="esrf-lh">
+    <div class="logo"><img src="{% static 'images/mater_dei_logo.png' %}" alt="SPTAR Mater Dei"></div>
+    <div class="org">
+      <div>MATERIALS MANAGEMENT &amp; LOGISTICS DIRECTORATE</div>
+      <div>MATER DEI HOSPITAL MSIDA MSD 2090</div>
+    </div>
+  </div>
+
+  <table class="esrf-grid">
+    <colgroup>{% for c in columns %}<col style="width:{{ c.w }}">{% endfor %}</colgroup>
+    {% with ncol=columns|length %}
+    <tr><td class="esrf-title-cell" colspan="{{ ncol }}">{{ form.doc_title }}</td></tr>
+    <tr><td class="esrf-email-cell" colspan="{{ ncol }}">SENT FOR PROCESSING TO:
+      <a href="mailto:{{ doc.recipient_email }}">{{ doc.recipient_email }}</a></td></tr>
+
+    <tr>
+      <td class="esrf-lbl">SECTION / WARD:</td><td class="val" colspan="2">{{ doc.section_ward }}</td>
+      <td class="esrf-lbl">COST CENTRE:</td><td class="val" colspan="{{ ncol|add:'-4' }}">{{ doc.cost_centre }}</td>
+    </tr>
+    <tr>
+      <td class="esrf-lbl">EXT no.:</td><td class="val" colspan="2">{{ doc.ext_no|default:"—" }}</td>
+      <td class="esrf-lbl">{{ form.note_label }}:</td><td class="val" colspan="{{ ncol|add:'-4' }}">{{ doc.delivery_period|default:"—" }}</td>
+    </tr>
+
+    <tr>{% for c in columns %}<th>{{ c.label }}</th>{% endfor %}</tr>
+    {% for it in doc.items %}
+    <tr>{% for c in columns %}<td class="val {% if c.left %}left{% endif %}">{{ it|dictkey:c.key }}</td>{% endfor %}</tr>
+    {% endfor %}
+
+    <tr>
+      <td colspan="{{ ncol|add:'-1' }}">
+        <div style="font-size:9px;color:#333;text-transform:uppercase;letter-spacing:.3px;">Requesting Officer</div>
+        <div class="val left" style="font-weight:600;">{{ doc.requested_by_name }}</div>
+      </td>
+      <td class="val"><div style="font-size:9px;color:#333;">DATE</div>{{ doc.form_date|date:"d/m/Y" }}</td>
+    </tr>
+    {% endwith %}
+  </table>
+</div>
+{% endblock %}
