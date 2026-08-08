@@ -1,0 +1,91 @@
+{% extends "clinic/base.html" %}
+{% block title %}Admin — Users — MDH Stoma Care Clinic{% endblock %}
+{% block content %}
+<style>
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .u-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 16px;align-items:end;}
+  input[type=text],input[type=email],input[type=password]{
+    width:100%;padding:8px 10px;border:1.5px solid rgba(203,213,225,.9);border-radius:8px;font-size:13px;background:rgba(255,255,255,.9);color:var(--ink);font-family:inherit;}
+  input:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .u-row{border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.75);margin-bottom:12px;}
+  .u-row h3{font-size:14px;margin:0 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .u-row .who{font-size:11.5px;color:var(--muted);}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800;}
+  .badge.admin{background:#eef2ff;color:#3730a3;}
+  .badge.off{background:#fef3f2;color:#b42318;}
+  .badge.on{background:#ecfdf3;color:#067647;}
+  details.edit>summary{list-style:none;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--teal);margin-top:8px;}
+  details.edit>summary::-webkit-details-marker{display:none;}
+  .edit-box{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(148,163,184,.5);}
+  .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink);}
+  .chk input{width:auto;}
+  .btn-sm{background:var(--btn);color:var(--btn-ink);border:none;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit;}
+  .btn-sm:hover{background:var(--btn-600);}
+</style>
+
+<h1 style="margin-bottom:2px;">Admin — Users</h1>
+<p class="muted" style="font-size:13px;">Add users, set their email, and reset passwords. A user's <strong>Name</strong> and <strong>Surname</strong> here fill the officer fields on every form automatically.</p>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- ===== Add user ===== -->
+<div class="card">
+  <div class="sec-t">Add a user</div>
+  <div class="sec-s">Give them a username and an initial password (at least 8 characters). They can be renamed or reset any time below.</div>
+  <form method="post" action="{% url 'clinic:admin_users' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create">
+    <div class="u-grid">
+      <div><label class="lbl">Username</label><input type="text" name="username" required autocomplete="off"></div>
+      <div><label class="lbl">Name</label><input type="text" name="first_name" placeholder="First name"></div>
+      <div><label class="lbl">Surname</label><input type="text" name="last_name" placeholder="Last name"></div>
+      <div><label class="lbl">Email</label><input type="email" name="email" placeholder="name@gov.mt"></div>
+      <div><label class="lbl">Initial password</label><input type="password" name="password" required autocomplete="new-password"></div>
+    </div>
+    <div style="margin-top:12px;text-align:right;"><button class="btn" type="submit">Add user</button></div>
+  </form>
+</div>
+
+<!-- ===== Users ===== -->
+<div class="card">
+  <div class="sec-t">Users</div>
+  <div class="sec-s">{{ users|length }} user{{ users|length|pluralize }}.</div>
+
+  {% for u in users %}
+  <div class="u-row">
+    <h3>
+      <strong>{{ u.username }}</strong>
+      {% if u.get_full_name %}<span class="who">{{ u.get_full_name }}</span>{% endif %}
+      {% if u.email %}<span class="who">· {{ u.email }}</span>{% endif %}
+      {% if u.is_superuser %}<span class="badge admin">Admin</span>{% endif %}
+      {% if u.is_active %}<span class="badge on">Active</span>{% else %}<span class="badge off">Disabled</span>{% endif %}
+    </h3>
+    <details class="edit">
+      <summary>Edit / reset password</summary>
+      <div class="edit-box">
+        <form method="post" action="{% url 'clinic:admin_user_edit' pk=u.pk %}">
+          {% csrf_token %}
+          <div class="u-grid">
+            <div><label class="lbl">Name</label><input type="text" name="first_name" value="{{ u.first_name }}"></div>
+            <div><label class="lbl">Surname</label><input type="text" name="last_name" value="{{ u.last_name }}"></div>
+            <div><label class="lbl">Email</label><input type="email" name="email" value="{{ u.email }}"></div>
+            <div><label class="lbl">New password</label><input type="password" name="password" placeholder="Leave blank to keep" autocomplete="new-password"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <label class="chk"><input type="checkbox" name="is_active" {% if u.is_active %}checked{% endif %}> Account active</label>
+            <button class="btn-sm" type="submit">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </div>
+  {% empty %}
+    <p class="muted" style="font-size:13px;">No users yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

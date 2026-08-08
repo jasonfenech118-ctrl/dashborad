@@ -304,6 +304,11 @@
         <a href="https://apps.powerapps.com/play/e/d8f3222d-7d60-eb1d-a031-060cf3f5ed5c/a/2eb732f4-6398-495a-bbe3-97038f89f1e4?tenantId=34cdd9f5-5db8-49bc-acba-01f65cca680d&amp;hint=4140e680-6b96-41a1-82ae-5a702fac4a73&amp;sourcetime=1766055859141&amp;source=teamsLinkUnfurling" target="_blank" rel="noopener noreferrer">
           <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5"/><path d="M14 17h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
           <span>Transport</span></a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'clinic:admin_users' %}">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16a3.5 3.5 0 0 1 7 0"/></svg>
+          <span>Admin</span></a>
+        {% endif %}
       </nav>
     </aside>
 
