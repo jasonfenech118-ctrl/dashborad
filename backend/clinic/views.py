@@ -1456,6 +1456,36 @@ def _reminders_due_today():
     )
 
 
+# Curated destinations a reminder can link to. Each is (label, url-name); the
+# label doubles as the call-to-action shown on the reminder card and home page.
+# Only these internal URLs are accepted when saving, so a reminder can never
+# link somewhere arbitrary or off-site.
+_REMINDER_ACTION_TARGETS = [
+    ("Ordering Forms", "clinic:ordering_forms"),
+    ("Requisition Form (ESRF)", "clinic:esrf_form"),
+    ("Clinic Documents", "clinic:clinic_documents"),
+    ("Appointments", "clinic:appointments"),
+    ("Inpatient Visits", "clinic:ward"),
+    ("Patients", "clinic:patient_list"),
+    ("Discharge Letter", "clinic:discharge_letter"),
+    ("CPSU", "clinic:cpsu"),
+    ("Library", "clinic:library"),
+    ("Roster", "clinic:roster"),
+    ("Reports", "clinic:reports"),
+]
+
+
+def _reminder_action_choices():
+    """Resolved (label, url) pairs for the reminder 'Opens' dropdown."""
+    out = []
+    for label, name in _REMINDER_ACTION_TARGETS:
+        try:
+            out.append((label, reverse(name)))
+        except Exception:
+            pass
+    return out
+
+
 def _parse_reminder_form(request):
     """Turn the POST into reminder fields, or None if there's no title."""
     R = models.Reminder
@@ -1486,6 +1516,17 @@ def _parse_reminder_form(request):
         except ValueError:
             at_time = None
 
+    # Optional call-to-action: accept only one of the curated internal targets,
+    # and derive its label from that same list so the card link is consistent.
+    action_url = (request.POST.get("action_url") or "").strip()
+    action_label = None
+    if action_url:
+        allowed = {url: label for label, url in _reminder_action_choices()}
+        if action_url in allowed:
+            action_label = allowed[action_url]
+        else:
+            action_url = None
+
     return {
         "title": title,
         "message": (request.POST.get("message") or "").strip() or None,
@@ -1495,6 +1536,8 @@ def _parse_reminder_form(request):
         "day_of_month": _int("day_of_month") if freq == R.MONTHLY else None,
         "on_date": on_date,
         "at_time": at_time,
+        "action_url": action_url,
+        "action_label": action_label,
     }
 
 
@@ -1525,6 +1568,7 @@ def reminders(request):
         "due_today": [r for r in items if r.is_due_on(today)],
         "frequencies": R.FREQUENCY_CHOICES,
         "weekdays": R.WEEKDAYS,
+        "action_choices": _reminder_action_choices(),
         "email_ready": _email_configured(),
     })
 
