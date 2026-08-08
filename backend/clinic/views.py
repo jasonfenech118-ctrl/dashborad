@@ -9,7 +9,8 @@ from django.core.files.base import ContentFile
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -601,6 +602,11 @@ def ordering_forms(request):
             "title": "MML Part 2",
             "desc": "",
             "url": reverse("clinic:order_form", args=["cleaning"]),
+        },
+        {
+            "title": "Stationary",
+            "desc": "",
+            "url": reverse("clinic:order_form", args=["stationery"]),
         },
     ]
     return render(request, "clinic/ordering_forms.html", {"forms": forms})
@@ -1236,6 +1242,89 @@ def diary_entry_delete(request, pk):
     except Exception:
         messages.error(request, "Could not remove that entry.")
     return redirect("clinic:diary")
+
+
+# ----------------------------------------------------------------- admin / users
+
+
+def _is_admin(user):
+    """Only active superusers may manage other users."""
+    return bool(user.is_active and user.is_superuser)
+
+
+@login_required
+@user_passes_test(_is_admin, login_url="/")
+def admin_users(request):
+    """User administration — superusers add users and set their details.
+
+    A user's first name (Name) and last name (Surname) feed the officer /
+    requesting-officer fields on every form automatically, so keeping these
+    up to date here is what drives the name automation across the app.
+    """
+    User = get_user_model()
+
+    if request.method == "POST" and (request.POST.get("action") == "create"):
+        username = (request.POST.get("username") or "").strip()
+        first = (request.POST.get("first_name") or "").strip()
+        last = (request.POST.get("last_name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        password = request.POST.get("password") or ""
+        if not username or not password:
+            messages.error(request, "A username and an initial password are required.")
+        elif len(password) < 8:
+            messages.error(request, "The password must be at least 8 characters.")
+        elif User.objects.filter(username__iexact=username).exists():
+            messages.error(request, f"A user named “{username}” already exists.")
+        else:
+            try:
+                u = User(username=username, first_name=first, last_name=last,
+                         email=email, is_active=True, is_staff=False, is_superuser=False)
+                u.set_password(password)
+                u.save()
+                messages.success(request, f"User “{username}” created.")
+            except Exception:
+                messages.error(request, "Could not create the user — please try again.")
+        return redirect("clinic:admin_users")
+
+    users = list(User.objects.order_by("username"))
+    return render(request, "clinic/admin_users.html", {"users": users})
+
+
+@login_required
+@user_passes_test(_is_admin, login_url="/")
+def admin_user_edit(request, pk):
+    """Update a user's name, surname and email, and optionally reset their
+    password or toggle whether the account is active (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:admin_users")
+    User = get_user_model()
+    u = get_object_or_404(User, pk=pk)
+
+    u.first_name = (request.POST.get("first_name") or "").strip()
+    u.last_name = (request.POST.get("last_name") or "").strip()
+    u.email = (request.POST.get("email") or "").strip()
+
+    new_password = request.POST.get("password") or ""
+    if new_password:
+        if len(new_password) < 8:
+            messages.error(request, "The new password must be at least 8 characters.")
+            return redirect("clinic:admin_users")
+        u.set_password(new_password)
+
+    # Allow deactivating an account, but never let an admin lock themselves out.
+    want_active = bool(request.POST.get("is_active"))
+    if u.pk == request.user.pk and not want_active:
+        messages.error(request, "You can't deactivate your own account.")
+        return redirect("clinic:admin_users")
+    u.is_active = want_active
+
+    try:
+        u.save()
+        note = "password reset and " if new_password else ""
+        messages.success(request, f"User “{u.get_username()}” updated ({note}details saved).")
+    except Exception:
+        messages.error(request, "Could not update the user — please try again.")
+    return redirect("clinic:admin_users")
 
 
 @login_required

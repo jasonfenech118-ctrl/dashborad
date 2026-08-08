@@ -12,8 +12,12 @@ and where it is sent. The rows are stored data, not a migration: a submitted
 form is saved as an OrderingDocument with these values in its ``items`` JSON.
 """
 
+from .stationery_items import STATIONERY_ITEMS
+
 # Every ward ordering form here is processed by the same office.
 DISPOSABLES_EMAIL = "disposablessupplies.mdh@gov.mt"
+# Stationery / SIT requests go to General Stores.
+GENERAL_STORES_EMAIL = "generalstores.mdh@gov.mt"
 
 
 # --- M.M.M.U. IRO Top-Up System List (Disposables) — pre-printed items ------
@@ -192,6 +196,32 @@ ORDER_FORM_DEFS = {
             {"key": "quota", "label": "Quota", "fill": True, "w": "10%"},
             {"key": "demand", "label": "Demand", "fill": True, "w": "10%"},
             {"key": "supply", "label": "Supply", "fill": True, "w": "12%"},
+        ],
+    },
+    "stationery": {
+        "slug": "stationery",
+        "template": "clinic/order_form.html",
+        "form_type": "Stationery/SIT Request (STO-01)",
+        "ref_prefix": "STAT-STO01",
+        "title": "Stationery / SIT Request List",
+        "doc_title": "STATIONERY / SIT REQUEST LIST",
+        "subtitle": "Stoma Care stationery request. Enter the demand for each "
+                    "item you need, then send it to General Stores.",
+        "section_ward": "Stoma Care",
+        "cost_centre": "STO-01",
+        "ext_default": "4431",
+        "note_label": "Remarks",
+        "note_default": "MONTHLY (2nd WEEK) TUESDAY",
+        "location": "",
+        "recipient": GENERAL_STORES_EMAIL,
+        "office_use": False,
+        "items": STATIONERY_ITEMS,
+        "columns": [
+            {"key": "code", "label": "SLH Stock Code", "fill": False, "w": "18%"},
+            {"key": "description", "label": "Stock Item Description", "fill": False, "left": True, "w": "40%"},
+            {"key": "unit", "label": "Unit", "fill": False, "center": True, "w": "12%"},
+            {"key": "quota", "label": "Quota", "fill": False, "center": True, "w": "12%"},
+            {"key": "demand", "label": "Demand", "fill": True, "w": "18%"},
         ],
     },
 }
