@@ -1,8 +1,15 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Ward — MDH Stoma Care Clinic{% endblock %}
 
 {% block content %}
 <style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
+      url("{% static 'images/inpatients_bg.png' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
   /* Ward shell — break out of the centered .wrap for a wide app layout */
   .ward{
     display:grid;grid-template-columns:300px 1fr;gap:16px;
