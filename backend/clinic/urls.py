@@ -42,6 +42,7 @@ urlpatterns = [
     path("reminders/<uuid:pk>/toggle/", views.reminder_toggle, name="reminder_toggle"),
     path("reminders/<uuid:pk>/send/", views.reminder_send, name="reminder_send"),
     path("reminders/<uuid:pk>/delete/", views.reminder_delete, name="reminder_delete"),
+    path("diary/", views.diary, name="diary"),
     path("more/", views.more_tools, name="more_tools"),
     path("pathways/<uuid:pk>/", views.pathway_detail, name="pathway_detail"),
     path("pathways/<uuid:pk>/encounter/", views.encounter_new, name="encounter_new"),

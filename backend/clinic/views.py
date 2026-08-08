@@ -1164,6 +1164,12 @@ def library_delete(request, pk):
 
 
 @login_required
+def diary(request):
+    """Diary landing page."""
+    return render(request, "clinic/diary.html")
+
+
+@login_required
 def cpsu(request):
     """CPSU (Central Procurement & Supplies Unit) landing page."""
     return render(request, "clinic/cpsu.html")
