@@ -1,6 +1,15 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Ordering Forms — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
+<style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
+      url("{% static 'images/ordering_forms_bg.png' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
+</style>
 <h1>Ordering Forms</h1>
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
   {% for f in forms %}
