@@ -1132,6 +1132,32 @@ class Reminder(UUIDModel):
         return base
 
 
+# ---------------------------------------------------------------- diary
+
+
+class DiaryEntry(UUIDModel):
+    """A dated entry in the unit's running clinical diary.
+
+    Django-managed table so it does not disturb the Supabase-owned tables.
+    """
+
+    entry_date = models.DateField(default=datetime.date.today)
+    title = models.CharField(max_length=200, blank=True, null=True)
+    body = models.TextField()
+
+    created_by = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "diary_entries"
+        ordering = ["-entry_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.entry_date:%d/%m/%Y} — {self.title or self.body[:40]}"
+
+
 # ---------------------------------------------------------- roster / shifts
 
 
