@@ -1163,10 +1163,79 @@ def library_delete(request, pk):
     return redirect("clinic:library")
 
 
+def _parse_iso_date(raw):
+    """Parse a YYYY-MM-DD string into a date, or None."""
+    try:
+        return datetime.date.fromisoformat((raw or "").strip())
+    except ValueError:
+        return None
+
+
 @login_required
 def diary(request):
-    """Diary landing page."""
-    return render(request, "clinic/diary.html")
+    """Diary — a running log of dated entries. GET lists, POST adds one."""
+    D = models.DiaryEntry
+    if request.method == "POST":
+        body = (request.POST.get("body") or "").strip()
+        if not body:
+            messages.error(request, "Write something for the diary entry.")
+        else:
+            try:
+                D.objects.create(
+                    entry_date=_parse_iso_date(request.POST.get("entry_date")) or datetime.date.today(),
+                    title=(request.POST.get("title") or "").strip() or None,
+                    body=body,
+                    created_by=request.user.get_username(),
+                )
+                messages.success(request, "Diary entry added.")
+            except Exception:
+                messages.error(request, "Could not save — the database is unavailable.")
+        return redirect("clinic:diary")
+
+    entries = _safe_query(lambda: list(D.objects.all()), None)
+    db_ok = entries is not None
+    return render(request, "clinic/diary.html", {
+        "entries": entries or [],
+        "db_ok": db_ok,
+        "today": datetime.date.today(),
+    })
+
+
+@login_required
+def diary_entry_edit(request, pk):
+    """Update a diary entry (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:diary")
+    entry = get_object_or_404(models.DiaryEntry, pk=pk)
+    body = (request.POST.get("body") or "").strip()
+    if not body:
+        messages.error(request, "A diary entry can't be empty.")
+        return redirect("clinic:diary")
+    entry.body = body
+    entry.title = (request.POST.get("title") or "").strip() or None
+    ed = _parse_iso_date(request.POST.get("entry_date"))
+    if ed:
+        entry.entry_date = ed
+    try:
+        entry.save()
+        messages.success(request, "Diary entry updated.")
+    except Exception:
+        messages.error(request, "Could not update — the database is unavailable.")
+    return redirect("clinic:diary")
+
+
+@login_required
+def diary_entry_delete(request, pk):
+    """Delete a diary entry (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:diary")
+    entry = get_object_or_404(models.DiaryEntry, pk=pk)
+    try:
+        entry.delete()
+        messages.success(request, "Diary entry removed.")
+    except Exception:
+        messages.error(request, "Could not remove that entry.")
+    return redirect("clinic:diary")
 
 
 @login_required

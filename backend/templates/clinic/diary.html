@@ -8,9 +8,103 @@
       linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
       url("{% static 'images/diary_bg.png' %}") center center / cover no-repeat !important;
   }
-  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
+  @media print{ body::before{display:none !important;} .card{background:#fff !important;backdrop-filter:none;} }
+  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .d-grid{display:grid;grid-template-columns:180px 1fr;gap:12px 16px;align-items:end;}
+  @media (max-width:640px){ .d-grid{grid-template-columns:1fr;} }
+  input[type=text],input[type=date],textarea{
+    width:100%;padding:8px 10px;border:1.5px solid rgba(203,213,225,.9);border-radius:8px;font-size:13px;background:rgba(255,255,255,.9);color:var(--ink);font-family:inherit;}
+  input:focus,textarea:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(207,17,36,.12);}
+  .esrf-msg{padding:11px 14px;border-radius:8px;font-size:13px;margin:14px 0;border:1px solid transparent;}
+  .esrf-msg.success{background:#ecfdf3;border-color:#abefc6;color:#067647;}
+  .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
+  .entry{border:1.5px solid rgba(255,255,255,.55);border-radius:12px;padding:14px 16px;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);margin-bottom:12px;}
+  .entry h3{font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .entry .date{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--teal-50);color:var(--teal);}
+  .entry .who{font-size:11.5px;color:var(--muted);}
+  .entry .body{font-size:13px;color:#334155;white-space:pre-wrap;margin:2px 0 10px;}
+  .entry .actions{display:flex;gap:14px;align-items:center;}
+  .entry .actions form{margin:0;}
+  .lnk{font-size:12.5px;font-weight:700;color:var(--teal);background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .del{font-size:12.5px;font-weight:600;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .del:hover,.lnk:hover{text-decoration:underline;}
+  details.edit{margin-top:8px;}
+  details.edit>summary{list-style:none;cursor:pointer;}
+  details.edit>summary::-webkit-details-marker{display:none;}
+  .edit-box{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(148,163,184,.5);}
+  .btn-sm{background:var(--btn);color:var(--btn-ink);border:none;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit;}
+  .btn-sm:hover{background:var(--btn-600);}
 </style>
 
 <h1 style="margin-bottom:2px;">Diary</h1>
-<p class="muted" style="font-size:13px;">A running clinical diary for the unit.</p>
+<p class="muted" style="font-size:13px;">A running clinical diary for the unit — add a dated note and it stays here as a log.</p>
+
+{% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+<!-- ===== Add ===== -->
+<div class="card">
+  <div class="sec-t">Add an entry</div>
+  <div class="sec-s">Pick the date, an optional title, and write the note.</div>
+  <form method="post" action="{% url 'clinic:diary' %}">
+    {% csrf_token %}
+    <div class="d-grid">
+      <div><label class="lbl">Date</label>
+        <input type="date" name="entry_date" value="{{ today|date:'Y-m-d' }}"></div>
+      <div><label class="lbl">Title (optional)</label>
+        <input type="text" name="title" placeholder="e.g. Ward round notes"></div>
+    </div>
+    <div style="margin-top:12px;"><label class="lbl">Note</label>
+      <textarea name="body" rows="3" required placeholder="What happened / what to remember"></textarea></div>
+    <div style="margin-top:12px;text-align:right;"><button class="btn" type="submit">Add entry</button></div>
+  </form>
+</div>
+
+<!-- ===== List ===== -->
+<div class="card">
+  <div class="sec-t">Entries</div>
+  <div class="sec-s">{{ entries|length }} entr{{ entries|length|pluralize:"y,ies" }}.</div>
+
+  {% if not db_ok %}
+    <div class="esrf-msg error" style="margin:0;">The diary is temporarily unavailable (database not reachable).</div>
+  {% elif entries %}
+    {% for e in entries %}
+    <div class="entry">
+      <h3>
+        <span class="date">{{ e.entry_date|date:"D d/m/Y" }}</span>
+        {% if e.title %}<strong>{{ e.title }}</strong>{% endif %}
+        {% if e.created_by %}<span class="who">· {{ e.created_by }}</span>{% endif %}
+      </h3>
+      <div class="body">{{ e.body }}</div>
+      <div class="actions">
+        <details class="edit">
+          <summary class="lnk">Edit</summary>
+          <div class="edit-box">
+            <form method="post" action="{% url 'clinic:diary_entry_edit' pk=e.id %}">
+              {% csrf_token %}
+              <div class="d-grid">
+                <div><label class="lbl">Date</label>
+                  <input type="date" name="entry_date" value="{{ e.entry_date|date:'Y-m-d' }}"></div>
+                <div><label class="lbl">Title (optional)</label>
+                  <input type="text" name="title" value="{{ e.title|default:'' }}"></div>
+              </div>
+              <div style="margin-top:10px;"><label class="lbl">Note</label>
+                <textarea name="body" rows="3" required>{{ e.body }}</textarea></div>
+              <div style="margin-top:10px;"><button class="btn-sm" type="submit">Save changes</button></div>
+            </form>
+          </div>
+        </details>
+        <form method="post" action="{% url 'clinic:diary_entry_delete' pk=e.id %}"
+              onsubmit="return confirm('Remove this diary entry?');">{% csrf_token %}
+          <button class="del" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="muted" style="font-size:13px;">No entries yet — add the first one above.</p>
+  {% endif %}
+</div>
 {% endblock %}
