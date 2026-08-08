@@ -85,7 +85,13 @@
       <div><label class="lbl">Time</label><input type="time" name="at_time" value="08:00"></div>
       <div><label class="lbl">Email to (optional)</label>
         <input type="email" name="recipient_email" placeholder="name@gov.mt"></div>
+      <div><label class="lbl">Opens (optional)</label>
+        <select name="action_url">
+          <option value="">— nothing —</option>
+          {% for label,url in action_choices %}<option value="{{ url }}">{{ label }}</option>{% endfor %}
+        </select></div>
     </div>
+    <div class="sec-s" style="margin:8px 0 0;">“Opens” adds a one-click link on the reminder — on the home page and here — that jumps straight to that page or form when it's due.</div>
     <div style="margin-top:12px;"><label class="lbl">Message (optional)</label>
       <textarea name="message" rows="2" placeholder="What to do when this reminder fires"></textarea></div>
     <div style="margin-top:12px;text-align:right;"><button class="btn" type="submit">Add reminder</button></div>
