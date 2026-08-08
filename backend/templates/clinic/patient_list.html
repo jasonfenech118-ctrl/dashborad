@@ -1,7 +1,14 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Patients — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
+      url("{% static 'images/patients_bg.png' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} .card,table{background:#fff !important;backdrop-filter:none;} }
   /* Patients directory — matches the ward view's teal/card language */
   .pt{margin-top:4px;}
   @media (min-width:1160px){
