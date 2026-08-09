@@ -10,7 +10,7 @@
   </td>
   <td class="rost-role">{{ row.staff.role|default:"" }}</td>
   {% for c in row.cells %}
-  <td class="rost-cell {% if c.weekend %}we{% endif %}">
+  <td class="rost-cell {% if c.sun %}we{% endif %}{% if c.holiday %} hol{% endif %}">
     <button class="cell" data-staff="{{ row.staff.id }}" data-date="{{ c.date }}"
             {% if c.meta %}style="background:{{ c.meta.bg }};color:{{ c.meta.fg }};"{% endif %}>{{ c.code }}</button>
   </td>

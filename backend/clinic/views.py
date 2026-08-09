@@ -1851,6 +1851,47 @@ def _roster_redirect(request):
 
 
 @login_required
+def _easter_sunday(year):
+    """Western (Gregorian) Easter Sunday — anonymous Gregorian algorithm."""
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    return datetime.date(year, month, day)
+
+
+def maltese_public_holidays(year):
+    """{date: full name} for Malta's national and public holidays in ``year``.
+
+    Fixed-date feasts plus the one movable holiday, Good Friday (Easter − 2).
+    """
+    d = datetime.date
+    good_friday = _easter_sunday(year) - datetime.timedelta(days=2)
+    return {
+        d(year, 1, 1): "New Year's Day",
+        d(year, 2, 10): "Feast of St Paul's Shipwreck",
+        d(year, 3, 19): "Feast of St Joseph",
+        d(year, 3, 31): "Freedom Day (Jum il-Ħelsien)",
+        good_friday: "Good Friday",
+        d(year, 5, 1): "Workers' Day (Jum il-Ħaddiem)",
+        d(year, 6, 7): "Sette Giugno",
+        d(year, 6, 29): "Feast of St Peter & St Paul (L-Imnarja)",
+        d(year, 8, 15): "Feast of the Assumption (Santa Marija)",
+        d(year, 9, 8): "Victory Day (Jum il-Vitorja)",
+        d(year, 9, 21): "Independence Day (Jum l-Indipendenza)",
+        d(year, 12, 8): "Feast of the Immaculate Conception",
+        d(year, 12, 13): "Republic Day (Jum ir-Repubblika)",
+        d(year, 12, 25): "Christmas Day",
+    }
+
+
 def roster(request):
     """Monthly roster grid — staff down the side, days across the top, a shift
     code in each cell."""
@@ -1863,11 +1904,13 @@ def roster(request):
         year, month = today.year, today.month
 
     ndays = calendar.monthrange(year, month)[1]
+    holidays = maltese_public_holidays(year)
     days = []
     for d in range(1, ndays + 1):
         dt = datetime.date(year, month, d)
         days.append({"day": d, "date": dt.isoformat(), "wd": dt.strftime("%a"),
-                     "weekend": dt.weekday() >= 5, "today": dt == today})
+                     "weekend": dt.weekday() >= 5, "sun": dt.weekday() == 6,
+                     "holiday": holidays.get(dt), "today": dt == today})
 
     def _load():
         staff = list(models.RosterStaff.objects.filter(active=True))
@@ -1890,7 +1933,8 @@ def roster(request):
                 "date": datetime.date(year, month, d).isoformat(),
                 "code": smap.get((st.id, d), ""),
                 "meta": ROSTER_CODE_MAP.get(smap.get((st.id, d))),
-                "weekend": datetime.date(year, month, d).weekday() >= 5,
+                "sun": datetime.date(year, month, d).weekday() == 6,
+                "holiday": bool(holidays.get(datetime.date(year, month, d))),
             } for d in range(1, ndays + 1)]
             rows.append({"staff": st, "cells": cells})
         return rows
@@ -1901,6 +1945,10 @@ def roster(request):
         "year": year, "month": month,
         "month_label": datetime.date(year, month, 1).strftime("%B %Y"),
         "days": days,
+        "month_holidays": [
+            {"day": dt.day, "wd": dt.strftime("%a"), "name": name}
+            for dt, name in sorted(holidays.items()) if dt.month == month
+        ],
         "core_rows": build_rows(models.RosterStaff.CORE),
         "ot_rows": build_rows(models.RosterStaff.OVERTIME),
         "codes": ROSTER_CODES,
