@@ -1305,14 +1305,20 @@ def admin_users(request):
 
 
 @login_required
-@user_passes_test(_is_admin, login_url="/")
 def admin_user_edit(request, pk):
     """Update a user's name, surname and email, and optionally reset their
-    password or toggle whether the account is active (POST only)."""
+    password or toggle whether the account is active (POST only).
+
+    Editable by any signed-in user, except that changing an administrator's
+    account requires being an administrator.
+    """
     if request.method != "POST":
         return redirect("clinic:admin_users")
     User = get_user_model()
     u = get_object_or_404(User, pk=pk)
+    if u.is_superuser and not _is_admin(request.user):
+        messages.error(request, "Only an administrator can edit an administrator's account.")
+        return redirect("clinic:admin_users")
 
     u.first_name = (request.POST.get("first_name") or "").strip()
     u.last_name = (request.POST.get("last_name") or "").strip()
