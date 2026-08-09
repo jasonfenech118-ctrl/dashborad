@@ -1266,27 +1266,25 @@ def admin_users(request):
     is_admin = _is_admin(request.user)
 
     if request.method == "POST" and (request.POST.get("action") == "create"):
-        if not is_admin:
-            messages.error(request, "Only an administrator can add users.")
-            return redirect("clinic:admin_users")
-        username = (request.POST.get("username") or "").strip()
+        # New users log in with their email, so the email is stored as the
+        # username too. Name/Surname feed the officer fields on every form.
+        email = (request.POST.get("email") or "").strip()
         first = (request.POST.get("first_name") or "").strip()
         last = (request.POST.get("last_name") or "").strip()
-        email = (request.POST.get("email") or "").strip()
         password = request.POST.get("password") or ""
-        if not username or not password:
-            messages.error(request, "A username and an initial password are required.")
+        if not email or "@" not in email:
+            messages.error(request, "Enter the user's login email.")
         elif len(password) < 8:
-            messages.error(request, "The password must be at least 8 characters.")
-        elif User.objects.filter(username__iexact=username).exists():
-            messages.error(request, f"A user named “{username}” already exists.")
+            messages.error(request, "The temporary password must be at least 8 characters.")
+        elif User.objects.filter(username__iexact=email).exists() or User.objects.filter(email__iexact=email).exists():
+            messages.error(request, f"A user with email “{email}” already exists.")
         else:
             try:
-                u = User(username=username, first_name=first, last_name=last,
+                u = User(username=email, first_name=first, last_name=last,
                          email=email, is_active=True, is_staff=False, is_superuser=False)
                 u.set_password(password)
                 u.save()
-                messages.success(request, f"User “{username}” created.")
+                messages.success(request, f"User “{email}” created with a temporary password.")
             except Exception:
                 messages.error(request, "Could not create the user — please try again.")
         return redirect("clinic:admin_users")
@@ -1297,7 +1295,7 @@ def admin_users(request):
     ot_staff = _safe_query(
         lambda: list(RS.objects.filter(category=RS.OVERTIME).order_by("display_order", "full_name")), []) or []
 
-    users = list(User.objects.order_by("username")) if is_admin else []
+    users = _safe_query(lambda: list(User.objects.order_by("username")), []) or []
     return render(request, "clinic/admin_users.html", {
         "users": users,
         "is_admin": is_admin,

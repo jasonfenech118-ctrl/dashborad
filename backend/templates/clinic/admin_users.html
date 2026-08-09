@@ -61,7 +61,7 @@
 </style>
 
 <h1 style="margin-bottom:2px;">Admin</h1>
-<p class="muted" style="font-size:13px;">Manage roster staff{% if is_admin %} and user accounts{% endif %}.</p>
+<p class="muted" style="font-size:13px;">Manage roster staff and users.</p>
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
 
@@ -121,39 +121,32 @@
   <div class="sec-s" style="margin-top:10px;">Overtime (non-core) staff are added and removed on the <a href="{% url 'clinic:roster' %}" style="font-weight:700;color:var(--teal);">Roster</a> page.</div>
 </div>
 
-{% if is_admin %}
-<!-- ===== Add user ===== -->
+<!-- ===== Users ===== -->
 <div class="card">
-  <div class="sec-t">Add a user</div>
-  <div class="sec-s">Give them a username and an initial password (at least 8 characters). Their Name and Surname fill the officer fields on every form automatically.</div>
+  <div class="sec-t">Users</div>
+  <div class="sec-s">Add people who will sign in with their own <strong>login email</strong> and a <strong>temporary password</strong>. Their Name and Surname fill the officer fields on every form automatically.</div>
   <form method="post" action="{% url 'clinic:admin_users' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="create">
     <div class="u-grid">
-      <div><label class="lbl">Username</label><input type="text" name="username" required autocomplete="off"></div>
+      <div><label class="lbl">Login email</label><input type="email" name="email" required placeholder="name@gov.mt" autocomplete="off"></div>
       <div><label class="lbl">Name</label><input type="text" name="first_name" placeholder="First name"></div>
       <div><label class="lbl">Surname</label><input type="text" name="last_name" placeholder="Last name"></div>
-      <div><label class="lbl">Email</label><input type="email" name="email" placeholder="name@gov.mt"></div>
-      <div><label class="lbl">Initial password</label><input type="password" name="password" required autocomplete="new-password"></div>
+      <div><label class="lbl">Temporary password</label><input type="password" name="password" required autocomplete="new-password" placeholder="At least 8 characters"></div>
     </div>
     <div style="margin-top:12px;text-align:right;"><button class="btn" type="submit">Add user</button></div>
   </form>
-</div>
 
-<!-- ===== Users ===== -->
-<div class="card">
-  <div class="sec-t">Users</div>
-  <div class="sec-s">{{ users|length }} user{{ users|length|pluralize }}.</div>
-
+  <div class="sec-t" style="font-size:13px;margin-top:16px;">{{ users|length }} user{{ users|length|pluralize }}</div>
   {% for u in users %}
   <div class="u-row">
     <h3>
-      <strong>{{ u.username }}</strong>
+      <strong>{{ u.email|default:u.username }}</strong>
       {% if u.get_full_name %}<span class="who">{{ u.get_full_name }}</span>{% endif %}
-      {% if u.email %}<span class="who">· {{ u.email }}</span>{% endif %}
       {% if u.is_superuser %}<span class="badge admin">Admin</span>{% endif %}
       {% if u.is_active %}<span class="badge on">Active</span>{% else %}<span class="badge off">Disabled</span>{% endif %}
     </h3>
+    {% if is_admin %}
     <details class="edit">
       <summary>Edit / reset password</summary>
       <div class="edit-box">
@@ -172,10 +165,10 @@
         </form>
       </div>
     </details>
+    {% endif %}
   </div>
   {% empty %}
     <p class="muted" style="font-size:13px;">No users yet.</p>
   {% endfor %}
 </div>
-{% endif %}
 {% endblock %}
