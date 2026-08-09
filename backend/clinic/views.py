@@ -1253,17 +1253,22 @@ def _is_admin(user):
 
 
 @login_required
-@user_passes_test(_is_admin, login_url="/")
 def admin_users(request):
-    """User administration — superusers add users and set their details.
+    """Admin hub.
 
-    A user's first name (Name) and last name (Surname) feed the officer /
-    requesting-officer fields on every form automatically, so keeping these
-    up to date here is what drives the name automation across the app.
+    * Roster staff (add / remove core and overtime staff) — available to any
+      signed-in user, moved here from the Roster page.
+    * Users & passwords — superusers only: add users and set their name,
+      surname, email and password. A user's Name/Surname here feed the officer
+      fields on every form, which is what drives the name automation.
     """
     User = get_user_model()
+    is_admin = _is_admin(request.user)
 
     if request.method == "POST" and (request.POST.get("action") == "create"):
+        if not is_admin:
+            messages.error(request, "Only an administrator can add users.")
+            return redirect("clinic:admin_users")
         username = (request.POST.get("username") or "").strip()
         first = (request.POST.get("first_name") or "").strip()
         last = (request.POST.get("last_name") or "").strip()
@@ -1286,8 +1291,19 @@ def admin_users(request):
                 messages.error(request, "Could not create the user — please try again.")
         return redirect("clinic:admin_users")
 
-    users = list(User.objects.order_by("username"))
-    return render(request, "clinic/admin_users.html", {"users": users})
+    RS = models.RosterStaff
+    core_staff = _safe_query(
+        lambda: list(RS.objects.filter(category=RS.CORE).order_by("display_order", "full_name")), []) or []
+    ot_staff = _safe_query(
+        lambda: list(RS.objects.filter(category=RS.OVERTIME).order_by("display_order", "full_name")), []) or []
+
+    users = list(User.objects.order_by("username")) if is_admin else []
+    return render(request, "clinic/admin_users.html", {
+        "users": users,
+        "is_admin": is_admin,
+        "core_staff": core_staff,
+        "ot_staff": ot_staff,
+    })
 
 
 @login_required
@@ -1825,7 +1841,10 @@ ROSTER_CODE_MAP = {c["code"]: c for c in ROSTER_CODES}
 
 
 def _roster_redirect(request):
-    """Back to the roster, keeping the month the user was viewing."""
+    """Back to where the staff change was made — the Admin page when the form
+    came from there, otherwise the roster (keeping the month being viewed)."""
+    if (request.POST.get("back") or "").strip() == "admin":
+        return reverse("clinic:admin_users")
     y, m = request.POST.get("year"), request.POST.get("month")
     base = reverse("clinic:roster")
     return f"{base}?year={y}&month={m}" if (y and m) else base
