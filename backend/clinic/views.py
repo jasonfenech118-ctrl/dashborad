@@ -1850,7 +1850,6 @@ def _roster_redirect(request):
     return f"{base}?year={y}&month={m}" if (y and m) else base
 
 
-@login_required
 def _easter_sunday(year):
     """Western (Gregorian) Easter Sunday — anonymous Gregorian algorithm."""
     a = year % 19
@@ -1892,6 +1891,7 @@ def maltese_public_holidays(year):
     }
 
 
+@login_required
 def roster(request):
     """Monthly roster grid — staff down the side, days across the top, a shift
     code in each cell."""
