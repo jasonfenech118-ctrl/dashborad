@@ -96,10 +96,23 @@
   {% for c in codes %}<span><b style="background:{{ c.bg }};color:{{ c.fg }};">{{ c.code }}</b>{{ c.label }}</span>{% endfor %}
 </div>
 
-<!-- Staff are now added and removed in Admin. -->
-<p class="muted" style="font-size:13px;margin:2px 0 14px;">
-  Add or remove staff in <a href="{% url 'clinic:admin_users' %}" style="font-weight:700;color:var(--teal);">Admin</a>.
+<!-- Overtime (non-core) staff are managed here; core staff live in Admin. -->
+<p class="muted" style="font-size:13px;margin:2px 0 10px;">
+  Core staff are managed in <a href="{% url 'clinic:admin_users' %}" style="font-weight:700;color:var(--teal);">Admin</a>. Add overtime (non-core) staff below.
 </p>
+<div class="addgrid">
+  <div class="addbox">
+    <div class="addhdr"><span class="dot" style="background:#f59e0b;"></span>Add overtime staff <span class="sub">(non-core)</span></div>
+    <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+      {% csrf_token %}
+      <input type="hidden" name="category" value="overtime">
+      <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+      <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+      <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. OT Nurse"></div>
+      <button class="btn" type="submit">+ Add overtime</button>
+    </form>
+  </div>
+</div>
 
 <!-- Month nav -->
 <div class="rost-bar">

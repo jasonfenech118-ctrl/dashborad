@@ -1,7 +1,14 @@
 {% extends "clinic/base.html" %}
+{% load static %}
 {% block title %}Admin — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
+  body::before{
+    background:
+      linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.25)),
+      url("{% static 'images/admin_bg.png' %}") center center / cover no-repeat !important;
+  }
+  @media print{ body::before{display:none !important;} .card{background:#fff !important;backdrop-filter:none;} }
   .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
   .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
   label.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
@@ -43,6 +50,14 @@
   .stafflist .sp{flex:1;}
   .rm{color:#dc2626;font-weight:600;font-size:12.5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
   .rm:hover{text-decoration:underline;}
+  /* Repeating shift pattern */
+  .pattern{flex:1 0 100%;border-top:1px dashed rgba(148,163,184,.5);margin-top:4px;padding-top:10px;}
+  .pat-hdr{font-size:12px;font-weight:800;margin-bottom:6px;}
+  .pat-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#475569;margin-bottom:8px;}
+  .pat-legend .sw{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:19px;border-radius:5px;font-size:10.5px;font-weight:800;margin-right:5px;padding:0 5px;}
+  .pat-row{display:flex;gap:14px;flex-wrap:wrap;align-items:end;}
+  .pat-steps{display:flex;gap:6px;flex-wrap:wrap;}
+  .pattern select{padding:7px 6px;border:1.5px solid rgba(203,213,225,.9);border-radius:8px;font-size:12.5px;background:rgba(255,255,255,.9);color:var(--ink);font-family:inherit;min-width:74px;}
 </style>
 
 <h1 style="margin-bottom:2px;">Admin</h1>
@@ -55,61 +70,55 @@
   <div class="sec-t">Roster staff</div>
   <div class="sec-s">Add or remove the people who appear on the Monthly Roster. Changes show on the Roster grid straight away.</div>
 
-  <div class="addgrid">
-    <div class="addbox">
-      <div class="addhdr"><span class="dot" style="background:#1f2937;"></span>Add core staff</div>
-      <form method="post" action="{% url 'clinic:roster_staff_add' %}">
-        {% csrf_token %}
-        <input type="hidden" name="category" value="core">
-        <input type="hidden" name="back" value="admin">
-        <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
-        <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
-        <button class="btn" type="submit">+ Add core</button>
-      </form>
-    </div>
-    <div class="addbox">
-      <div class="addhdr"><span class="dot" style="background:#f59e0b;"></span>Add overtime staff <span class="sub">(non-core)</span></div>
-      <form method="post" action="{% url 'clinic:roster_staff_add' %}">
-        {% csrf_token %}
-        <input type="hidden" name="category" value="overtime">
-        <input type="hidden" name="back" value="admin">
-        <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
-        <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. OT Nurse"></div>
-        <button class="btn" type="submit">+ Add overtime</button>
-      </form>
-    </div>
+  <div class="addbox" style="max-width:660px;">
+    <div class="addhdr"><span class="dot" style="background:#1f2937;"></span>Add core staff</div>
+    <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+      {% csrf_token %}
+      <input type="hidden" name="category" value="core">
+      <input type="hidden" name="back" value="admin">
+      <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+      <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
+
+      <div class="pattern">
+        <div class="pat-hdr">Repeating shift pattern <span class="muted" style="font-weight:600;">(optional)</span></div>
+        <div class="pat-legend">
+          <span><b class="sw" style="background:#1f2937;color:#fff;">D</b>Day</span>
+          <span><b class="sw" style="background:#e5e7eb;color:#111;">R</b>Off</span>
+          <span><b class="sw" style="background:#0891b2;color:#fff;">AM</b>Morning</span>
+        </div>
+        <div class="pat-row">
+          <div class="fld"><label>Start date</label><input type="date" name="pattern_start"></div>
+          <div class="pat-steps">
+            {% for i in "1234567" %}
+            <select name="pattern" aria-label="Pattern day {{ forloop.counter }}">
+              <option value="">—</option>
+              <option value="D">Day</option>
+              <option value="R">Off</option>
+              <option value="AM">Morning</option>
+            </select>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:5px;">Fill the cycle left → right (e.g. Day, Day, Off, Morning). It repeats from the start date through the end of next month. Leave blank for no pattern.</div>
+      </div>
+
+      <button class="btn" type="submit">+ Add core</button>
+    </form>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 24px;margin-top:8px;">
-    <div>
-      <div class="sec-t" style="font-size:13px;margin-top:12px;">Core staff</div>
-      <ul class="stafflist">
-        {% for s in core_staff %}
-        <li>
-          <span class="nm">{{ s.full_name }}</span>{% if s.role %}<span class="rl">{{ s.role }}</span>{% endif %}
-          <span class="sp"></span>
-          <form method="post" action="{% url 'clinic:roster_staff_delete' pk=s.id %}" onsubmit="return confirm('Remove {{ s.full_name|escapejs }} from the roster?');">
-            {% csrf_token %}<input type="hidden" name="back" value="admin"><button class="rm" type="submit">Remove</button>
-          </form>
-        </li>
-        {% empty %}<li class="muted" style="color:#94a3b8;">No core staff yet.</li>{% endfor %}
-      </ul>
-    </div>
-    <div>
-      <div class="sec-t" style="font-size:13px;margin-top:12px;">Overtime staff</div>
-      <ul class="stafflist">
-        {% for s in ot_staff %}
-        <li>
-          <span class="nm">{{ s.full_name }}</span>{% if s.role %}<span class="rl">{{ s.role }}</span>{% endif %}
-          <span class="sp"></span>
-          <form method="post" action="{% url 'clinic:roster_staff_delete' pk=s.id %}" onsubmit="return confirm('Remove {{ s.full_name|escapejs }} from the roster?');">
-            {% csrf_token %}<input type="hidden" name="back" value="admin"><button class="rm" type="submit">Remove</button>
-          </form>
-        </li>
-        {% empty %}<li class="muted" style="color:#94a3b8;">No overtime staff yet.</li>{% endfor %}
-      </ul>
-    </div>
-  </div>
+  <div class="sec-t" style="font-size:13px;margin-top:14px;">Core staff</div>
+  <ul class="stafflist">
+    {% for s in core_staff %}
+    <li>
+      <span class="nm">{{ s.full_name }}</span>{% if s.role %}<span class="rl">{{ s.role }}</span>{% endif %}
+      <span class="sp"></span>
+      <form method="post" action="{% url 'clinic:roster_staff_delete' pk=s.id %}" onsubmit="return confirm('Remove {{ s.full_name|escapejs }} from the roster?');">
+        {% csrf_token %}<input type="hidden" name="back" value="admin"><button class="rm" type="submit">Remove</button>
+      </form>
+    </li>
+    {% empty %}<li class="muted" style="color:#94a3b8;">No core staff yet.</li>{% endfor %}
+  </ul>
+  <div class="sec-s" style="margin-top:10px;">Overtime (non-core) staff are added and removed on the <a href="{% url 'clinic:roster' %}" style="font-weight:700;color:var(--teal);">Roster</a> page.</div>
 </div>
 
 {% if is_admin %}

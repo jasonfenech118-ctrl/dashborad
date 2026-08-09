@@ -1826,6 +1826,7 @@ def reminder_send(request, pk):
 # The shift codes shown in the roster legend, with their colours.
 ROSTER_CODES = [
     {"code": "D", "label": "Day", "bg": "#1f2937", "fg": "#ffffff"},
+    {"code": "AM", "label": "Morning", "bg": "#0891b2", "fg": "#ffffff"},
     {"code": "R", "label": "Rest/Off", "bg": "#e5e7eb", "fg": "#111827"},
     {"code": "S", "label": "Sick", "bg": "#ef4444", "fg": "#ffffff"},
     {"code": "M", "label": "Maternity", "bg": "#db2777", "fg": "#ffffff"},
@@ -1973,14 +1974,50 @@ def roster_staff_add(request):
                 cat = models.RosterStaff.CORE
             try:
                 order = _safe_count(models.RosterStaff.objects.filter(category=cat)) or 0
-                models.RosterStaff.objects.create(
+                st = models.RosterStaff.objects.create(
                     full_name=name,
                     role=(request.POST.get("role") or "").strip() or None,
                     category=cat, display_order=order)
-                messages.success(request, f"{name} added to the roster.")
+                applied = _apply_shift_pattern(request, st)
+                if applied:
+                    messages.success(request, f"{name} added, with {applied} shifts from the pattern.")
+                else:
+                    messages.success(request, f"{name} added to the roster.")
             except Exception:
                 messages.error(request, "Could not add — the database is unavailable.")
     return redirect(_roster_redirect(request))
+
+
+def _apply_shift_pattern(request, staff):
+    """Apply a repeating shift pattern from the add-staff form, if present.
+
+    Reads the ``pattern`` cycle (a list of shift codes: D=Day, R=Off, AM=Morning)
+    and ``pattern_start`` date, then fills each day from the start through the
+    end of the following month by cycling the pattern. Returns the number of
+    days filled (0 if no pattern was given).
+    """
+    cycle = [c for c in request.POST.getlist("pattern") if c in ROSTER_CODE_MAP]
+    raw = (request.POST.get("pattern_start") or "").strip()
+    try:
+        start = datetime.date.fromisoformat(raw) if raw else None
+    except ValueError:
+        start = None
+    if not cycle or not start:
+        return 0
+    # Horizon: the end of the month after the start month.
+    ny, nm = (start.year + 1, 1) if start.month == 12 else (start.year, start.month + 1)
+    horizon = datetime.date(ny, nm, calendar.monthrange(ny, nm)[1])
+    d, i, n = start, 0, 0
+    while d <= horizon:
+        try:
+            models.RosterShift.objects.update_or_create(
+                staff=staff, date=d, defaults={"code": cycle[i % len(cycle)]})
+            n += 1
+        except Exception:
+            pass
+        d += datetime.timedelta(days=1)
+        i += 1
+    return n
 
 
 @login_required
