@@ -37,6 +37,11 @@
   .addbox input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(207,17,36,.12);}
 
   .rost-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
+  /* Break out of the centered 1100px content column on wide screens so the whole
+     month (31 days) fits without horizontal scrolling. */
+  @media (min-width:1180px){
+    .rost-wrap{width:min(1560px,95vw);margin-left:calc(50% - min(1560px,95vw)/2);}
+  }
   table.rost{border-collapse:separate;border-spacing:0;font-size:12px;}
   table.rost th,table.rost td{border-bottom:1px solid #eef1f5;border-right:1px solid #eef1f5;padding:0;}
   table.rost thead th{position:sticky;top:0;z-index:3;background:#0f2540;color:#fff;height:40px;font-weight:700;text-align:center;}
