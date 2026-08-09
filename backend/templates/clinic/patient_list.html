@@ -16,13 +16,11 @@
   }
 
   .pt-head{
-    background:var(--teal);color:#fff;border-radius:12px 12px 0 0;
+    background:#fff;color:var(--navy);border:1px solid var(--border);border-bottom:none;border-radius:12px 12px 0 0;
     padding:14px 18px;display:flex;align-items:center;gap:10px;
   }
-  .pt-head .title{font-size:17px;font-weight:800;}
-  .pt-head .count{background:rgba(255,255,255,.18);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;}
-  .pt-head .add{margin-left:auto;background:#fff;color:var(--teal);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-decoration:none;}
-  .pt-head .add:hover{background:var(--teal-50);}
+  .pt-head .title{font-size:20px;font-weight:800;color:var(--navy);}
+  .pt-head .count{background:rgba(19,41,75,.08);color:var(--navy);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;}
 
   .pt-tools{
     background:#fff;border:1px solid var(--border);border-top:none;
@@ -62,7 +60,6 @@
     <div class="pt-head">
       <span class="title">Patients</span>
       <span class="count">{{ page.paginator.count }}</span>
-      <a class="add" href="{% url 'clinic:add_patient' %}">+ Add patient</a>
     </div>
 
     <div class="pt-tools">
