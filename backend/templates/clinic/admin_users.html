@@ -1,5 +1,5 @@
 {% extends "clinic/base.html" %}
-{% block title %}Admin — Users — MDH Stoma Care Clinic{% endblock %}
+{% block title %}Admin — MDH Stoma Care Clinic{% endblock %}
 {% block content %}
 <style>
   .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
@@ -26,17 +26,97 @@
   .chk input{width:auto;}
   .btn-sm{background:var(--btn);color:var(--btn-ink);border:none;padding:7px 13px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12.5px;font-family:inherit;}
   .btn-sm:hover{background:var(--btn-600);}
+
+  /* Roster staff management */
+  .addgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;}
+  .addbox{border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.75);}
+  .addbox .addhdr{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13px;margin-bottom:10px;}
+  .addbox .addhdr .dot{width:10px;height:10px;border-radius:3px;flex:none;}
+  .addbox .addhdr .sub{color:var(--muted);font-weight:600;font-size:12px;}
+  .addbox form{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+  .fld label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .stafflist{list-style:none;margin:12px 0 0;padding:0;}
+  .stafflist li{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #eef1f5;font-size:13px;}
+  .stafflist li:last-child{border-bottom:none;}
+  .stafflist .nm{font-weight:700;}
+  .stafflist .rl{color:var(--muted);font-size:12px;}
+  .stafflist .sp{flex:1;}
+  .rm{color:#dc2626;font-weight:600;font-size:12.5px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .rm:hover{text-decoration:underline;}
 </style>
 
-<h1 style="margin-bottom:2px;">Admin — Users</h1>
-<p class="muted" style="font-size:13px;">Add users, set their email, and reset passwords. A user's <strong>Name</strong> and <strong>Surname</strong> here fill the officer fields on every form automatically.</p>
+<h1 style="margin-bottom:2px;">Admin</h1>
+<p class="muted" style="font-size:13px;">Manage roster staff{% if is_admin %} and user accounts{% endif %}.</p>
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
 
+<!-- ===== Roster staff ===== -->
+<div class="card">
+  <div class="sec-t">Roster staff</div>
+  <div class="sec-s">Add or remove the people who appear on the Monthly Roster. Changes show on the Roster grid straight away.</div>
+
+  <div class="addgrid">
+    <div class="addbox">
+      <div class="addhdr"><span class="dot" style="background:#1f2937;"></span>Add core staff</div>
+      <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+        {% csrf_token %}
+        <input type="hidden" name="category" value="core">
+        <input type="hidden" name="back" value="admin">
+        <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+        <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. Staff Nurse"></div>
+        <button class="btn" type="submit">+ Add core</button>
+      </form>
+    </div>
+    <div class="addbox">
+      <div class="addhdr"><span class="dot" style="background:#f59e0b;"></span>Add overtime staff <span class="sub">(non-core)</span></div>
+      <form method="post" action="{% url 'clinic:roster_staff_add' %}">
+        {% csrf_token %}
+        <input type="hidden" name="category" value="overtime">
+        <input type="hidden" name="back" value="admin">
+        <div class="fld"><label>Name</label><input type="text" name="full_name" required placeholder="Full name" style="min-width:170px;"></div>
+        <div class="fld"><label>Role</label><input type="text" name="role" placeholder="e.g. OT Nurse"></div>
+        <button class="btn" type="submit">+ Add overtime</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px 24px;margin-top:8px;">
+    <div>
+      <div class="sec-t" style="font-size:13px;margin-top:12px;">Core staff</div>
+      <ul class="stafflist">
+        {% for s in core_staff %}
+        <li>
+          <span class="nm">{{ s.full_name }}</span>{% if s.role %}<span class="rl">{{ s.role }}</span>{% endif %}
+          <span class="sp"></span>
+          <form method="post" action="{% url 'clinic:roster_staff_delete' pk=s.id %}" onsubmit="return confirm('Remove {{ s.full_name|escapejs }} from the roster?');">
+            {% csrf_token %}<input type="hidden" name="back" value="admin"><button class="rm" type="submit">Remove</button>
+          </form>
+        </li>
+        {% empty %}<li class="muted" style="color:#94a3b8;">No core staff yet.</li>{% endfor %}
+      </ul>
+    </div>
+    <div>
+      <div class="sec-t" style="font-size:13px;margin-top:12px;">Overtime staff</div>
+      <ul class="stafflist">
+        {% for s in ot_staff %}
+        <li>
+          <span class="nm">{{ s.full_name }}</span>{% if s.role %}<span class="rl">{{ s.role }}</span>{% endif %}
+          <span class="sp"></span>
+          <form method="post" action="{% url 'clinic:roster_staff_delete' pk=s.id %}" onsubmit="return confirm('Remove {{ s.full_name|escapejs }} from the roster?');">
+            {% csrf_token %}<input type="hidden" name="back" value="admin"><button class="rm" type="submit">Remove</button>
+          </form>
+        </li>
+        {% empty %}<li class="muted" style="color:#94a3b8;">No overtime staff yet.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% if is_admin %}
 <!-- ===== Add user ===== -->
 <div class="card">
   <div class="sec-t">Add a user</div>
-  <div class="sec-s">Give them a username and an initial password (at least 8 characters). They can be renamed or reset any time below.</div>
+  <div class="sec-s">Give them a username and an initial password (at least 8 characters). Their Name and Surname fill the officer fields on every form automatically.</div>
   <form method="post" action="{% url 'clinic:admin_users' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="create">
@@ -88,4 +168,5 @@
     <p class="muted" style="font-size:13px;">No users yet.</p>
   {% endfor %}
 </div>
+{% endif %}
 {% endblock %}
