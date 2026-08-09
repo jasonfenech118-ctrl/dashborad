@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
@@ -1338,6 +1338,60 @@ def admin_user_edit(request, pk):
         messages.success(request, f"User “{u.get_username()}” updated ({note}details saved).")
     except Exception:
         messages.error(request, "Could not update the user — please try again.")
+    return redirect("clinic:admin_users")
+
+
+@login_required
+def admin_password_self(request):
+    """Change the signed-in account's own password (POST only)."""
+    if request.method != "POST":
+        return redirect("clinic:admin_users")
+    pw = request.POST.get("password") or ""
+    pw2 = request.POST.get("password2") or ""
+    if len(pw) < 8:
+        messages.error(request, "Your new password must be at least 8 characters.")
+    elif pw != pw2:
+        messages.error(request, "The two passwords don't match.")
+    else:
+        try:
+            u = request.user
+            u.set_password(pw)
+            u.save()
+            # Keep this session signed in after the password change.
+            update_session_auth_hash(request, u)
+            messages.success(request, "Your password has been changed.")
+        except Exception:
+            messages.error(request, "Could not change your password — please try again.")
+    return redirect("clinic:admin_users")
+
+
+@login_required
+def admin_password_set(request, pk):
+    """Set a new password for another user (POST only).
+
+    Anyone signed in can reset an ordinary user's password; changing an
+    administrator's password requires being an administrator, so a shared
+    account can't take over an admin login.
+    """
+    if request.method != "POST":
+        return redirect("clinic:admin_users")
+    User = get_user_model()
+    u = get_object_or_404(User, pk=pk)
+    if u.is_superuser and not _is_admin(request.user):
+        messages.error(request, "Only an administrator can change an administrator's password.")
+        return redirect("clinic:admin_users")
+    pw = request.POST.get("password") or ""
+    if len(pw) < 8:
+        messages.error(request, "The new password must be at least 8 characters.")
+        return redirect("clinic:admin_users")
+    try:
+        u.set_password(pw)
+        u.save()
+        if u.pk == request.user.pk:
+            update_session_auth_hash(request, u)
+        messages.success(request, f"Password changed for {u.email or u.get_username()}.")
+    except Exception:
+        messages.error(request, "Could not change that password — please try again.")
     return redirect("clinic:admin_users")
 
 
