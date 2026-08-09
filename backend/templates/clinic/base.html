@@ -246,12 +246,14 @@
       </div>
       {% endwith %}
       <div class="wrap">
+        {% if request.resolver_match.url_name != 'admin_users' %}
         <div class="backbar">
           <button type="button" class="btn-back" onclick="if(history.length>1){history.back()}else{location.href='/'}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
             Back
           </button>
         </div>
+        {% endif %}
         {% block content %}{% endblock %}
       </div>
     </div>
