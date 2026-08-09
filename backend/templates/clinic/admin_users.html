@@ -70,7 +70,7 @@
   <div class="sec-t">Roster staff</div>
   <div class="sec-s">Add or remove the people who appear on the Monthly Roster. Changes show on the Roster grid straight away.</div>
 
-  <div class="addbox" style="max-width:660px;">
+  <div class="addbox" style="max-width:660px;border:none;background:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none;">
     <div class="addhdr"><span class="dot" style="background:#1f2937;"></span>Add core staff</div>
     <form method="post" action="{% url 'clinic:roster_staff_add' %}">
       {% csrf_token %}
