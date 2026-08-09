@@ -171,4 +171,37 @@
     <p class="muted" style="font-size:13px;">No users yet.</p>
   {% endfor %}
 </div>
+
+<!-- ===== Passwords ===== -->
+<div class="card">
+  <div class="sec-t">Passwords</div>
+  <div class="sec-s">Change your own password, or set a new password for any user.</div>
+
+  <div class="addbox" style="max-width:560px;margin-bottom:14px;">
+    <div class="addhdr"><span class="dot" style="background:#0891b2;"></span>Your password</div>
+    <form method="post" action="{% url 'clinic:admin_password_self' %}">
+      {% csrf_token %}
+      <div class="fld"><label>New password</label><input type="password" name="password" required autocomplete="new-password" style="min-width:170px;"></div>
+      <div class="fld"><label>Confirm</label><input type="password" name="password2" required autocomplete="new-password" style="min-width:170px;"></div>
+      <button class="btn" type="submit">Change my password</button>
+    </form>
+  </div>
+
+  <div class="sec-t" style="font-size:13px;">Set another user's password</div>
+  <ul class="stafflist">
+    {% for u in users %}
+    <li>
+      <span class="nm">{{ u.email|default:u.username }}</span>{% if u.get_full_name %}<span class="rl">{{ u.get_full_name }}</span>{% endif %}
+      {% if u.is_superuser %}<span class="badge admin">Admin</span>{% endif %}
+      <span class="sp"></span>
+      <form method="post" action="{% url 'clinic:admin_password_set' pk=u.pk %}" style="display:flex;gap:8px;align-items:center;margin:0;">
+        {% csrf_token %}
+        <input type="password" name="password" placeholder="New password" required autocomplete="new-password"
+               style="padding:6px 9px;border:1.5px solid rgba(203,213,225,.9);border-radius:8px;font-size:12.5px;min-width:150px;background:rgba(255,255,255,.9);color:var(--ink);font-family:inherit;">
+        <button class="btn-sm" type="submit">Set</button>
+      </form>
+    </li>
+    {% empty %}<li class="muted" style="color:#94a3b8;">No users yet.</li>{% endfor %}
+  </ul>
+</div>
 {% endblock %}
