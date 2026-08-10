@@ -149,14 +149,6 @@
   </table>
 </div>
 
-{% if month_holidays %}
-<div class="holidays">
-  <div class="hol-t"><span class="hol-dot"></span>Maltese public holidays this month</div>
-  <ul>
-    {% for h in month_holidays %}<li><b>{{ h.day }}</b><span class="hd">{{ h.wd }}</span>{{ h.name }}</li>{% endfor %}
-  </ul>
-</div>
-{% endif %}
 {% endif %}
 
 <!-- Shift code palette (shown on cell click) -->
