@@ -1205,3 +1205,40 @@ class RosterShift(UUIDModel):
 
     def __str__(self):
         return f"{self.staff_id} {self.date} {self.code}"
+
+
+class OvertimeHours(UUIDModel):
+    staff = models.ForeignKey(RosterStaff, on_delete=models.CASCADE, related_name="overtime_hours")
+    date = models.DateField()
+    hours = models.DecimalField(max_digits=6, decimal_places=2)
+    notes = models.CharField(max_length=300, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "roster_overtime_hours"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.staff} {self.date} {self.hours}h"
+
+
+class TimeinLieuHours(UUIDModel):
+    EARNED = "earned"
+    USED = "used"
+    TYPE_CHOICES = [(EARNED, "Earned"), (USED, "Used")]
+
+    staff = models.ForeignKey(RosterStaff, on_delete=models.CASCADE, related_name="til_hours")
+    date = models.DateField()
+    hours = models.DecimalField(max_digits=6, decimal_places=2)
+    entry_type = models.CharField(max_length=6, choices=TYPE_CHOICES, default=EARNED)
+    notes = models.CharField(max_length=300, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "roster_til_hours"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"{self.staff} {self.date} {self.entry_type} {self.hours}h"
