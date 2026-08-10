@@ -90,42 +90,29 @@
   .pal.clear{grid-column:1/-1;background:#f1f5f9;color:#475569;}
   .hint{font-size:12px;color:var(--muted);margin-bottom:6px;}
 
-  /* ---- tab bar ---- */
-  .rost-tabbar{
-    background:var(--navy);display:flex;align-items:stretch;gap:2px;min-height:46px;
-    position:sticky;top:46px;z-index:40;
-    /* break fully out of the centred wrap to span the whole main area */
-    width:calc(100vw - var(--sidebar));
-    margin-left:calc(-1 * max(0px,(100vw - var(--sidebar) - 1100px)/2) - 20px);
-    margin-bottom:18px;
-  }
-  .rost-tabbar button{
-    color:#fff;background:none;border:none;font-size:12.5px;font-weight:600;opacity:.82;
-    padding:0 14px;white-space:nowrap;border-bottom:3px solid transparent;
-    cursor:pointer;font-family:inherit;display:flex;align-items:center;transition:.15s;
-  }
-  .rost-tabbar button:hover{opacity:1;background:rgba(207,17,36,.18);}
-  .rost-tabbar button.active{opacity:1;background:rgba(207,17,36,.24);border-bottom-color:var(--red);}
   /* placeholder sections */
   .sec-placeholder{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;}
   .sec-placeholder svg{width:38px;height:38px;stroke:#94a3b8;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:10px;}
   .sec-placeholder p{margin:4px 0 0;font-weight:600;color:var(--ink);}
   .sec-placeholder span{font-size:12.5px;}
 
-  @media print{ .rost-bar .navbtn,.addbox,.rm,#palette,.rost-tabbar{display:none !important;} }
+  @media print{ .rost-bar .navbtn,.addbox,.rm,#palette{display:none !important;} }
 </style>
 
-<!-- ===== TAB BAR ===== -->
-<nav class="rost-tabbar" aria-label="Roster views">
-  <button class="active" data-sec="sec-roster">Roster</button>
-  <button data-sec="sec-overtime">Overtime</button>
-  <button data-sec="sec-timelieu">Time in Lieu</button>
+{% block topbar_nav %}
+<nav style="display:flex;align-items:stretch;" aria-label="Roster views">
+  <button class="rost-tab active" data-sec="sec-roster"
+    style="color:#fff;background:rgba(207,17,36,.24);border:none;border-bottom:3px solid var(--red);font-size:12.5px;font-weight:600;padding:0 14px;white-space:nowrap;cursor:pointer;font-family:inherit;display:flex;align-items:center;transition:.15s;">Roster</button>
+  <button class="rost-tab" data-sec="sec-overtime"
+    style="color:#fff;background:none;border:none;border-bottom:3px solid transparent;font-size:12.5px;font-weight:600;opacity:.82;padding:0 14px;white-space:nowrap;cursor:pointer;font-family:inherit;display:flex;align-items:center;transition:.15s;">Overtime</button>
+  <button class="rost-tab" data-sec="sec-timelieu"
+    style="color:#fff;background:none;border:none;border-bottom:3px solid transparent;font-size:12.5px;font-weight:600;opacity:.82;padding:0 14px;white-space:nowrap;cursor:pointer;font-family:inherit;display:flex;align-items:center;transition:.15s;">Time in Lieu</button>
 </nav>
+{% endblock %}
 
 <!-- ===== SECTION: Monthly Roster ===== -->
 <div id="sec-roster">
 <h1 style="margin-bottom:2px;">Monthly Roster</h1>
-<p class="muted" style="font-size:13px;">Click any day cell to set a shift. Add or remove staff below.</p>
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
 
@@ -262,12 +249,19 @@
 
 // ---- Tab switching ----
 (function(){
-  var tabs = document.querySelectorAll('.rost-tabbar button');
+  var tabs = document.querySelectorAll('.rost-tab');
   var sections = ['sec-roster','sec-overtime','sec-timelieu'];
+  var RED = 'var(--red)';
   tabs.forEach(function(btn){
+    btn.addEventListener('mouseenter', function(){ if(!btn.classList.contains('active')){ btn.style.opacity='1'; btn.style.background='rgba(207,17,36,.18)'; } });
+    btn.addEventListener('mouseleave', function(){ if(!btn.classList.contains('active')){ btn.style.opacity='.82'; btn.style.background='none'; } });
     btn.addEventListener('click', function(){
-      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tabs.forEach(function(t){
+        t.classList.remove('active');
+        t.style.background='none'; t.style.opacity='.82'; t.style.borderBottomColor='transparent';
+      });
       btn.classList.add('active');
+      btn.style.background='rgba(207,17,36,.24)'; btn.style.opacity='1'; btn.style.borderBottomColor=RED;
       sections.forEach(function(id){
         var el = document.getElementById(id);
         if(el) el.style.display = (id === btn.dataset.sec) ? '' : 'none';
