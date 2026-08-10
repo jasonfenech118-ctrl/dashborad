@@ -1934,17 +1934,17 @@ def maltese_public_holidays(year):
     good_friday = _easter_sunday(year) - datetime.timedelta(days=2)
     return {
         d(year, 1, 1): "New Year's Day",
-        d(year, 2, 10): "Feast of St Paul's Shipwreck",
-        d(year, 3, 19): "Feast of St Joseph",
+        d(year, 2, 10): "St Paul's Shipwreck",
+        d(year, 3, 19): "St Joseph",
         d(year, 3, 31): "Freedom Day (Jum il-Ħelsien)",
         good_friday: "Good Friday",
         d(year, 5, 1): "Workers' Day (Jum il-Ħaddiem)",
         d(year, 6, 7): "Sette Giugno",
-        d(year, 6, 29): "Feast of St Peter & St Paul (L-Imnarja)",
-        d(year, 8, 15): "Feast of the Assumption (Santa Marija)",
+        d(year, 6, 29): "St Peter & St Paul (L-Imnarja)",
+        d(year, 8, 15): "Assumption (Santa Marija)",
         d(year, 9, 8): "Victory Day (Jum il-Vitorja)",
         d(year, 9, 21): "Independence Day (Jum l-Indipendenza)",
-        d(year, 12, 8): "Feast of the Immaculate Conception",
+        d(year, 12, 8): "Immaculate Conception",
         d(year, 12, 13): "Republic Day (Jum ir-Repubblika)",
         d(year, 12, 25): "Christmas Day",
     }
