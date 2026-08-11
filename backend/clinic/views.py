@@ -2000,6 +2000,46 @@ def roster(request):
 
     prev_m = datetime.date(year, month, 1) - datetime.timedelta(days=1)
     next_m = datetime.date(year, month, ndays) + datetime.timedelta(days=1)
+
+    # --- Overtime & TiL summaries ---
+    from django.db.models import Sum
+    all_staff = list(models.RosterStaff.objects.filter(active=True).order_by("full_name"))
+
+    # Overtime: total hours per staff
+    ot_totals = {
+        row["staff_id"]: row["total"]
+        for row in models.OvertimeHours.objects.values("staff_id").annotate(total=Sum("hours"))
+    }
+    ot_entries = list(models.OvertimeHours.objects.select_related("staff").order_by("-date"))
+
+    # TiL: earned and used per staff
+    til_earned = {
+        row["staff_id"]: row["total"]
+        for row in models.TimeinLieuHours.objects.filter(entry_type="earned").values("staff_id").annotate(total=Sum("hours"))
+    }
+    til_used = {
+        row["staff_id"]: row["total"]
+        for row in models.TimeinLieuHours.objects.filter(entry_type="used").values("staff_id").annotate(total=Sum("hours"))
+    }
+    til_entries = list(models.TimeinLieuHours.objects.select_related("staff").order_by("-date"))
+
+    ot_summary = [
+        {
+            "staff": s,
+            "total": ot_totals.get(s.id, 0),
+        }
+        for s in all_staff
+    ]
+    til_summary = [
+        {
+            "staff": s,
+            "earned": til_earned.get(s.id, 0),
+            "used": til_used.get(s.id, 0),
+            "balance": (til_earned.get(s.id, 0) or 0) - (til_used.get(s.id, 0) or 0),
+        }
+        for s in all_staff
+    ]
+
     return render(request, "clinic/roster.html", {
         "year": year, "month": month,
         "month_label": datetime.date(year, month, 1).strftime("%B %Y"),
@@ -2016,6 +2056,11 @@ def roster(request):
         "next": {"year": next_m.year, "month": next_m.month},
         "today": {"year": today.year, "month": today.month},
         "categories": models.RosterStaff.CATEGORY_CHOICES,
+        "all_staff": all_staff,
+        "ot_summary": ot_summary,
+        "ot_entries": ot_entries,
+        "til_summary": til_summary,
+        "til_entries": til_entries,
     })
 
 
@@ -2115,6 +2160,65 @@ def roster_shift_set(request):
         return JsonResponse({"ok": True, "code": code, "bg": meta["bg"], "fg": meta["fg"]})
     except Exception:
         return JsonResponse({"ok": False, "error": "db"}, status=500)
+
+
+# ------------------------------------------------------------------ overtime / time-in-lieu
+
+
+@login_required
+def overtime_add(request):
+    if request.method == "POST":
+        staff_id = request.POST.get("staff_id")
+        date_str = request.POST.get("date")
+        hours_str = request.POST.get("hours", "").strip()
+        notes = request.POST.get("notes", "").strip()
+        try:
+            staff = get_object_or_404(models.RosterStaff, pk=staff_id)
+            date = datetime.date.fromisoformat(date_str)
+            hours = float(hours_str)
+            models.OvertimeHours.objects.create(staff=staff, date=date, hours=hours, notes=notes or None)
+            messages.success(request, f"Overtime logged for {staff.full_name}.")
+        except Exception:
+            messages.error(request, "Could not save overtime entry.")
+    return redirect("clinic:roster")
+
+
+@login_required
+def overtime_delete(request, pk):
+    if request.method == "POST":
+        entry = get_object_or_404(models.OvertimeHours, pk=pk)
+        entry.delete()
+        messages.success(request, "Overtime entry removed.")
+    return redirect("clinic:roster")
+
+
+@login_required
+def til_add(request):
+    if request.method == "POST":
+        staff_id = request.POST.get("staff_id")
+        date_str = request.POST.get("date")
+        hours_str = request.POST.get("hours", "").strip()
+        entry_type = request.POST.get("entry_type", "earned")
+        notes = request.POST.get("notes", "").strip()
+        try:
+            staff = get_object_or_404(models.RosterStaff, pk=staff_id)
+            date = datetime.date.fromisoformat(date_str)
+            hours = float(hours_str)
+            models.TimeinLieuHours.objects.create(
+                staff=staff, date=date, hours=hours, entry_type=entry_type, notes=notes or None)
+            messages.success(request, f"Time in Lieu logged for {staff.full_name}.")
+        except Exception:
+            messages.error(request, "Could not save Time in Lieu entry.")
+    return redirect("clinic:roster")
+
+
+@login_required
+def til_delete(request, pk):
+    if request.method == "POST":
+        entry = get_object_or_404(models.TimeinLieuHours, pk=pk)
+        entry.delete()
+        messages.success(request, "Time in Lieu entry removed.")
+    return redirect("clinic:roster")
 
 
 # ------------------------------------------------------------------ pathways
