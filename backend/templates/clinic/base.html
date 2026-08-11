@@ -124,18 +124,50 @@
     .pager{margin-top:16px;display:flex;gap:8px;align-items:center;font-size:13px;}
     pre{white-space:pre-wrap;font-family:inherit;margin:0;font-size:12px;}
 
-    /* mobile */
+    /* ---- responsive: phone / tablet / desktop ---- */
     .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55;}
     .menu-toggle{display:none;align-items:center;justify-content:center;width:36px;height:36px;
       border:none;background:none;color:#fff;cursor:pointer;padding:0;}
     .menu-toggle svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-    @media(max-width:820px){
+    /* Tablet / small laptop: keep the sidebar but slim it down and tighten the content gutters. */
+    @media(max-width:1024px){
+      :root{--sidebar:200px;}
+      .wrap{padding:20px 16px 48px;}
+      .side-nav a{font-size:13px;padding:9px 11px;min-height:40px;}
+    }
+
+    /* Below this the sidebar becomes an off-canvas drawer opened from the hamburger. */
+    @media(max-width:860px){
       .app{grid-template-columns:1fr;}
-      .sidebar{transform:translateX(-100%);transition:transform .25s ease;}
+      .sidebar{transform:translateX(-100%);transition:transform .25s ease;width:240px;}
       body.nav-open .sidebar{transform:translateX(0);}
       body.nav-open .scrim{display:block;}
       .menu-toggle{display:inline-flex;}
+      .main-area{grid-column:1;}
+    }
+
+    /* Phone: shrink type + gutters, let wide tables scroll instead of overflowing. */
+    @media(max-width:600px){
+      body{font-size:13.5px;}
+      .wrap{padding:16px 12px 44px;}
+      h1{font-size:19px;margin-bottom:12px;}
+      h2{font-size:15px;}
+      .topbar{padding:0 8px;min-height:44px;}
+      .topbar nav a{padding:0 8px;font-size:12px;}
+      .topbar .util{padding-left:4px;gap:2px;}
+      .topbar .util .who{display:none;}
+      .card{padding:14px;}
+      .grid{grid-template-columns:1fr 1fr;}
+      .controls{gap:6px;}
+      .controls input,.controls select{width:100%;}
+      /* Any full-width data table scrolls sideways within its own strip on phones. */
+      .wrap > table,.card > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+    }
+
+    /* Very small phones: stat grids stack to a single column. */
+    @media(max-width:400px){
+      .grid{grid-template-columns:1fr;}
     }
 
     @media print{
