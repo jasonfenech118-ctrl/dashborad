@@ -201,21 +201,7 @@
 
 <div class="hrs-head">
   <h1>Overtime</h1>
-  <span class="muted" style="font-size:13px;">Total hours worked per nurse</span>
-</div>
-
-<!-- Summary cards -->
-<div class="hrs-grid">
-  {% for row in ot_summary %}
-  <div class="hrs-card">
-    <div class="nm">{{ row.staff.full_name }}</div>
-    {% if row.staff.role %}<div class="rl">{{ row.staff.role }}</div>{% endif %}
-    <div class="tot">{{ row.total|floatformat:1 }}</div>
-    <div class="lbl">Hours overtime</div>
-  </div>
-  {% empty %}
-  <p class="muted" style="font-size:13px;">No staff found.</p>
-  {% endfor %}
+  <span class="muted" style="font-size:13px;">Record of overtime bookings</span>
 </div>
 
 <!-- Add entry form -->
@@ -242,7 +228,6 @@
 <!-- Upcoming (future) bookings -->
 <div class="log-title">
   <span class="lt-dot" style="background:#0ea5e9;"></span>Upcoming overtime bookings
-  <span class="lt-count">{{ ot_upcoming|length }} booking{{ ot_upcoming|length|pluralize }} · {{ ot_upcoming_total|floatformat:1 }}h</span>
 </div>
 <div class="hrs-log">
   <table>
@@ -271,7 +256,6 @@
 <!-- Past history -->
 <div class="log-title">
   <span class="lt-dot" style="background:#94a3b8;"></span>Overtime history
-  <span class="lt-count">{{ ot_past|length }} entr{{ ot_past|length|pluralize:"y,ies" }} · {{ ot_past_total|floatformat:1 }}h</span>
 </div>
 <div class="hrs-log">
   <table>
