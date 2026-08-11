@@ -2011,6 +2011,11 @@ def roster(request):
         for row in models.OvertimeHours.objects.values("staff_id").annotate(total=Sum("hours"))
     }
     ot_entries = list(models.OvertimeHours.objects.select_related("staff").order_by("-date"))
+    # Split into future/today bookings (soonest first) and past history (most recent first).
+    ot_upcoming = sorted((e for e in ot_entries if e.date >= today), key=lambda e: e.date)
+    ot_past = [e for e in ot_entries if e.date < today]
+    ot_upcoming_total = sum((e.hours for e in ot_upcoming), 0)
+    ot_past_total = sum((e.hours for e in ot_past), 0)
 
     # TiL: earned and used per staff
     til_earned = {
@@ -2059,6 +2064,10 @@ def roster(request):
         "all_staff": all_staff,
         "ot_summary": ot_summary,
         "ot_entries": ot_entries,
+        "ot_upcoming": ot_upcoming,
+        "ot_past": ot_past,
+        "ot_upcoming_total": ot_upcoming_total,
+        "ot_past_total": ot_past_total,
         "til_summary": til_summary,
         "til_entries": til_entries,
     })
