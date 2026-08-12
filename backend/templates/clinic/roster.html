@@ -233,27 +233,6 @@
   <span class="muted" style="font-size:13px;">Record of overtime bookings</span>
 </div>
 
-<!-- Add entry form -->
-<div class="hrs-form">
-  <div style="font-weight:800;font-size:13px;margin-bottom:10px;">Log overtime hours</div>
-  <form method="post" action="{% url 'clinic:overtime_add' %}">
-    {% csrf_token %}
-    <div class="frow">
-      <div class="fld">
-        <label>Staff member</label>
-        <select name="staff_id" required>
-          <option value="">— Select —</option>
-          {% for s in all_staff %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="fld"><label>Date</label><input type="date" name="date" required></div>
-      <div class="fld"><label>Hours</label><input type="number" name="hours" min="0.5" max="24" step="0.5" required style="width:80px;"></div>
-      <div class="fld"><label>Notes</label><input type="text" name="notes" placeholder="Optional" style="min-width:160px;"></div>
-      <div class="fld" style="justify-content:flex-end;"><button class="btn" type="submit">+ Add</button></div>
-    </div>
-  </form>
-</div>
-
 <!-- Timeline: all overtime bookings, upcoming first then history -->
 <div class="log-title">
   <span class="lt-dot" style="background:#0ea5e9;"></span>Overtime bookings
@@ -281,7 +260,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="7" class="muted" style="padding:12px;">No overtime booked yet — add one above.</td></tr>
+      <tr><td colspan="7" class="muted" style="padding:12px;">No overtime records yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -307,34 +286,6 @@
   {% empty %}
   <p class="muted" style="font-size:13px;">No staff found.</p>
   {% endfor %}
-</div>
-
-<!-- Add entry form -->
-<div class="hrs-form">
-  <div style="font-weight:800;font-size:13px;margin-bottom:10px;">Log time in lieu</div>
-  <form method="post" action="{% url 'clinic:til_add' %}">
-    {% csrf_token %}
-    <div class="frow">
-      <div class="fld">
-        <label>Staff member</label>
-        <select name="staff_id" required>
-          <option value="">— Select —</option>
-          {% for s in all_staff %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="fld"><label>Date</label><input type="date" name="date" required></div>
-      <div class="fld"><label>Hours</label><input type="number" name="hours" min="0.5" max="24" step="0.5" required style="width:80px;"></div>
-      <div class="fld">
-        <label>Type</label>
-        <select name="entry_type">
-          <option value="earned">Earned</option>
-          <option value="used">Used</option>
-        </select>
-      </div>
-      <div class="fld"><label>Notes</label><input type="text" name="notes" placeholder="Optional" style="min-width:140px;"></div>
-      <div class="fld" style="justify-content:flex-end;"><button class="btn" type="submit">+ Add</button></div>
-    </div>
-  </form>
 </div>
 
 <!-- Log -->
