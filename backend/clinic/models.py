@@ -871,18 +871,18 @@ class AppointmentCancellation(UUIDModel):
     """A permanent record of a cancelled clinic booking. Kept even after the
     slot is rebooked, so repeated cancellations by a patient are documented."""
 
-    PATIENT_REQUEST = "patient_request"
-    ILLNESS = "illness"
-    TRANSPORT = "transport"
-    CLINICAL = "clinical"
-    RESCHEDULED = "rescheduled"
+    PATIENT_CANCELLED = "patient_cancelled"
+    CLINIC_CANCELLED = "clinic_cancelled"
+    REVIEWED_WARD = "reviewed_ward"
+    AWAITING_SURGERY = "awaiting_surgery"
+    AWAITING_FEEDBACK = "awaiting_feedback"
     OTHER = "other"
     REASON_CHOICES = [
-        (PATIENT_REQUEST, "Patient request"),
-        (ILLNESS, "Illness"),
-        (TRANSPORT, "Transport"),
-        (CLINICAL, "Clinical decision"),
-        (RESCHEDULED, "Rescheduled"),
+        (PATIENT_CANCELLED, "Patient cancelled the appointment"),
+        (CLINIC_CANCELLED, "Appointment cancelled by the clinic"),
+        (REVIEWED_WARD, "Cancelled — patient reviewed on the ward"),
+        (AWAITING_SURGERY, "Awaiting surgery"),
+        (AWAITING_FEEDBACK, "Awaiting feedback"),
         (OTHER, "Other"),
     ]
 
