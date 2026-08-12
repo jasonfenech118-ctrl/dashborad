@@ -1,6 +1,16 @@
 {% extends "clinic/base.html" %}
 {% load static %}
 {% block title %}Patients — MDH Stoma Care Clinic{% endblock %}
+
+{% block topbar_nav %}
+<nav aria-label="Patient outcomes">
+  <a href="{% url 'clinic:patient_list' %}{% if q %}?q={{ q }}{% endif %}" class="{% if not status %}active{% endif %}">All</a>
+  {% for val, label in outcome_tabs %}
+  <a href="?status={{ val }}{% if q %}&q={{ q }}{% endif %}" class="{% if status == val %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{% endblock %}
+
 {% block content %}
 <style>
   body::before{
@@ -63,13 +73,8 @@
     </div>
 
     <div class="pt-tools">
+      <input type="hidden" name="status" value="{{ status }}">
       <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID card, phone, locality…"/>
-      <select name="status">
-        <option value="">All statuses</option>
-        {% for s in statuses %}
-          <option value="{{ s }}" {% if s == status %}selected{% endif %}>{{ s }}</option>
-        {% endfor %}
-      </select>
       <button class="btn" type="submit">Search</button>
       {% if q or status %}<a class="reset" href="{% url 'clinic:patient_list' %}">Clear</a>{% endif %}
     </div>
