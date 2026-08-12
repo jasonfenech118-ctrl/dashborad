@@ -2617,16 +2617,14 @@ def _appointment_action(request):
 
 @login_required
 def appointment_patient_search(request):
-    """JSON patient lookup for the daily-clinic booking box."""
+    """JSON patient lookup for the daily-clinic booking box — by ID number only."""
     q = (request.GET.get("q") or "").strip()
     if len(q) < 2:
         return JsonResponse({"results": []})
 
     def _find():
-        qs = (models.Patient.objects.filter(
-            Q(first_name__icontains=q) | Q(surname__icontains=q)
-            | Q(id_card__icontains=q) | Q(phone_number__icontains=q))
-            .order_by("surname", "first_name")[:12])
+        qs = (models.Patient.objects.filter(id_card__icontains=q)
+              .order_by("id_card", "surname", "first_name")[:12])
         return [{
             "id": str(p.id),
             "name": f"{p.first_name or ''} {p.surname or ''}".strip() or "—",
