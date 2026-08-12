@@ -226,23 +226,35 @@
   .pill-up{background:#e0f2fe;color:#0369a1;}
   .pill-td{background:#dcfce7;color:#166534;}
   .pill-pa{background:#f1f5f9;color:#64748b;}
+  /* Nurse filter buttons */
+  .nurse-btns{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px;}
+  .nbtn{background:rgba(255,255,255,.85);border:1.5px solid var(--border);border-radius:999px;
+    padding:9px 16px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit;transition:.12s;}
+  .nbtn:hover{border-color:var(--teal);}
+  .nbtn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 </style>
 
 <div class="hrs-head">
   <h1>Overtime</h1>
-  <span class="muted" style="font-size:13px;">Record of overtime bookings</span>
+  <span class="muted" style="font-size:13px;">Tap a nurse to see their overtime</span>
+</div>
+
+<!-- Nurse filter buttons -->
+<div class="nurse-btns" data-target="ot-log">
+  <button type="button" class="nbtn active" data-staff="">All nurses</button>
+  {% for s in all_staff %}<button type="button" class="nbtn" data-staff="{{ s.id }}">{{ s.full_name }}</button>{% endfor %}
 </div>
 
 <!-- Timeline: all overtime bookings, upcoming first then history -->
 <div class="log-title">
   <span class="lt-dot" style="background:#0ea5e9;"></span>Overtime bookings
 </div>
-<div class="hrs-log">
+<div class="hrs-log" id="ot-log">
   <table>
     <thead><tr><th>Status</th><th>Staff</th><th>Date</th><th>Day</th><th>Hours</th><th>Notes</th><th></th></tr></thead>
     <tbody>
       {% for e in ot_timeline %}
-      <tr>
+      <tr data-staff="{{ e.staff_id }}">
         <td>
           {% if e.status == 'today' %}<span class="pill-st pill-td">Today</span>
           {% elif e.status == 'upcoming' %}<span class="pill-st pill-up">Upcoming</span>
@@ -262,6 +274,7 @@
       {% empty %}
       <tr><td colspan="7" class="muted" style="padding:12px;">No overtime records yet.</td></tr>
       {% endfor %}
+      <tr class="none-row" style="display:none;"><td colspan="7" class="muted" style="padding:12px;">No overtime records for this nurse.</td></tr>
     </tbody>
   </table>
 </div>
@@ -271,33 +284,26 @@
 <div id="sec-timelieu" style="display:none;">
 <div class="hrs-head">
   <h1>Time in Lieu</h1>
-  <span class="muted" style="font-size:13px;">Earned vs used balance per nurse</span>
+  <span class="muted" style="font-size:13px;">Tap a nurse to see their time in lieu</span>
 </div>
 
-<!-- Summary cards -->
-<div class="hrs-grid">
-  {% for row in til_summary %}
-  <div class="hrs-card {% if row.balance > 0 %}bal-pos{% elif row.balance < 0 %}bal-neg{% endif %}">
-    <div class="nm">{{ row.staff.full_name }}</div>
-    {% if row.staff.role %}<div class="rl">{{ row.staff.role }}</div>{% endif %}
-    <div class="tot">{{ row.balance|floatformat:1 }}h</div>
-    <div class="lbl">Balance &nbsp;·&nbsp; Earned {{ row.earned|floatformat:1 }}h &nbsp;/&nbsp; Used {{ row.used|floatformat:1 }}h</div>
-  </div>
-  {% empty %}
-  <p class="muted" style="font-size:13px;">No staff found.</p>
-  {% endfor %}
+<!-- Nurse filter buttons -->
+<div class="nurse-btns" data-target="til-log">
+  <button type="button" class="nbtn active" data-staff="">All nurses</button>
+  {% for s in all_staff %}<button type="button" class="nbtn" data-staff="{{ s.id }}">{{ s.full_name }}</button>{% endfor %}
 </div>
 
-<!-- Log -->
-{% if til_entries %}
-<div class="hrs-log">
+<div class="log-title">
+  <span class="lt-dot" style="background:#8b5cf6;"></span>Time in lieu records
+</div>
+<div class="hrs-log" id="til-log">
   <table>
     <thead><tr><th>Staff</th><th>Date</th><th>Type</th><th>Hours</th><th>Notes</th><th></th></tr></thead>
     <tbody>
       {% for e in til_entries %}
-      <tr>
+      <tr data-staff="{{ e.staff_id }}">
         <td>{{ e.staff.full_name }}</td>
-        <td>{{ e.date }}</td>
+        <td>{{ e.date|date:"d M Y" }}</td>
         <td><span class="til-type-{{ e.entry_type|slice:':1' }}">{{ e.get_entry_type_display }}</span></td>
         <td><strong>{{ e.hours|floatformat:1 }}h</strong></td>
         <td>{{ e.notes|default:"—" }}</td>
@@ -307,11 +313,13 @@
           </form>
         </td>
       </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted" style="padding:12px;">No time in lieu records yet.</td></tr>
       {% endfor %}
+      <tr class="none-row" style="display:none;"><td colspan="6" class="muted" style="padding:12px;">No time in lieu records for this nurse.</td></tr>
     </tbody>
   </table>
 </div>
-{% endif %}
 </div><!-- /#sec-timelieu -->
 
 <!-- Shift code palette (shown on cell click) -->
@@ -391,6 +399,29 @@
       sections.forEach(function(id){
         var el = document.getElementById(id);
         if(el) el.style.display = (id === btn.dataset.sec) ? '' : 'none';
+      });
+    });
+  });
+})();
+
+// ---- Nurse filter buttons (Overtime / Time in Lieu) ----
+(function(){
+  document.querySelectorAll('.nurse-btns').forEach(function(group){
+    var target = document.getElementById(group.dataset.target);
+    if(!target) return;
+    group.querySelectorAll('.nbtn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        group.querySelectorAll('.nbtn').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        var sid = btn.dataset.staff;
+        var visible = 0;
+        target.querySelectorAll('tbody tr[data-staff]').forEach(function(tr){
+          var show = (!sid || tr.dataset.staff === sid);
+          tr.style.display = show ? '' : 'none';
+          if(show) visible++;
+        });
+        var noneRow = target.querySelector('tbody tr.none-row');
+        if(noneRow) noneRow.style.display = (sid && visible === 0) ? '' : 'none';
       });
     });
   });
