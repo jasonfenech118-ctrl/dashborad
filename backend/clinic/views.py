@@ -2590,6 +2590,7 @@ def patient_list(request):
         "q": q,
         "status": status,
         "statuses": statuses,
+        "outcome_tabs": forms.FOLLOWUP_STATUS_CHOICES,
     })
 
 
