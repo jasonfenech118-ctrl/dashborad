@@ -170,8 +170,8 @@
 <div class="modal" id="bookModal" style="display:none;">
   <h3>Book appointment</h3>
   <div class="sub" id="bookSub"></div>
-  <label>Search patient (name, ID card or phone)</label>
-  <input type="text" id="patSearch" placeholder="Type at least 2 characters…" autocomplete="off">
+  <label>Search patient by ID number</label>
+  <input type="text" id="patSearch" placeholder="Type the ID number (at least 2 characters)…" autocomplete="off">
   <div class="res" id="patResults" style="display:none;"></div>
   <form method="post" id="bookForm">
     {% csrf_token %}
