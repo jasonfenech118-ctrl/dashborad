@@ -2406,45 +2406,235 @@ def _pathway_action(request, p):
     return redirect("clinic:pathway_detail", pk=p.pk)
 
 
+# --- Daily clinic configuration -------------------------------------------
+
+# Roster shift codes that mean the nurse is on the floor and can see patients.
+CLINIC_WORKING_CODES = {"D", "AM", "OT", "TIL", "COD-in"}
+# 30-minute slots, 08:30 to 13:30 inclusive.
+CLINIC_SLOTS = ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
+                "11:30", "12:00", "12:30", "13:00", "13:30"]
+# Consecutive did-not-turn-up appointments before a patient is dropped.
+DNTU_LIMIT = 3
+# followup_status a patient is moved to once they hit the DNTU limit.
+DNTU_REMOVED_STATUS = "inactive"
+
+
+def _consecutive_dntu(patient):
+    """How many did-not-turn-ups in a row the patient has right now.
+    Only realised outcomes count (attended / dna); an attended visit resets
+    the run. Cancellations and future bookings are ignored."""
+    FA = models.FollowUpAppointment
+    outcomes = (FA.objects.filter(patient=patient, status__in=[FA.ATTENDED, FA.DNA])
+                .order_by("-appt_date", "-appt_time"))
+    run = 0
+    for a in outcomes:
+        if a.status == FA.DNA:
+            run += 1
+        else:
+            break
+    return run
+
+
+def _apply_dntu_rule(patient, request):
+    """After a DNTU is recorded, drop the patient from active follow-up once
+    they reach the limit. Only downgrades patients currently on active
+    follow-up; leaves other outcomes (reversed, deceased…) untouched."""
+    run = _consecutive_dntu(patient)
+    current = (patient.followup_status or "active").strip().lower()
+    if run >= DNTU_LIMIT and current in ("active", ""):
+        patient.followup_status = DNTU_REMOVED_STATUS
+        try:
+            patient.save(update_fields=["followup_status"])
+        except Exception:
+            pass
+        name = f"{patient.first_name or ''} {patient.surname or ''}".strip() or "Patient"
+        messages.warning(
+            request,
+            f"{name} has {run} consecutive DNTUs and has been removed from "
+            f"active follow-up.",
+        )
+    return run
+
+
+def _clinic_nurses_for(day):
+    """The nurses working on `day` per the roster — one clinic column each,
+    in roster order. Returns a list of RosterStaff."""
+    shifts = (models.RosterShift.objects
+              .filter(date=day, code__in=CLINIC_WORKING_CODES)
+              .select_related("staff"))
+    seen, nurses = set(), []
+    for sh in shifts:
+        if sh.staff_id in seen or not sh.staff or not sh.staff.active:
+            continue
+        seen.add(sh.staff_id)
+        nurses.append(sh.staff)
+    nurses.sort(key=lambda s: (s.display_order, s.full_name or ""))
+    return nurses
+
+
 @login_required
 def appointments(request):
-    """All planned follow-up / outpatient appointments."""
-    show = (request.GET.get("show") or "upcoming").strip()
-
-    def _load():
-        qs = models.FollowUpAppointment.objects.select_related("patient", "pathway")
-        if show == "upcoming":
-            qs = qs.filter(appt_date__gte=datetime.date.today())
-        return list(qs[:300])
-
-    appts = _safe_query(_load, None)
-    db_ok = appts is not None
-    appts = appts or []
-
+    """Daily clinic: nurse columns (from the roster) across the top, 30-minute
+    slots down the side, one patient booking per cell."""
     if request.method == "POST":
-        appt_id = (request.POST.get("appt_id") or "").strip()
-        action = (request.POST.get("action") or "").strip()
-        try:
-            a = models.FollowUpAppointment.objects.get(pk=appt_id)
-            if action == "reschedule":
-                d = _parse_date(request.POST.get("appt_date"))
-                if d:
-                    a.appt_date = d
-                    a.status = models.FollowUpAppointment.SCHEDULED
-                    a.save()
-                    messages.success(request, f"Moved to {d:%d/%m/%Y}.")
-            elif action in dict(models.FollowUpAppointment.STATUS_CHOICES):
-                a.status = action
-                a.save(update_fields=["status", "updated_at"])
-                messages.success(request, f"Marked as {a.get_status_display()}.")
-        except Exception:
-            messages.error(request, "Could not update that appointment.")
-        return redirect("clinic:appointments")
+        return _appointment_action(request)
+
+    today = datetime.date.today()
+    day = _parse_date(request.GET.get("date"), today)
+
+    def _build():
+        nurses = _clinic_nurses_for(day)
+        appts = list(
+            models.FollowUpAppointment.objects
+            .filter(appt_date=day)
+            .select_related("patient", "nurse")
+            .order_by("appt_time")
+        )
+        return nurses, appts
+
+    loaded = _safe_query(_build, None)
+    db_ok = loaded is not None
+    nurses, appts = loaded if loaded else ([], [])
+
+    FA = models.FollowUpAppointment
+    # column keys: each nurse id, then "common" for the shared column
+    columns = [{"key": str(n.id), "name": n.full_name, "common": False,
+                "ot": n.category == models.RosterStaff.OVERTIME} for n in nurses]
+    columns.append({"key": "common", "name": "Common", "common": True, "ot": False})
+
+    # cell[(col_key, time)] = {"active": appt|None, "cancelled": [appts]}
+    cells = {}
+    booked = 0
+    for a in appts:
+        col = "common" if a.nurse_id is None else str(a.nurse_id)
+        key = (col, a.appt_time or "")
+        cell = cells.setdefault(key, {"active": None, "cancelled": []})
+        if a.status == FA.CANCELLED:
+            cell["cancelled"].append(a)
+        else:
+            cell["active"] = a
+            booked += 1
+
+    rows = []
+    for t in CLINIC_SLOTS:
+        row_cells = []
+        for c in columns:
+            cell = cells.get((c["key"], t), {"active": None, "cancelled": []})
+            row_cells.append({"col": c, "time": t,
+                              "active": cell["active"], "cancelled": cell["cancelled"]})
+        rows.append({"time": t, "cells": row_cells})
 
     return render(request, "clinic/appointments.html", {
-        "appointments": appts, "db_ok": db_ok, "show": show,
-        "today": datetime.date.today(),
+        "db_ok": db_ok,
+        "day": day,
+        "prev_day": day - datetime.timedelta(days=1),
+        "next_day": day + datetime.timedelta(days=1),
+        "today": today,
+        "columns": columns,
+        "rows": rows,
+        "nurse_count": len(nurses),
+        "booked_count": booked,
+        "slot_count": len(CLINIC_SLOTS),
+        "cancel_reasons": models.AppointmentCancellation.REASON_CHOICES,
     })
+
+
+def _actor(request):
+    u = request.user
+    return (u.get_full_name() or u.get_username() or u.email or "").strip()
+
+
+@login_required
+def _appointment_action(request):
+    """Handle book / seen / dntu / cancel / edit posts from the daily clinic."""
+    action = (request.POST.get("action") or "").strip()
+    day_str = (request.POST.get("date") or "").strip()
+    back = f"{reverse('clinic:appointments')}?date={day_str}" if day_str \
+        else reverse("clinic:appointments")
+    FA = models.FollowUpAppointment
+
+    try:
+        if action == "book":
+            patient_id = (request.POST.get("patient_id") or "").strip()
+            day = _parse_date(day_str, datetime.date.today())
+            time = (request.POST.get("time") or "").strip()
+            col = (request.POST.get("nurse") or "common").strip()
+            nurse_id = None if col == "common" else col
+            patient = models.Patient.objects.get(pk=patient_id)
+            FA.objects.create(
+                patient=patient, nurse_id=nurse_id, appt_date=day,
+                appt_time=time, status=FA.SCHEDULED,
+            )
+            messages.success(request, f"Booked {patient} at {time}.")
+
+        elif action == "seen":
+            a = FA.objects.select_related("patient").get(pk=request.POST.get("appt_id"))
+            a.status = FA.ATTENDED
+            a.outcome_by = _actor(request)
+            a.outcome_at = timezone.now()
+            nxt = _parse_date(request.POST.get("next_followup_date"))
+            if nxt:
+                a.next_followup_date = nxt
+            a.save()
+            messages.success(request, f"{a.patient} marked as seen.")
+
+        elif action == "dntu":
+            a = FA.objects.select_related("patient").get(pk=request.POST.get("appt_id"))
+            a.status = FA.DNA
+            a.outcome_by = _actor(request)
+            a.outcome_at = timezone.now()
+            a.save()
+            if a.patient:
+                _apply_dntu_rule(a.patient, request)
+            messages.success(request, f"{a.patient} marked as did-not-turn-up.")
+
+        elif action == "cancel":
+            a = FA.objects.select_related("patient", "nurse").get(pk=request.POST.get("appt_id"))
+            models.AppointmentCancellation.objects.create(
+                patient=a.patient, appt_date=a.appt_date, appt_time=a.appt_time,
+                nurse_name=(a.nurse.full_name if a.nurse else "Common"),
+                reason=(request.POST.get("reason") or "other").strip(),
+                note=(request.POST.get("note") or "").strip()[:400],
+                cancelled_by=_actor(request),
+            )
+            a.status = FA.CANCELLED
+            a.save(update_fields=["status", "updated_at"])
+            messages.success(request, f"Cancelled — {a.patient}. The slot is free to rebook.")
+
+        elif action == "delete":
+            a = FA.objects.get(pk=request.POST.get("appt_id"))
+            a.delete()
+            messages.success(request, "Booking removed.")
+    except models.Patient.DoesNotExist:
+        messages.error(request, "Patient not found.")
+    except FA.DoesNotExist:
+        messages.error(request, "That booking no longer exists.")
+    except Exception:
+        messages.error(request, "Could not complete that action.")
+
+    return redirect(back)
+
+
+@login_required
+def appointment_patient_search(request):
+    """JSON patient lookup for the daily-clinic booking box."""
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse({"results": []})
+
+    def _find():
+        qs = (models.Patient.objects.filter(
+            Q(first_name__icontains=q) | Q(surname__icontains=q)
+            | Q(id_card__icontains=q) | Q(phone_number__icontains=q))
+            .order_by("surname", "first_name")[:12])
+        return [{
+            "id": str(p.id),
+            "name": f"{p.first_name or ''} {p.surname or ''}".strip() or "—",
+            "id_card": p.id_card or "",
+            "phone": p.phone_number or "",
+        } for p in qs]
+
+    return JsonResponse({"results": _safe_query(_find, []) or []})
 
 
 @login_required
