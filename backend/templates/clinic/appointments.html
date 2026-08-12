@@ -45,9 +45,14 @@
   .appt .stt{display:inline-block;border-radius:999px;font-size:10px;font-weight:800;padding:1px 8px;text-transform:uppercase;letter-spacing:.3px;}
   .stt.scheduled{background:#e0f2fe;color:#0369a1;}
   .stt.attended{background:#dcfce7;color:#166534;}
-  .stt.dna{background:#fef3f2;color:#b42318;}
   .appt.attended{border-left-color:#16a34a;}
-  .appt.dna{border-left-color:#dc2626;}
+  /* DNTU escalates by consecutive count: 1st yellow, 2nd amber, 3rd red. */
+  .stt.dntu1{background:#fef9c3;color:#854d0e;}
+  .stt.dntu2{background:#ffedd5;color:#9a3412;}
+  .stt.dntu3{background:#fee2e2;color:#dc2626;}
+  .appt.dntu1{border-left-color:#facc15;}
+  .appt.dntu2{border-left-color:#f97316;}
+  .appt.dntu3{border-left-color:#ef4444;}
   .appt .acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
   .appt .acts button{border:none;border-radius:6px;font-size:11px;font-weight:700;padding:4px 8px;cursor:pointer;font-family:inherit;}
   .a-seen{background:#dcfce7;color:#166534;}
@@ -76,6 +81,39 @@
   .modal .res .rm{font-size:11.5px;color:var(--muted);}
   .modal .mrow{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
   .modal .mrow .btn.ghost{background:#f1f5f9;color:#475569;}
+  /* Wider card for the unified edit form */
+  #editModal{width:min(660px,95vw);}
+  .modal .sec{background:#f8fafc;border:1px solid var(--border);border-radius:8px;
+    padding:8px 12px;font-size:12.5px;font-weight:800;color:var(--navy);margin:16px 0 4px;}
+  .modal .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  @media(max-width:560px){ .modal .grid2{grid-template-columns:1fr;} }
+
+  /* DNTU record correction */
+  .corr{border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px;}
+  .corr-t{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+  .corr-p{font-size:11.5px;color:var(--muted);margin:0 0 10px;line-height:1.45;}
+  .corr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:560px){ .corr-grid{grid-template-columns:1fr;} }
+  .corr-b{text-align:left;border:1.5px solid var(--border);border-radius:9px;background:#fff;
+    padding:10px 12px;cursor:pointer;font-family:inherit;}
+  .corr-b b{display:block;font-size:14px;color:var(--ink);}
+  .corr-b span{display:block;font-size:11px;color:var(--muted);line-height:1.35;margin-top:2px;}
+  .corr-b:hover{border-color:var(--teal);}
+  .corr-b.on{border-color:#b45309;background:#fffbeb;}
+  .note-y{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:7px;
+    padding:8px 10px;font-size:11.5px;font-weight:600;margin-top:10px;}
+  .note-b{background:#ecfeff;border:1px solid #a5f3fc;color:#155e75;border-radius:7px;
+    padding:8px 10px;font-size:11.5px;font-weight:600;margin-top:8px;}
+
+  /* Availability donut */
+  .cap{display:flex;align-items:center;gap:14px;border:1px solid var(--border);
+    border-radius:10px;padding:12px 14px;margin-top:10px;background:#fff;}
+  .cap .donut{width:52px;height:52px;flex:none;}
+  .cap-t{font-size:13px;font-weight:800;color:var(--ink);}
+  .cap-s{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .cap-r{font-size:12px;font-weight:800;margin-top:3px;}
+  .cap-r.good{color:#16a34a;} .cap-r.moderate{color:#b45309;}
+  .cap-r.limited{color:#c2410c;} .cap-r.full{color:#dc2626;}
 </style>
 
 <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:4px;">
@@ -118,23 +156,33 @@
         <td class="cl-cell">
           {% if cell.active %}
             {% with a=cell.active %}
-            <div class="appt {{ a.status }}">
+            <div class="appt {% if a.status == 'dna' %}dntu{{ a.dntu_run }}{% else %}{{ a.status }}{% endif %}"
+                 data-appt="{{ a.id }}"
+                 data-idcard="{{ a.patient.id_card|default:'' }}"
+                 data-phone="{{ a.patient.phone_number|default:'' }}"
+                 data-first="{{ a.patient.first_name|default:'' }}"
+                 data-surname="{{ a.patient.surname|default:'' }}"
+                 data-time="{{ a.appt_time|default:'' }}"
+                 data-nurse="{% if a.nurse_id %}{{ a.nurse_id }}{% else %}common{% endif %}"
+                 data-status="{{ a.status }}"
+                 data-fuowner="{{ a.patient.followup_owner|default:'' }}"
+                 data-fumonth="{{ a.patient.followup_due_month|default:'' }}"
+                 data-fuyear="{{ a.patient.followup_year|default:'' }}"
+                 data-fustatus="{{ a.patient.followup_status|default:'' }}"
+                 data-dntu="{{ a.dntu_run }}">
               <div class="nm">{{ a.patient.first_name|default:"" }} {{ a.patient.surname|default:"" }}</div>
               <div class="meta">
                 {% if a.patient.id_card %}<span>ID {{ a.patient.id_card }}</span>{% endif %}
                 {% if a.patient.phone_number %}<span>☎ {{ a.patient.phone_number }}</span>{% endif %}
               </div>
-              <span class="stt {{ a.status }}">{{ a.get_status_display }}</span>
+              <span class="stt {% if a.status == 'dna' %}dntu{{ a.dntu_run }}{% else %}{{ a.status }}{% endif %}">
+                {% if a.status == 'dna' %}DNTU ×{{ a.dntu_run }}{% else %}{{ a.get_status_display }}{% endif %}
+              </span>
               {% if a.next_followup_date %}<div class="nf">Next follow-up: {{ a.next_followup_date|date:"d M Y" }}</div>{% endif %}
               <div class="acts">
-                {% if a.status == 'scheduled' %}
-                <button class="a-seen" onclick="openSeen('{{ a.id }}','{{ a.patient.first_name|escapejs }} {{ a.patient.surname|escapejs }}')">✓ Seen</button>
-                <form method="post" style="margin:0;display:inline;">{% csrf_token %}
-                  <input type="hidden" name="action" value="dntu"><input type="hidden" name="appt_id" value="{{ a.id }}"><input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
-                  <button class="a-dntu" type="submit" onclick="return confirm('Mark as did-not-turn-up?');">DNTU</button>
-                </form>
-                {% endif %}
-                <button class="a-can" onclick="openCancel('{{ a.id }}')">Cancel</button>
+                <button class="a-seen" onclick="openEdit('{{ a.id }}','attended')">✓ Seen</button>
+                <button class="a-dntu" onclick="openEdit('{{ a.id }}','dna')">DNTU</button>
+                <button class="a-can" onclick="openEdit('{{ a.id }}','cancelled')">Cancel</button>
                 <form method="post" style="margin:0;display:inline;">{% csrf_token %}
                   <input type="hidden" name="action" value="delete"><input type="hidden" name="appt_id" value="{{ a.id }}"><input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
                   <button class="a-del" type="submit" title="Remove booking" onclick="return confirm('Remove this booking entirely?');">🗑</button>
@@ -184,52 +232,136 @@
   <div class="mrow"><button class="btn ghost" type="button" onclick="closeModals()">Close</button></div>
 </div>
 
-<div class="modal" id="seenModal" style="display:none;">
-  <h3>Mark as seen</h3>
-  <div class="sub" id="seenSub"></div>
-  <form method="post">
+
+<!-- ===== Unified Edit card (Seen / DNTU / Cancelled) ===== -->
+<div class="modal" id="editModal" style="display:none;">
+  <h3 id="editTitle">Edit Appointment</h3>
+  <div class="sub" id="editSub"></div>
+  <form method="post" id="editForm">
     {% csrf_token %}
-    <input type="hidden" name="action" value="seen">
+    <input type="hidden" name="action" value="save_edit">
     <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
-    <input type="hidden" name="appt_id" id="seenApptId">
-    <label>Next follow-up date (optional)</label>
-    <input type="date" name="next_followup_date">
+    <input type="hidden" name="appt_id" id="edApptId">
+    <input type="hidden" name="outcome" id="edOutcome">
+    <input type="hidden" name="dntu_count" id="edDntuCount" value="">
+    <input type="hidden" name="reason" id="edReason" value="">
+    <input type="hidden" name="note" id="edNote" value="">
+
+    <div class="sec">Patient details</div>
+    <div class="grid2">
+      <div><label>ID Card Number *</label><input type="text" name="id_card" id="edIdCard" required></div>
+      <div><label>Phone</label><input type="text" name="phone" id="edPhone"></div>
+      <div><label>Name *</label><input type="text" name="first_name" id="edFirst" required></div>
+      <div><label>Surname *</label><input type="text" name="surname" id="edSurname" required></div>
+    </div>
+
+    <div class="sec">Appointment details</div>
+    <div class="grid2">
+      <div><label>Appointment Date *</label><input type="date" name="appt_date" id="edDate" required></div>
+      <div><label>Appointment Time *</label>
+        <select name="appt_time" id="edTime">
+          {% for s in slots %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+        </select></div>
+      <div><label>Nurse / Column</label>
+        <select name="nurse" id="edNurse">
+          <option value="common">{{ common_column }}</option>
+          {% for n in all_nurses %}<option value="{{ n.id }}">{{ n.full_name }}</option>{% endfor %}
+        </select></div>
+      <div><label>Appointment outcome</label>
+        <input type="text" id="edOutcomeLabel" readonly style="font-weight:700;"></div>
+    </div>
+
+    <!-- DNTU-only: record correction -->
+    <div id="dntuBlock" style="display:none;">
+      <div class="sec">DNTU record correction</div>
+      <div class="corr">
+        <div class="corr-t">DNTU button selection</div>
+        <p class="corr-p">Saving this appointment as DNTU will create the <b id="dntuNext">1st</b> DNTU in the database. Choose the DNTU count from the real clinical records.</p>
+        <div class="corr-grid">
+          <button type="button" class="corr-b" data-n="2" onclick="pickDntu(2)">
+            <b>2 DNTU</b><span>Set the record to two consecutive did-not-turn-up events.</span></button>
+          <button type="button" class="corr-b" data-n="3" onclick="pickDntu(3)">
+            <b>3 DNTU</b><span>Set the record to three consecutive did-not-turn-up events.</span></button>
+        </div>
+        <div class="note-y" id="dntuHint">Optional — leave unselected to record just this DNTU.</div>
+      </div>
+    </div>
+
+    <div class="sec">Follow-up planning</div>
+    <div class="grid2">
+      <div><label>Follow-up allocation / owner</label>
+        <select name="fu_owner" id="edFuOwner" onchange="loadCapacity()">
+          <option value="{{ common_column }}">{{ common_column }}</option>
+          {% for n in all_nurses %}<option value="{{ n.full_name }}">{{ n.full_name }}</option>{% endfor %}
+        </select></div>
+      <div><label>Follow-up due year</label>
+        <select name="fu_year" id="edFuYear" onchange="loadCapacity()">
+          {% for y in fu_years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <label>Follow-up due month</label>
+    <select name="fu_month" id="edFuMonth" onchange="loadCapacity()">
+      {% for num, nm in fu_months %}<option value="{{ num }}">{{ nm }}</option>{% endfor %}
+    </select>
+
+    <!-- Availability donut -->
+    <div class="cap" id="capBox">
+      <svg class="donut" viewBox="0 0 42 42" aria-hidden="true">
+        <circle class="ring" cx="21" cy="21" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="6"></circle>
+        <circle id="capArc" cx="21" cy="21" r="15.9" fill="none" stroke="#16a34a" stroke-width="6"
+                stroke-dasharray="0 100" stroke-linecap="round" transform="rotate(-90 21 21)"></circle>
+      </svg>
+      <div class="cap-tx">
+        <div class="cap-t" id="capTitle">—</div>
+        <div class="cap-s" id="capSub">Loading availability…</div>
+        <div class="cap-r" id="capRating"></div>
+      </div>
+    </div>
+    <div class="note-b" id="capNote"></div>
+
+    <label>Follow-up status</label>
+    <select name="fu_status" id="edFuStatus">
+      {% for val, lbl in followup_statuses %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
+    </select>
+
     <div class="mrow">
-      <button class="btn ghost" type="button" onclick="closeModals()">Close</button>
-      <button class="btn" type="submit">✓ Confirm seen</button>
+      <button class="btn ghost" type="button" onclick="closeModals()">Cancel</button>
+      <button class="btn" type="submit" id="edSave">Save</button>
     </div>
   </form>
 </div>
 
-<div class="modal" id="cancelModal" style="display:none;">
-  <h3>Cancel appointment</h3>
-  <div class="sub">The cancellation is kept on record; the slot can be rebooked.</div>
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="cancel">
-    <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
-    <input type="hidden" name="appt_id" id="cancelApptId">
-    <label>Reason</label>
-    <select name="reason">
-      {% for val, lbl in cancel_reasons %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
-    </select>
-    <label>Note (optional)</label>
-    <textarea name="note" rows="2" placeholder="Any extra detail…"></textarea>
-    <div class="mrow">
-      <button class="btn ghost" type="button" onclick="closeModals()">Close</button>
-      <button class="btn" type="submit">Cancel appointment</button>
-    </div>
-  </form>
+<!-- ===== Cancellation reason (second screen) ===== -->
+<div class="modal" id="reasonModal" style="display:none;">
+  <h3>Why is this appointment cancelled?</h3>
+  <div class="sub">The reason is kept on record even after the slot is rebooked.</div>
+  <label>Reason *</label>
+  <select id="rsReason">
+    {% for val, lbl in cancel_reasons %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
+  </select>
+  <label>Note (optional)</label>
+  <textarea id="rsNote" rows="3" placeholder="Any extra detail or justification…"></textarea>
+  <div class="mrow">
+    <button class="btn ghost" type="button" onclick="backToEdit()">← Back</button>
+    <button class="btn" type="button" onclick="confirmCancel()">Save cancellation</button>
+  </div>
 </div>
 
 <script>
   var SEARCH_URL = "{% url 'clinic:appointment_patient_search' %}";
+  var CAP_URL = "{% url 'clinic:appointment_capacity' %}";
+  var COMMON = "{{ common_column|escapejs }}";
+  var OUTCOME_LABELS = {attended:"Seen / Attended", dna:"DNTU — Did Not Turn Up",
+                        cancelled:"Cancelled", scheduled:"Scheduled"};
+
   function showModal(id){ document.getElementById('scrim').classList.add('on'); document.getElementById(id).style.display='block'; }
-  function closeModals(e){
-    if(e && e.target && e.target.id !== 'scrim') return;
+  function hideAll(){
     document.getElementById('scrim').classList.remove('on');
-    ['bookModal','seenModal','cancelModal'].forEach(function(i){ document.getElementById(i).style.display='none'; });
+    ['bookModal','editModal','reasonModal'].forEach(function(i){ document.getElementById(i).style.display='none'; });
   }
+  function closeModals(e){ if(e && e.target && e.target.id !== 'scrim') return; hideAll(); }
+
+  /* ---------- booking ---------- */
   function openBook(nurseKey, nurseName, time){
     document.getElementById('bookNurse').value = nurseKey;
     document.getElementById('bookTime').value = time;
@@ -241,15 +373,128 @@
     showModal('bookModal');
     setTimeout(function(){ document.getElementById('patSearch').focus(); }, 50);
   }
-  function openSeen(id, name){
-    document.getElementById('seenApptId').value = id;
-    document.getElementById('seenSub').textContent = name;
-    showModal('seenModal');
+
+  /* ---------- unified edit card ---------- */
+  function setVal(id, v){ var el=document.getElementById(id); if(el) el.value = v || ''; }
+  function openEdit(apptId, outcome){
+    var card = document.querySelector('.appt[data-appt="'+apptId+'"]');
+    if(!card) return;
+    var d = card.dataset;
+    setVal('edApptId', apptId);
+    setVal('edOutcome', outcome);
+    setVal('edIdCard', d.idcard); setVal('edPhone', d.phone);
+    setVal('edFirst', d.first);   setVal('edSurname', d.surname);
+    setVal('edDate', "{{ day|date:'Y-m-d' }}");
+    setVal('edTime', d.time);
+    setVal('edNurse', d.nurse || 'common');
+    setVal('edOutcomeLabel', OUTCOME_LABELS[outcome] || outcome);
+    setVal('edDntuCount',''); setVal('edReason',''); setVal('edNote','');
+    document.querySelectorAll('.corr-b').forEach(function(b){ b.classList.remove('on'); });
+
+    // follow-up planning defaults
+    var now = new Date();
+    document.getElementById('edFuOwner').value = d.fuowner || COMMON;
+    document.getElementById('edFuYear').value = d.fuyear || now.getFullYear();
+    document.getElementById('edFuMonth').value = d.fumonth || (now.getMonth()+1);
+    // Keep whatever status the patient already has, even one not in the list
+    // (e.g. "inactive", set automatically after 3 consecutive DNTUs).
+    var fs = document.getElementById('edFuStatus');
+    if(d.fustatus){
+      if(!Array.prototype.some.call(fs.options, function(o){ return o.value === d.fustatus; })){
+        var o = document.createElement('option');
+        o.value = d.fustatus;
+        o.textContent = d.fustatus.charAt(0).toUpperCase() + d.fustatus.slice(1)
+          + ' (set automatically)';
+        fs.appendChild(o);
+      }
+      fs.value = d.fustatus;
+    }
+
+    // variant styling
+    var title = document.getElementById('editTitle');
+    var save = document.getElementById('edSave');
+    var dntuBlock = document.getElementById('dntuBlock');
+    var lbl = document.getElementById('edOutcomeLabel');
+    lbl.style.color = ''; 
+    if(outcome === 'dna'){
+      title.textContent = 'Edit / DNTU Appointment — Did Not Turn Up';
+      save.textContent = 'Save Edit / DNTU Appointment';
+      dntuBlock.style.display = 'block';
+      lbl.style.color = '#b45309';
+      var run = parseInt(d.dntu || '0', 10);
+      var nextN = (run > 0 ? run : run + 1);
+      document.getElementById('dntuNext').textContent = ['1st','1st','2nd','3rd'][Math.min(3,nextN)] || '1st';
+    } else if(outcome === 'cancelled'){
+      title.textContent = 'Edit / Cancel Appointment';
+      save.textContent = 'Next: reason →';
+      dntuBlock.style.display = 'none';
+    } else {
+      title.textContent = 'Edit / Seen Appointment';
+      save.textContent = 'Save Edit / Seen';
+      dntuBlock.style.display = 'none';
+    }
+    document.getElementById('editSub').textContent =
+      "{{ day|date:'Y-m-d' }} · " + (d.time || '');
+    hideAll(); showModal('editModal');
+    loadCapacity();
   }
-  function openCancel(id){
-    document.getElementById('cancelApptId').value = id;
-    showModal('cancelModal');
+
+  function pickDntu(n){
+    var cur = document.getElementById('edDntuCount').value;
+    document.querySelectorAll('.corr-b').forEach(function(b){ b.classList.remove('on'); });
+    if(String(cur) === String(n)){
+      document.getElementById('edDntuCount').value = '';
+      document.getElementById('dntuHint').textContent = 'Optional — leave unselected to record just this DNTU.';
+      return;
+    }
+    document.getElementById('edDntuCount').value = n;
+    document.querySelector('.corr-b[data-n="'+n+'"]').classList.add('on');
+    document.getElementById('dntuHint').textContent =
+      'The record will be set to ' + n + ' consecutive DNTUs; missing earlier ones are back-dated.';
   }
+
+  /* ---------- availability donut ---------- */
+  var ARC_COLOURS = {good:'#16a34a', moderate:'#f59e0b', limited:'#f97316', full:'#dc2626'};
+  function loadCapacity(){
+    var owner = document.getElementById('edFuOwner').value;
+    var year = document.getElementById('edFuYear').value;
+    var month = document.getElementById('edFuMonth').value;
+    fetch(CAP_URL + '?owner=' + encodeURIComponent(owner) + '&year=' + year + '&month=' + month)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.ok) return;
+        document.getElementById('capTitle').textContent = d.month_label + ' — ' + d.owner;
+        document.getElementById('capSub').textContent =
+          d.booked + ' booked / ' + d.total + ' total slots · ' + d.free + ' free slots';
+        var r = document.getElementById('capRating');
+        r.textContent = d.rating_label;
+        r.className = 'cap-r ' + d.rating;
+        var arc = document.getElementById('capArc');
+        arc.setAttribute('stroke-dasharray', d.pct + ' ' + (100 - d.pct));
+        arc.setAttribute('stroke', ARC_COLOURS[d.rating] || '#16a34a');
+        document.getElementById('capNote').textContent =
+          d.working_days + ' clinic days (Mon–Sat, excluding Sundays and public holidays) × '
+          + d.slots_per_day + ' slots · clinic total booked this month: ' + d.clinic_total;
+      })
+      .catch(function(){});
+  }
+
+  /* ---------- cancel: second screen ---------- */
+  document.getElementById('editForm').addEventListener('submit', function(e){
+    if(document.getElementById('edOutcome').value === 'cancelled'
+       && !document.getElementById('edReason').value){
+      e.preventDefault();
+      hideAll(); showModal('reasonModal');
+    }
+  });
+  function backToEdit(){ hideAll(); showModal('editModal'); }
+  function confirmCancel(){
+    document.getElementById('edReason').value = document.getElementById('rsReason').value;
+    document.getElementById('edNote').value = document.getElementById('rsNote').value;
+    document.getElementById('editForm').submit();
+  }
+
+  /* ---------- patient search (ID number only) ---------- */
   var searchTimer = null;
   document.getElementById('patSearch').addEventListener('input', function(){
     var q = this.value.trim();
@@ -261,7 +506,7 @@
         .then(function(r){ return r.json(); })
         .then(function(d){
           box.innerHTML = '';
-          if(!d.results || !d.results.length){ box.innerHTML = '<div style="padding:10px;color:#94a3b8;font-size:12.5px;">No matches.</div>'; box.style.display='block'; return; }
+          if(!d.results || !d.results.length){ box.innerHTML = '<div style="padding:10px;color:#94a3b8;font-size:12.5px;">No patient with that ID number.</div>'; box.style.display='block'; return; }
           d.results.forEach(function(p){
             var b = document.createElement('button');
             b.type = 'button';

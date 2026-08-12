@@ -2419,6 +2419,92 @@ DNTU_LIMIT = 3
 DNTU_REMOVED_STATUS = "inactive"
 
 
+COMMON_COLUMN = "Common"
+
+
+def _month_working_days(year, month):
+    """Clinic working days in a month: Monday–Saturday, minus Maltese public
+    holidays. Sundays and public holidays carry no clinic slots."""
+    ndays = calendar.monthrange(year, month)[1]
+    holidays = maltese_public_holidays(year)
+    days = 0
+    for d in range(1, ndays + 1):
+        dt = datetime.date(year, month, d)
+        if dt.weekday() == 6:          # Sunday
+            continue
+        if dt in holidays:             # public holiday
+            continue
+        days += 1
+    return days
+
+
+def _availability_rating(free, total):
+    """Traffic-light wording for how much room is left in a month."""
+    if total <= 0:
+        return "full", "no slots"
+    pct = free / total
+    if free <= 0:
+        return "full", "fully booked"
+    if pct >= 0.5:
+        return "good", "good availability"
+    if pct >= 0.2:
+        return "moderate", "moderate availability"
+    return "limited", "limited availability"
+
+
+def _capacity_for(owner, year, month):
+    """Monthly slot capacity for one clinic column (a nurse name, or
+    ``Common``), plus the clinic-wide booked total for that month."""
+    working_days = _month_working_days(year, month)
+    total = working_days * len(CLINIC_SLOTS)
+
+    FA = models.FollowUpAppointment
+    first = datetime.date(year, month, 1)
+    last = datetime.date(year, month, calendar.monthrange(year, month)[1])
+    month_qs = (FA.objects.filter(appt_date__gte=first, appt_date__lte=last)
+                .exclude(status=FA.CANCELLED))
+
+    if owner and owner != COMMON_COLUMN:
+        col_qs = month_qs.filter(nurse__full_name=owner)
+    else:
+        col_qs = month_qs.filter(nurse__isnull=True)
+
+    booked = col_qs.count()
+    clinic_total = month_qs.count()
+    free = max(0, total - booked)
+    rating, label = _availability_rating(free, total)
+    return {
+        "owner": owner or COMMON_COLUMN,
+        "year": year, "month": month,
+        "month_label": datetime.date(year, month, 1).strftime("%B"),
+        "working_days": working_days,
+        "slots_per_day": len(CLINIC_SLOTS),
+        "total": total, "booked": booked, "free": free,
+        "clinic_total": clinic_total,
+        "rating": rating, "rating_label": label,
+        "pct": int(round((booked / total) * 100)) if total else 0,
+    }
+
+
+@login_required
+def appointment_capacity(request):
+    """JSON slot availability for a column + month, for the donut in the
+    edit card."""
+    owner = (request.GET.get("owner") or COMMON_COLUMN).strip()
+    today = datetime.date.today()
+    try:
+        year = int(request.GET.get("year") or today.year)
+        month = int(request.GET.get("month") or today.month)
+        datetime.date(year, month, 1)
+    except (ValueError, TypeError):
+        year, month = today.year, today.month
+    data = _safe_query(lambda: _capacity_for(owner, year, month), None)
+    if data is None:
+        return JsonResponse({"ok": False}, status=200)
+    data["ok"] = True
+    return JsonResponse(data)
+
+
 def _consecutive_dntu(patient):
     """How many did-not-turn-ups in a row the patient has right now.
     Only realised outcomes count (attended / dna); an attended visit resets
@@ -2506,6 +2592,11 @@ def appointments(request):
     cells = {}
     booked = 0
     for a in appts:
+        # Grade a DNTU by how many consecutive misses the patient now has:
+        # 1st = yellow, 2nd = amber, 3rd = red.
+        a.dntu_run = 0
+        if a.status == FA.DNA and a.patient_id:
+            a.dntu_run = min(3, _consecutive_dntu(a.patient))
         col = "common" if a.nurse_id is None else str(a.nurse_id)
         key = (col, a.appt_time or "")
         cell = cells.setdefault(key, {"active": None, "cancelled": []})
@@ -2536,12 +2627,123 @@ def appointments(request):
         "booked_count": booked,
         "slot_count": len(CLINIC_SLOTS),
         "cancel_reasons": models.AppointmentCancellation.REASON_CHOICES,
+        "slots": CLINIC_SLOTS,
+        "all_nurses": _safe_query(
+            lambda: list(models.RosterStaff.objects.filter(active=True)
+                         .order_by("display_order", "full_name")), []) or [],
+        "followup_statuses": forms.FOLLOWUP_STATUS_CHOICES,
+        "outcome_choices": models.FollowUpAppointment.STATUS_CHOICES,
+        "fu_years": list(range(today.year, today.year + 4)),
+        "fu_months": [(i, datetime.date(2000, i, 1).strftime("%B"))
+                      for i in range(1, 13)],
+        "common_column": COMMON_COLUMN,
     })
 
 
 def _actor(request):
     u = request.user
     return (u.get_full_name() or u.get_username() or u.email or "").strip()
+
+
+def _backfill_dntu(patient, appointment, target_count):
+    """Set the patient's consecutive DNTU record to ``target_count`` (2 or 3).
+
+    The appointment being saved is the most recent DNTU; any missing earlier
+    ones are written as back-dated records so the history matches the real
+    clinical record."""
+    FA = models.FollowUpAppointment
+    have = _consecutive_dntu(patient)
+    missing = max(0, target_count - have)
+    for i in range(missing):
+        back_date = (appointment.appt_date or datetime.date.today()) \
+            - datetime.timedelta(days=7 * (i + 1))
+        FA.objects.create(
+            patient=patient, nurse=appointment.nurse, appt_date=back_date,
+            appt_time=appointment.appt_time, status=FA.DNA,
+            notes="Historical DNTU added via record correction.",
+        )
+    return missing
+
+
+def _save_appointment_edit(request, a, outcome):
+    """Apply the unified edit card: patient details, appointment details,
+    the outcome (seen / DNTU / cancelled) and follow-up planning."""
+    FA = models.FollowUpAppointment
+    P = request.POST
+    patient = a.patient
+
+    # --- patient details -------------------------------------------------
+    if patient:
+        for field, key in (("id_card", "id_card"), ("phone_number", "phone"),
+                           ("first_name", "first_name"), ("surname", "surname")):
+            val = (P.get(key) or "").strip()
+            if val:
+                setattr(patient, field, val)
+        # --- follow-up planning ------------------------------------------
+        owner = (P.get("fu_owner") or "").strip()
+        if owner:
+            patient.followup_owner = owner
+        for field, key in (("followup_due_month", "fu_month"),
+                           ("followup_year", "fu_year")):
+            try:
+                setattr(patient, field, int(P.get(key)))
+            except (TypeError, ValueError):
+                pass
+        status = (P.get("fu_status") or "").strip()
+        if status:
+            patient.followup_status = status
+        try:
+            patient.save()
+        except Exception:
+            messages.error(request, "Patient details could not be saved.")
+
+    # --- appointment details --------------------------------------------
+    d = _parse_date(P.get("appt_date"))
+    if d:
+        a.appt_date = d
+    t = (P.get("appt_time") or "").strip()
+    if t:
+        a.appt_time = t
+    col = (P.get("nurse") or "").strip()
+    if col:
+        a.nurse_id = None if col in ("common", COMMON_COLUMN) else col
+
+    # --- outcome ---------------------------------------------------------
+    a.status = outcome
+    a.outcome_by = _actor(request)
+    a.outcome_at = timezone.now()
+    a.save()
+
+    name = str(patient) if patient else "Patient"
+
+    if outcome == FA.CANCELLED:
+        models.AppointmentCancellation.objects.create(
+            patient=patient, appt_date=a.appt_date, appt_time=a.appt_time,
+            nurse_name=(a.nurse.full_name if a.nurse else COMMON_COLUMN),
+            reason=(P.get("reason") or "other").strip(),
+            note=(P.get("note") or "").strip()[:400],
+            cancelled_by=_actor(request),
+        )
+        messages.success(
+            request, f"Cancelled — {name}. Recorded with a reason; the slot is free to rebook.")
+
+    elif outcome == FA.DNA:
+        added = 0
+        try:
+            target = int(P.get("dntu_count") or 0)
+        except (TypeError, ValueError):
+            target = 0
+        if patient and target in (2, 3):
+            added = _backfill_dntu(patient, a, target)
+        if patient:
+            run = _apply_dntu_rule(patient, request)
+            extra = f" ({added} historical DNTU added)" if added else ""
+            messages.success(
+                request,
+                f"{name} marked as did-not-turn-up — {run} consecutive{extra}.")
+
+    else:
+        messages.success(request, f"{name} saved as {a.get_status_display()}.")
 
 
 @login_required
@@ -2567,39 +2769,11 @@ def _appointment_action(request):
             )
             messages.success(request, f"Booked {patient} at {time}.")
 
-        elif action == "seen":
-            a = FA.objects.select_related("patient").get(pk=request.POST.get("appt_id"))
-            a.status = FA.ATTENDED
-            a.outcome_by = _actor(request)
-            a.outcome_at = timezone.now()
-            nxt = _parse_date(request.POST.get("next_followup_date"))
-            if nxt:
-                a.next_followup_date = nxt
-            a.save()
-            messages.success(request, f"{a.patient} marked as seen.")
-
-        elif action == "dntu":
-            a = FA.objects.select_related("patient").get(pk=request.POST.get("appt_id"))
-            a.status = FA.DNA
-            a.outcome_by = _actor(request)
-            a.outcome_at = timezone.now()
-            a.save()
-            if a.patient:
-                _apply_dntu_rule(a.patient, request)
-            messages.success(request, f"{a.patient} marked as did-not-turn-up.")
-
-        elif action == "cancel":
-            a = FA.objects.select_related("patient", "nurse").get(pk=request.POST.get("appt_id"))
-            models.AppointmentCancellation.objects.create(
-                patient=a.patient, appt_date=a.appt_date, appt_time=a.appt_time,
-                nurse_name=(a.nurse.full_name if a.nurse else "Common"),
-                reason=(request.POST.get("reason") or "other").strip(),
-                note=(request.POST.get("note") or "").strip()[:400],
-                cancelled_by=_actor(request),
-            )
-            a.status = FA.CANCELLED
-            a.save(update_fields=["status", "updated_at"])
-            messages.success(request, f"Cancelled — {a.patient}. The slot is free to rebook.")
+        elif action == "save_edit":
+            a = FA.objects.select_related("patient", "nurse").get(
+                pk=request.POST.get("appt_id"))
+            outcome = (request.POST.get("outcome") or a.status).strip()
+            _save_appointment_edit(request, a, outcome)
 
         elif action == "delete":
             a = FA.objects.get(pk=request.POST.get("appt_id"))
