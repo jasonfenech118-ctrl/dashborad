@@ -58,6 +58,8 @@ urlpatterns = [
     path("pathways/<uuid:pk>/encounter/", views.encounter_new, name="encounter_new"),
     path("patients/<uuid:patient_id>/profile/", views.patient_profile, name="patient_profile"),
     path("appointments/", views.appointments, name="appointments"),
+    path("appointments/patients.json", views.appointment_patient_search,
+         name="appointment_patient_search"),
     path("patients/add/", views.add_patient, name="add_patient"),
     path("patients/", views.patient_list, name="patient_list"),
     path("patients/<uuid:patient_id>/", views.patient_detail, name="patient_detail"),

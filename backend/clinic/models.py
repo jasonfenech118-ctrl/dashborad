@@ -841,10 +841,20 @@ class FollowUpAppointment(UUIDModel):
         Patient, on_delete=models.CASCADE, db_constraint=False,
         related_name="followup_appointments_new",
     )
+    # Which nurse's column this booking sits in on the daily clinic grid.
+    # Null means the shared "Common / General" column.
+    nurse = models.ForeignKey(
+        "RosterStaff", on_delete=models.SET_NULL, blank=True, null=True,
+        related_name="clinic_appointments",
+    )
     appt_date = models.DateField()
     appt_time = models.CharField(max_length=20, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=SCHEDULED)
     notes = models.TextField(blank=True, null=True)
+    # The next follow-up date agreed when the patient is seen.
+    next_followup_date = models.DateField(blank=True, null=True)
+    outcome_by = models.CharField(max_length=200, blank=True, null=True)
+    outcome_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -855,6 +865,46 @@ class FollowUpAppointment(UUIDModel):
 
     def __str__(self):
         return f"{self.appt_date} — {self.patient}"
+
+
+class AppointmentCancellation(UUIDModel):
+    """A permanent record of a cancelled clinic booking. Kept even after the
+    slot is rebooked, so repeated cancellations by a patient are documented."""
+
+    PATIENT_REQUEST = "patient_request"
+    ILLNESS = "illness"
+    TRANSPORT = "transport"
+    CLINICAL = "clinical"
+    RESCHEDULED = "rescheduled"
+    OTHER = "other"
+    REASON_CHOICES = [
+        (PATIENT_REQUEST, "Patient request"),
+        (ILLNESS, "Illness"),
+        (TRANSPORT, "Transport"),
+        (CLINICAL, "Clinical decision"),
+        (RESCHEDULED, "Rescheduled"),
+        (OTHER, "Other"),
+    ]
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, db_constraint=False,
+        related_name="appointment_cancellations",
+    )
+    appt_date = models.DateField(blank=True, null=True)
+    appt_time = models.CharField(max_length=20, blank=True, null=True)
+    nurse_name = models.CharField(max_length=200, blank=True, null=True)
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES, default=OTHER)
+    note = models.CharField(max_length=400, blank=True, null=True)
+    cancelled_by = models.CharField(max_length=200, blank=True, null=True)
+    cancelled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "appointment_cancellations"
+        ordering = ["-cancelled_at"]
+
+    def __str__(self):
+        return f"Cancelled {self.appt_date} {self.appt_time or ''} — {self.patient}"
 
 
 class LibraryDocument(UUIDModel):
