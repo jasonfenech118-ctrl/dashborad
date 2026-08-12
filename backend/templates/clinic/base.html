@@ -173,6 +173,9 @@
       h1{font-size:19px;margin-bottom:12px;}
       h2{font-size:15px;}
       .topbar{padding:0 8px;min-height:44px;}
+      /* Tabs scroll sideways rather than wrapping or being clipped. */
+      .topbar nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+      .topbar nav::-webkit-scrollbar{display:none;}
       .topbar nav a{padding:0 8px;font-size:12px;}
       .topbar .util{padding-left:4px;gap:2px;}
       .topbar .util .who{display:none;}
@@ -180,6 +183,9 @@
       .grid{grid-template-columns:1fr 1fr;}
       .controls{gap:6px;}
       .controls input,.controls select{width:100%;}
+      /* 16px keeps iOS Safari from auto-zooming the page when a field is focused. */
+      input,select,textarea{font-size:16px;}
+      .btn,.btn-back{padding:11px 16px;}
       /* Any full-width data table scrolls sideways within its own strip on phones. */
       .wrap > table,.card > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
     }

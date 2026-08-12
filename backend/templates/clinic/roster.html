@@ -108,6 +108,28 @@
   .sec-placeholder span{font-size:12.5px;}
 
   @media print{ .rost-bar .navbtn,.addbox,.rm,#palette{display:none !important;} }
+
+  /* ---- phone: make the roster grid actually usable ----
+     The frozen Staff+Role columns ate 286px of a 390px screen, leaving room
+     for a single day. Drop Role, slim the name column and tighten the day
+     cells so a week's worth of days is visible at once. */
+  @media(max-width:600px){
+    th.rost-role,td.rost-role{display:none;}
+    th.rost-name,td.rost-name{min-width:104px;width:104px;padding:6px 4px 6px 8px;font-size:12px;}
+    .rost-day{min-width:42px;width:42px;}
+    td.rost-cell{width:42px;height:38px;}
+    .rost-day .hol-name{display:none;}
+    .rost-day .dn{font-size:11.5px;}
+    .cell{width:32px;height:30px;}
+    table.rost{font-size:12px;}
+    .rost-bar{gap:6px;}
+    .rost-bar .mlabel{font-size:14.5px;margin:0 2px;}
+    .legend{gap:6px 10px;padding:9px 11px;}
+    /* Stack the log forms so fields aren't squeezed onto one line. */
+    .hrs-form .frow{flex-direction:column;align-items:stretch;}
+    .hrs-form .fld{width:100%;}
+    .hrs-form input,.hrs-form select{width:100% !important;}
+  }
 </style>
 
 <!-- ===== SECTION: Monthly Roster ===== -->
@@ -186,7 +208,10 @@
   .hrs-form .fld{display:flex;flex-direction:column;gap:3px;}
   .hrs-form label{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700;}
   .hrs-form input,.hrs-form select{padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
-  .hrs-log{background:rgba(255,255,255,.7);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+  /* overflow-x:auto (not hidden) so the wide booking table scrolls on phones
+     instead of being clipped off-screen. */
+  .hrs-log{background:rgba(255,255,255,.7);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:10px;overflow-x:auto;margin-bottom:16px;}
+  .hrs-log table{min-width:560px;}
   .hrs-log table{background:transparent;border:none;border-radius:0;}
   .hrs-log th{background:#f8fafc;}
   .hrs-log td,.hrs-log th{font-size:12.5px;padding:8px 12px;}
