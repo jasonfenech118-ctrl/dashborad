@@ -473,8 +473,10 @@
         arc.setAttribute('stroke-dasharray', d.pct + ' ' + (100 - d.pct));
         arc.setAttribute('stroke', ARC_COLOURS[d.rating] || '#16a34a');
         document.getElementById('capNote').textContent =
-          d.working_days + ' clinic days (Mon–Sat, excluding Sundays and public holidays) × '
-          + d.slots_per_day + ' slots · clinic total booked this month: ' + d.clinic_total;
+          d.working_days + ' bookable days (Sundays and public holidays only) × '
+          + d.slots_per_day + ' slots'
+          + (d.part_month ? ' · counted from ' + d.counts_from + ' (past days excluded)' : '')
+          + ' · clinic total booked: ' + d.clinic_total;
       })
       .catch(function(){});
   }
