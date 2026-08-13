@@ -2422,19 +2422,22 @@ DNTU_REMOVED_STATUS = "inactive"
 COMMON_COLUMN = "Common"
 
 
-def _month_working_days(year, month):
-    """Clinic working days in a month: Monday–Saturday, minus Maltese public
-    holidays. Sundays and public holidays carry no clinic slots."""
+def _month_capacity_days(year, month, today=None):
+    """Days in a month that carry bookable clinic slots.
+
+    Only Sundays and Maltese public holidays count — Monday to Saturday are
+    excluded. Days that have already passed are never bookable, so a month
+    that is already under way is counted from today onwards."""
+    today = today or datetime.date.today()
     ndays = calendar.monthrange(year, month)[1]
     holidays = maltese_public_holidays(year)
     days = 0
     for d in range(1, ndays + 1):
         dt = datetime.date(year, month, d)
-        if dt.weekday() == 6:          # Sunday
+        if dt < today:                              # in the past — cannot book
             continue
-        if dt in holidays:             # public holiday
-            continue
-        days += 1
+        if dt.weekday() == 6 or dt in holidays:     # Sunday or public holiday
+            days += 1
     return days
 
 
@@ -2455,13 +2458,17 @@ def _availability_rating(free, total):
 def _capacity_for(owner, year, month):
     """Monthly slot capacity for one clinic column (a nurse name, or
     ``Common``), plus the clinic-wide booked total for that month."""
-    working_days = _month_working_days(year, month)
+    today = datetime.date.today()
+    working_days = _month_capacity_days(year, month, today)
     total = working_days * len(CLINIC_SLOTS)
 
     FA = models.FollowUpAppointment
     first = datetime.date(year, month, 1)
     last = datetime.date(year, month, calendar.monthrange(year, month)[1])
-    month_qs = (FA.objects.filter(appt_date__gte=first, appt_date__lte=last)
+    # Count bookings over the same window the capacity covers, so a month
+    # already under way never shows more booked than it has slots left.
+    counts_from = max(first, today)
+    month_qs = (FA.objects.filter(appt_date__gte=counts_from, appt_date__lte=last)
                 .exclude(status=FA.CANCELLED))
 
     if owner and owner != COMMON_COLUMN:
@@ -2478,6 +2485,8 @@ def _capacity_for(owner, year, month):
         "year": year, "month": month,
         "month_label": datetime.date(year, month, 1).strftime("%B"),
         "working_days": working_days,
+        "counts_from": counts_from.isoformat(),
+        "part_month": counts_from > first,
         "slots_per_day": len(CLINIC_SLOTS),
         "total": total, "booked": booked, "free": free,
         "clinic_total": clinic_total,
