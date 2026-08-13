@@ -2411,8 +2411,7 @@ def _pathway_action(request, p):
 # Roster shift codes that mean the nurse is on the floor and can see patients.
 CLINIC_WORKING_CODES = {"D", "AM", "OT", "TIL", "COD-in"}
 # 30-minute slots, 08:30 to 13:30 inclusive.
-CLINIC_SLOTS = ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00",
-                "11:30", "12:00", "12:30", "13:00", "13:30"]
+CLINIC_SLOTS = ["21:00", "21:30", "22:00", "22:30", "23:00", "23:30"]
 # Consecutive did-not-turn-up appointments before a patient is dropped.
 DNTU_LIMIT = 3
 # followup_status a patient is moved to once they hit the DNTU limit.
@@ -2615,14 +2614,20 @@ def appointments(request):
             cell["active"] = a
             booked += 1
 
+    # Bookings made under an earlier slot schedule keep their original time, so
+    # show those times as extra rows rather than dropping the booking off the
+    # grid where nobody can see or move it.
+    off_schedule = sorted({t for (_col, t) in cells if t and t not in CLINIC_SLOTS})
+
     rows = []
-    for t in CLINIC_SLOTS:
+    for t in CLINIC_SLOTS + off_schedule:
         row_cells = []
         for c in columns:
             cell = cells.get((c["key"], t), {"active": None, "cancelled": []})
             row_cells.append({"col": c, "time": t,
                               "active": cell["active"], "cancelled": cell["cancelled"]})
-        rows.append({"time": t, "cells": row_cells})
+        rows.append({"time": t, "cells": row_cells,
+                     "off_schedule": t in off_schedule})
 
     return render(request, "clinic/appointments.html", {
         "db_ok": db_ok,
