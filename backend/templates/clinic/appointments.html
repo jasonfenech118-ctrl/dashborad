@@ -103,8 +103,6 @@
   .corr-b.on{border-color:#b45309;background:#fffbeb;}
   .note-y{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:7px;
     padding:8px 10px;font-size:11.5px;font-weight:600;margin-top:10px;}
-  .note-b{background:#ecfeff;border:1px solid #a5f3fc;color:#155e75;border-radius:7px;
-    padding:8px 10px;font-size:11.5px;font-weight:600;margin-top:8px;}
 
   /* Availability donut */
   .cap{display:flex;align-items:center;gap:14px;border:1px solid var(--border);
@@ -120,7 +118,7 @@
 <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:4px;">
   <div style="flex:1;min-width:220px;">
     <h1 style="margin-bottom:2px;">Daily Clinic</h1>
-    <p class="muted" style="font-size:13px;">08:30 – 13:30 · 30-min slots · one column per nurse working (from the roster).</p>
+    <p class="muted" style="font-size:13px;">{{ slots|first }} – {{ slots|last }} · 30-min slots · one column per nurse working (from the roster).</p>
   </div>
 </div>
 
@@ -319,7 +317,6 @@
         <div class="cap-r" id="capRating"></div>
       </div>
     </div>
-    <div class="note-b" id="capNote"></div>
 
     <label>Follow-up status</label>
     <select name="fu_status" id="edFuStatus">
@@ -456,7 +453,35 @@
   }
 
   /* ---------- availability donut ---------- */
-  var ARC_COLOURS = {good:'#16a34a', moderate:'#f59e0b', limited:'#f97316', full:'#dc2626'};
+  /* The ring colour slides continuously with how full the month is: green
+     while there is room, easing through lime, yellow, amber and orange as it
+     fills. The last three slots are pinned to progressively deeper reds so
+     the end of a month is unmistakable regardless of the month's size. */
+  var CAP_RAMP = [
+    [0.00, [220,  38,  38]],   /* red   */
+    [0.15, [249, 115,  22]],   /* orange*/
+    [0.30, [245, 158,  11]],   /* amber */
+    [0.50, [234, 179,   8]],   /* yellow*/
+    [0.75, [101, 163,  13]],   /* lime  */
+    [1.00, [ 22, 163,  74]]    /* green */
+  ];
+  function capColour(free, total){
+    if(free <= 0) return '#7f1d1d';            /* nothing left  */
+    if(free === 1) return '#a11212';           /* one slot left */
+    if(free === 2) return '#dc2626';           /* two slots left*/
+    var f = total > 0 ? Math.max(0, Math.min(1, free / total)) : 0;
+    for(var i = 1; i < CAP_RAMP.length; i++){
+      if(f <= CAP_RAMP[i][0]){
+        var lo = CAP_RAMP[i-1], hi = CAP_RAMP[i];
+        var t = (hi[0] === lo[0]) ? 0 : (f - lo[0]) / (hi[0] - lo[0]);
+        var c = [0,1,2].map(function(k){
+          return Math.round(lo[1][k] + (hi[1][k] - lo[1][k]) * t);
+        });
+        return 'rgb(' + c.join(',') + ')';
+      }
+    }
+    return '#16a34a';
+  }
   function loadCapacity(){
     var owner = document.getElementById('edFuOwner').value;
     var year = document.getElementById('edFuYear').value;
@@ -473,12 +498,7 @@
         r.className = 'cap-r ' + d.rating;
         var arc = document.getElementById('capArc');
         arc.setAttribute('stroke-dasharray', d.pct + ' ' + (100 - d.pct));
-        arc.setAttribute('stroke', ARC_COLOURS[d.rating] || '#16a34a');
-        document.getElementById('capNote').textContent =
-          d.working_days + ' bookable days (Sundays and public holidays only) × '
-          + d.slots_per_day + ' slots'
-          + (d.part_month ? ' · counted from ' + d.counts_from + ' (past days excluded)' : '')
-          + ' · clinic total booked: ' + d.clinic_total;
+        arc.setAttribute('stroke', capColour(d.free, d.total));
       })
       .catch(function(){});
   }

@@ -2410,7 +2410,7 @@ def _pathway_action(request, p):
 
 # Roster shift codes that mean the nurse is on the floor and can see patients.
 CLINIC_WORKING_CODES = {"D", "AM", "OT", "TIL", "COD-in"}
-# 30-minute slots, 08:30 to 13:30 inclusive.
+# 30-minute slots, 21:00 to 23:30 inclusive — the Sunday / public-holiday session.
 CLINIC_SLOTS = ["21:00", "21:30", "22:00", "22:30", "23:00", "23:30"]
 # Consecutive did-not-turn-up appointments before a patient is dropped.
 DNTU_LIMIT = 3
@@ -2422,22 +2422,47 @@ COMMON_COLUMN = "Common"
 
 
 def _month_capacity_days(year, month, today=None):
-    """Days in a month that carry bookable clinic slots.
+    """Dates in a month that can carry clinic slots at all.
 
-    Only Sundays and Maltese public holidays count — Monday to Saturday are
-    excluded. Days that have already passed are never bookable, so a month
-    that is already under way is counted from today onwards."""
+    Only Sundays and Maltese public holidays run a clinic — Monday to Saturday
+    are excluded. Days that have already passed are never bookable, so a month
+    already under way is counted from today onwards."""
     today = today or datetime.date.today()
     ndays = calendar.monthrange(year, month)[1]
     holidays = maltese_public_holidays(year)
-    days = 0
+    days = []
     for d in range(1, ndays + 1):
         dt = datetime.date(year, month, d)
         if dt < today:                              # in the past — cannot book
             continue
         if dt.weekday() == 6 or dt in holidays:     # Sunday or public holiday
-            days += 1
+            days.append(dt)
     return days
+
+
+def _owner_capacity_days(owner, year, month, today=None):
+    """The clinic days one column can actually be booked on.
+
+    ``Common`` is the shared column, so it carries every Sunday and public
+    holiday. A named nurse only carries the days they are rostered to work,
+    plus any day they have overtime logged against them — so a nurse who picks
+    up an extra Sunday gains that day's slots automatically."""
+    days = _month_capacity_days(year, month, today)
+    if not owner or owner == COMMON_COLUMN or not days:
+        return days
+
+    rostered = set(
+        models.RosterShift.objects
+        .filter(staff__full_name=owner, staff__active=True,
+                date__in=days, code__in=CLINIC_WORKING_CODES)
+        .values_list("date", flat=True)
+    )
+    overtime = set(
+        models.OvertimeHours.objects
+        .filter(staff__full_name=owner, date__in=days)
+        .values_list("date", flat=True)
+    )
+    return sorted(rostered | overtime)
 
 
 def _availability_rating(free, total):
@@ -2458,7 +2483,8 @@ def _capacity_for(owner, year, month):
     """Monthly slot capacity for one clinic column (a nurse name, or
     ``Common``), plus the clinic-wide booked total for that month."""
     today = datetime.date.today()
-    working_days = _month_capacity_days(year, month, today)
+    day_list = _owner_capacity_days(owner, year, month, today)
+    working_days = len(day_list)
     total = working_days * len(CLINIC_SLOTS)
 
     FA = models.FollowUpAppointment
