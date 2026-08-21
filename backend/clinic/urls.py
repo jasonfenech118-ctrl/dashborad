@@ -64,5 +64,6 @@ urlpatterns = [
          name="appointment_capacity"),
     path("patients/add/", views.add_patient, name="add_patient"),
     path("patients/", views.patient_list, name="patient_list"),
+    path("patients/<uuid:patient_id>/card.json", views.patient_card, name="patient_card"),
     path("patients/<uuid:patient_id>/", views.patient_detail, name="patient_detail"),
 ]

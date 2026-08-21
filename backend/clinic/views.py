@@ -2996,6 +2996,120 @@ def patient_list(request):
     })
 
 
+def _age_from(dob, on=None):
+    """Whole years between ``dob`` and ``on`` (today by default)."""
+    if not dob:
+        return None
+    on = on or datetime.date.today()
+    return on.year - dob.year - ((on.month, on.day) < (dob.month, dob.day))
+
+
+def _patient_card(patient):
+    """The at-a-glance payload behind the patient card on the registry."""
+    stomas = _safe(lambda: list(patient.stomas.all()), []) or []
+    open_stomas = [s for s in stomas if s.is_open]
+    episodes = _safe(
+        lambda: list(models.Episode.objects.filter(patient_id=patient.id)), []
+    ) or []
+    appliances = _safe(
+        lambda: list(models.ApplianceRecord.objects.filter(patient_id=patient.id)[:20]), []
+    ) or []
+    appts = _safe(
+        lambda: list(models.FollowUpAppointment.objects
+                     .filter(patient_id=patient.id)
+                     .order_by("-appt_date", "-appt_time")[:10]), []
+    ) or []
+
+    current_episode = episodes[0] if episodes else None
+    current_stoma = open_stomas[0] if open_stomas else (stomas[0] if stomas else None)
+    current_appliance = appliances[0] if appliances else None
+
+    def _d(value):
+        return value.strftime("%d %b %Y") if value else None
+
+    status = (patient.followup_status or "").strip()
+    name = f"{patient.first_name or ''} {patient.surname or ''}".strip()
+
+    return {
+        "id": str(patient.id),
+        "name": name or (patient.id_card or "Unnamed patient"),
+        "id_card": patient.id_card or None,
+        "age": _age_from(patient.dob),
+        "dob": _d(patient.dob),
+        "sex": (patient.sex or "").strip() or None,
+        "locality": patient.locality or None,
+        "phone": patient.phone_number or None,
+        "status": status or None,
+        "status_label": dict(forms.FOLLOWUP_STATUS_CHOICES).get(status, status or "—"),
+        "summary": [
+            ("Follow-up owner", patient.followup_owner or "—"),
+            ("Surgery date", _d(patient.surgery_date) or "—"),
+            ("Admission route", patient.admission_route or "—"),
+            ("Surgery type", patient.surgery_type or "—"),
+            ("Consultant", patient.consultant or "—"),
+            ("Operation", patient.operation_performed or "—"),
+            ("Stoma summary", patient.stoma_type_summary or "—"),
+            ("Reversal date", _d(patient.reversal_date) or "—"),
+        ],
+        "episodes": {
+            "count": len(episodes),
+            "title": "Current episode" if current_episode else "No episodes recorded",
+            "detail": " • ".join(
+                x for x in [
+                    (current_episode.pathway_type or "Episode") if current_episode else None,
+                    _d(current_episode.surgery_date) if current_episode else None,
+                ] if x
+            ) or "—",
+            "badge": (current_episode.status or "").strip() if current_episode else None,
+        },
+        "stomas": {
+            "count": len(stomas),
+            "title": "Active stoma" if open_stomas else (
+                "Most recent stoma" if stomas else "No stomas recorded"),
+            "detail": " • ".join(
+                x for x in [
+                    current_stoma.get_stoma_type_display() if current_stoma else None,
+                    current_stoma.get_site_display() if current_stoma and current_stoma.site else None,
+                ] if x
+            ) or "—",
+            "badge": (current_stoma.get_status_display() if current_stoma else None),
+        },
+        "appliances": {
+            "count": len(appliances),
+            "title": "Current appliance" if current_appliance else "No appliances recorded",
+            "detail": " • ".join(
+                x for x in [
+                    current_appliance.brand if current_appliance else None,
+                    current_appliance.pouch_type if current_appliance else None,
+                ] if x
+            ) or "—",
+            "badge": _d(current_appliance.used_on) if current_appliance else None,
+        },
+        "appointments": [
+            {
+                "date": _d(a.appt_date) or "—",
+                "time": a.appt_time or "",
+                "status": a.get_status_display(),
+                "nurse": (a.nurse.full_name if a.nurse_id else "Common"),
+            }
+            for a in appts
+        ],
+        "profile_url": reverse("clinic:patient_profile", args=[patient.id]),
+        "detail_url": reverse("clinic:patient_detail", args=[patient.id]),
+    }
+
+
+@login_required
+def patient_card(request, patient_id):
+    """JSON for the patient card that opens from the registry list."""
+    patient = get_object_or_404(models.Patient, pk=patient_id)
+    data = _safe_query(lambda: _patient_card(patient), None)
+    if data is None:
+        return JsonResponse({"ok": False}, status=200)
+    data["ok"] = True
+    return JsonResponse(data)
+
+
 @login_required
 def patient_detail(request, patient_id):
     patient = get_object_or_404(models.Patient, pk=patient_id)
