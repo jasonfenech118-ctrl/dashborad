@@ -113,6 +113,24 @@
   {% else %}
     <p class="muted" style="font-size:13px;">No episodes yet.</p>
   {% endif %}
+
+  <details {% if not pathways %}open{% endif %} style="margin-top:8px;">
+    <summary>+ Add episode</summary>
+    <form method="post" style="margin-top:12px;">{% csrf_token %}
+      <input type="hidden" name="action" value="add_episode">
+      <div class="f-row" style="align-items:end;">
+        <div><label class="lbl">Pathway</label>
+          <select name="pathway_type" required>{% for v,l in pathway_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+        <div><label class="lbl">Stage</label>
+          <select name="status" required>{% for v,l in pathway_statuses %}<option value="{{ v }}"{% if v == 'outpatient' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        <div><label class="lbl">Surgery date</label><input type="date" name="surgery_date"></div>
+        <div><label class="lbl">Stoma type</label><input type="text" name="ep_stoma_type"></div>
+        <div><label class="lbl">Operation</label><input type="text" name="operation"></div>
+        <div><label class="lbl">Notes</label><input type="text" name="ep_notes"></div>
+        <div><button class="btn" type="submit">Add episode</button></div>
+      </div>
+    </form>
+  </details>
 </div>
 
 <!-- Stomas -->

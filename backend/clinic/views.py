@@ -537,6 +537,23 @@ def patient_profile(request, patient_id):
                 messages.success(request, f"{stoma.stoma_ref} marked {ctype}.")
             except Exception:
                 messages.error(request, "Could not record that change.")
+        elif action == "add_episode":
+            try:
+                models.CarePathway.objects.create(
+                    patient=patient,
+                    pathway_type=(request.POST.get("pathway_type") or "").strip()
+                        or models.CarePathway.ELECTIVE,
+                    status=(request.POST.get("status") or "").strip()
+                        or models.CarePathway.OUTPATIENT,
+                    surgery_date=_parse_date(request.POST.get("surgery_date")),
+                    operation=(request.POST.get("operation") or "").strip() or None,
+                    stoma_type=(request.POST.get("ep_stoma_type") or "").strip() or None,
+                    notes=(request.POST.get("ep_notes") or "").strip() or None,
+                    created_by_username=request.user.get_username(),
+                )
+                messages.success(request, "Episode added.")
+            except Exception:
+                messages.error(request, "Could not add that episode.")
         elif action == "mark_deceased":
             _close_case_for_deceased(
                 patient, _parse_date(request.POST.get("rip_date"), datetime.date.today())
@@ -575,6 +592,8 @@ def patient_profile(request, patient_id):
         "stoma_types": models.Stoma.TYPE_CHOICES,
         "site_choices": models.Stoma.SITE_CHOICES,
         "change_types": models.StomaChange.TYPE_CHOICES,
+        "pathway_types": models.CarePathway.TYPE_CHOICES,
+        "pathway_statuses": models.CarePathway.STATUS_CHOICES,
         "today": datetime.date.today(),
     })
 
@@ -3004,31 +3023,58 @@ def _age_from(dob, on=None):
     return on.year - dob.year - ((on.month, on.day) < (dob.month, dob.day))
 
 
+# Follow-up statuses that are a closed outcome rather than an open case — a
+# patient in one of these is not booked for further reviews.
+OUTCOME_STATUSES = {"reversed", "deceased", "relocated_gozo", "relocated_overseas"}
+
+
 def _patient_card(patient):
     """The at-a-glance payload behind the patient card on the registry."""
+    today = datetime.date.today()
+    FA = models.FollowUpAppointment
+
     stomas = _safe(lambda: list(patient.stomas.all()), []) or []
     open_stomas = [s for s in stomas if s.is_open]
-    episodes = _safe(
-        lambda: list(models.Episode.objects.filter(patient_id=patient.id)), []
-    ) or []
-    appliances = _safe(
-        lambda: list(models.ApplianceRecord.objects.filter(patient_id=patient.id)[:20]), []
-    ) or []
-    appts = _safe(
-        lambda: list(models.FollowUpAppointment.objects
-                     .filter(patient_id=patient.id)
-                     .order_by("-appt_date", "-appt_time")[:10]), []
-    ) or []
-
-    current_episode = episodes[0] if episodes else None
     current_stoma = open_stomas[0] if open_stomas else (stomas[0] if stomas else None)
-    current_appliance = appliances[0] if appliances else None
+
+    appts = _safe(
+        lambda: list(FA.objects.filter(patient_id=patient.id)
+                     .select_related("nurse")
+                     .order_by("-appt_date", "-appt_time")), []
+    ) or []
 
     def _d(value):
         return value.strftime("%d %b %Y") if value else None
 
+    # The next still-to-come booking, and the most recent realised visit.
+    upcoming = next(
+        (a for a in sorted(appts, key=lambda x: (x.appt_date, x.appt_time or ""))
+         if a.appt_date and a.appt_date >= today
+         and a.status in {FA.SCHEDULED, FA.POSTPONED}),
+        None,
+    )
+    last_seen = next(
+        (a for a in appts if a.status == FA.ATTENDED and a.appt_date), None
+    )
+
     status = (patient.followup_status or "").strip()
+    is_outcome = status in OUTCOME_STATUSES
     name = f"{patient.first_name or ''} {patient.surname or ''}".strip()
+
+    stoma_type = (current_stoma.get_stoma_type_display() if current_stoma
+                  else (patient.stoma_type_summary or None))
+
+    history = [
+        {
+            "date": _d(a.appt_date) or "—",
+            "time": a.appt_time or "",
+            "status": a.get_status_display(),
+            "status_key": a.status,
+            "by": a.outcome_by or (a.nurse.full_name if a.nurse_id else None),
+        }
+        for a in appts
+        if a.status in {FA.ATTENDED, FA.DNA, FA.CANCELLED} and a.appt_date
+    ][:8]
 
     return {
         "id": str(patient.id),
@@ -3041,61 +3087,37 @@ def _patient_card(patient):
         "phone": patient.phone_number or None,
         "status": status or None,
         "status_label": dict(forms.FOLLOWUP_STATUS_CHOICES).get(status, status or "—"),
-        "summary": [
-            ("Follow-up owner", patient.followup_owner or "—"),
-            ("Surgery date", _d(patient.surgery_date) or "—"),
-            ("Admission route", patient.admission_route or "—"),
-            ("Surgery type", patient.surgery_type or "—"),
-            ("Consultant", patient.consultant or "—"),
-            ("Operation", patient.operation_performed or "—"),
-            ("Stoma summary", patient.stoma_type_summary or "—"),
-            ("Reversal date", _d(patient.reversal_date) or "—"),
+        "is_outcome": is_outcome,
+        "can_schedule": not is_outcome,
+        # Next-action / upcoming-appointment banner.
+        "next_action": (
+            f"{_d(upcoming.appt_date)}" + (f" · {upcoming.appt_time}" if upcoming.appt_time else "")
+            if upcoming else None
+        ),
+        # Clinical snapshot.
+        "snapshot": [
+            ("Stoma type", stoma_type or "Not recorded"),
+            ("Surgery date", _d(patient.surgery_date) or "Not recorded"),
+            ("Discharge date", _d(patient.discharged_date) or "Not recorded"),
+            ("Procedure", patient.operation_performed or patient.surgery_type or "Not recorded"),
+            ("Findings", patient.findings or "Not recorded"),
         ],
-        "episodes": {
-            "count": len(episodes),
-            "title": "Current episode" if current_episode else "No episodes recorded",
-            "detail": " • ".join(
-                x for x in [
-                    (current_episode.pathway_type or "Episode") if current_episode else None,
-                    _d(current_episode.surgery_date) if current_episode else None,
-                ] if x
-            ) or "—",
-            "badge": (current_episode.status or "").strip() if current_episode else None,
-        },
-        "stomas": {
-            "count": len(stomas),
-            "title": "Active stoma" if open_stomas else (
-                "Most recent stoma" if stomas else "No stomas recorded"),
-            "detail": " • ".join(
-                x for x in [
-                    current_stoma.get_stoma_type_display() if current_stoma else None,
-                    current_stoma.get_site_display() if current_stoma and current_stoma.site else None,
-                ] if x
-            ) or "—",
-            "badge": (current_stoma.get_status_display() if current_stoma else None),
-        },
-        "appliances": {
-            "count": len(appliances),
-            "title": "Current appliance" if current_appliance else "No appliances recorded",
-            "detail": " • ".join(
-                x for x in [
-                    current_appliance.brand if current_appliance else None,
-                    current_appliance.pouch_type if current_appliance else None,
-                ] if x
-            ) or "—",
-            "badge": _d(current_appliance.used_on) if current_appliance else None,
-        },
-        "appointments": [
-            {
-                "date": _d(a.appt_date) or "—",
-                "time": a.appt_time or "",
-                "status": a.get_status_display(),
-                "nurse": (a.nurse.full_name if a.nurse_id else "Common"),
-            }
-            for a in appts
+        # Contact & record.
+        "contact": [
+            ("Telephone", patient.phone_number or "—"),
+            ("Date of birth", _d(patient.dob) or "—"),
+            ("Locality", patient.locality or "—"),
+            ("ID card", patient.id_card or "—"),
         ],
+        "last_seen": (
+            f"Last seen {_d(last_seen.appt_date)}"
+            + (f" by {last_seen.outcome_by}" if last_seen.outcome_by else "")
+            if last_seen else None
+        ),
+        "history": history,
         "profile_url": reverse("clinic:patient_profile", args=[patient.id]),
         "detail_url": reverse("clinic:patient_detail", args=[patient.id]),
+        "schedule_url": reverse("clinic:appointments"),
     }
 
 

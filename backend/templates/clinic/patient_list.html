@@ -90,29 +90,41 @@
     cursor:pointer;}
   .pc-tab.on{background:var(--navy,#0f172a);color:#fff;border-color:var(--navy,#0f172a);}
   .pc-body{flex:1;overflow:auto;padding:0 18px;}
+  .pc-tab.link{text-decoration:none;display:flex;align-items:center;justify-content:center;}
   .pc-empty{padding:22px 2px;text-align:center;color:var(--muted);font-size:13px;}
-  .pc-dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;margin:0 0 6px;font-size:13px;}
-  .pc-dl dt{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.3px;
-    font-weight:700;align-self:center;}
-  .pc-dl dd{margin:0;color:var(--ink);font-weight:600;overflow-wrap:anywhere;}
-  .pc-rec{display:flex;gap:12px;align-items:center;border:1px solid var(--border);
-    border-radius:11px;padding:12px 13px;margin-bottom:9px;}
-  .pc-rec .rt{flex:1;min-width:0;}
-  .pc-rec .rh{font-size:13.5px;font-weight:800;color:var(--ink);
-    display:flex;align-items:center;gap:7px;}
-  .pc-rec .rn{font-size:11px;font-weight:800;background:#f1f5f9;color:#475569;
-    border-radius:20px;padding:1px 7px;}
-  .pc-rec .rs{font-size:12px;color:var(--muted);margin-top:2px;}
-  .pc-rec .rd{font-size:12.5px;color:var(--ink);margin-top:1px;overflow-wrap:anywhere;}
-  .pc-rec .rb{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
-    background:#e0f2fe;color:#075985;white-space:nowrap;}
-  .pc-ap{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #f1f5f9;
-    padding:9px 2px;font-size:13px;}
-  .pc-ap:last-child{border-bottom:none;}
-  .pc-ap .al{font-weight:700;color:var(--ink);}
-  .pc-ap .ar{color:var(--muted);font-size:12px;text-align:right;}
+  /* action banner (next action / upcoming appointment) */
+  .pc-action{display:flex;gap:12px;align-items:center;justify-content:space-between;
+    background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:13px 15px;margin-bottom:14px;}
+  .pc-at{min-width:0;}
+  .pc-ak{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:#0f766e;}
+  .pc-av2{font-size:15px;font-weight:800;color:var(--ink);margin-top:2px;}
+  .pc-asub{font-size:12px;color:var(--muted);margin-top:1px;}
+  .pc-sched{white-space:nowrap;flex:none;}
+  /* section header */
+  .pc-sec{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px;}
+  .pc-sh{font-size:14px;font-weight:800;color:var(--ink);}
+  .pc-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#ede9fe;color:#5b21b6;}
+  .pc-badge.alt{background:#f1f5f9;color:#475569;}
+  .pc-box{border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:16px;background:#fcfdff;}
+  .pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;margin:0;}
+  .pc-grid dt{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+  .pc-grid dd{margin:2px 0 0;color:var(--ink);font-weight:700;font-size:13.5px;overflow-wrap:anywhere;}
+  .pc-grid dd.na{color:var(--muted);font-weight:600;font-style:italic;}
+  .pc-seen{margin-top:12px;padding-top:11px;border-top:1px solid #eef2f7;
+    font-size:12px;color:var(--muted);}
+  /* recent history rows */
+  .pc-ap{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--border);
+    border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:13px;}
+  .pc-ap .al{font-weight:800;color:var(--ink);}
+  .pc-ap .as{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pc-ap .ab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+    padding:3px 9px;border-radius:20px;background:#dcfce7;color:#166534;white-space:nowrap;height:fit-content;}
+  .pc-ap .ab.dna{background:#fef3c7;color:#92400e;}
+  .pc-ap .ab.cancelled{background:#fee2e2;color:#991b1b;}
   .pc-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 18px;
     border-top:1px solid var(--border);}
+  .pc-st.outcome{background:#f1f5f9;color:#475569;}
+  @media(max-width:480px){ .pc-grid{grid-template-columns:1fr;} }
 </style>
 
 <div class="pt">
@@ -183,20 +195,47 @@
 
     <div class="pc-tabs" role="tablist">
       <button class="pc-tab on" data-pane="pcSummary" role="tab">Summary</button>
-      <button class="pc-tab" data-pane="pcClinical" role="tab">Clinical records</button>
+      <a class="pc-tab link" id="pcClinTab" href="#" title="Opens the clinical records page">Clinical</a>
       <button class="pc-tab" data-pane="pcAppts" role="tab">Appointments</button>
     </div>
 
     <div class="pc-body">
       <div id="pcLoading" class="pc-empty">Loading…</div>
-      <div class="pc-pane" id="pcSummary" hidden><dl class="pc-dl" id="pcDl"></dl></div>
-      <div class="pc-pane" id="pcClinical" hidden></div>
-      <div class="pc-pane" id="pcAppts" hidden></div>
+
+      <div class="pc-pane" id="pcSummary" hidden>
+        <div class="pc-action">
+          <div class="pc-at">
+            <div class="pc-ak">Next action</div>
+            <div class="pc-av2" id="pcNextS">—</div>
+            <div class="pc-asub" id="pcSubS"></div>
+          </div>
+          <a class="btn pc-sched" id="pcSchedS" href="#">Schedule</a>
+        </div>
+
+        <div class="pc-sec"><span class="pc-sh">Clinical snapshot</span><span class="pc-badge">Stoma clinic</span></div>
+        <div class="pc-box"><dl class="pc-grid" id="pcSnap"></dl></div>
+
+        <div class="pc-sec"><span class="pc-sh">Contact &amp; record</span></div>
+        <div class="pc-box"><dl class="pc-grid" id="pcContact"></dl><div class="pc-seen" id="pcSeen"></div></div>
+      </div>
+
+      <div class="pc-pane" id="pcAppts" hidden>
+        <div class="pc-action">
+          <div class="pc-at">
+            <div class="pc-ak">Upcoming appointment</div>
+            <div class="pc-av2" id="pcNextA">—</div>
+            <div class="pc-asub" id="pcSubA"></div>
+          </div>
+          <a class="btn pc-sched" id="pcSchedA" href="#">Schedule</a>
+        </div>
+        <div class="pc-sec"><span class="pc-sh">Recent history</span><span class="pc-badge alt" id="pcHistCount"></span></div>
+        <div id="pcHist"></div>
+      </div>
     </div>
 
     <div class="pc-foot">
       <button class="btn ghost" onclick="closeCard()">Close</button>
-      <a class="btn" id="pcProfile" href="#">Open profile</a>
+      <a class="btn" id="pcProfile" href="#">Edit patient</a>
     </div>
   </div>
 
@@ -213,7 +252,7 @@
 (function(){
   var card = document.getElementById('pcCard');
   var scrim = document.getElementById('pcScrim');
-  var panes = ['pcSummary','pcClinical','pcAppts'];
+  var panes = ['pcSummary','pcAppts'];
   var lastFocus = null;
 
   function esc(s){
@@ -224,23 +263,20 @@
 
   function showPane(id){
     panes.forEach(function(p){ document.getElementById(p).hidden = (p !== id); });
-    Array.prototype.forEach.call(document.querySelectorAll('.pc-tab'), function(b){
+    Array.prototype.forEach.call(document.querySelectorAll('.pc-tab[data-pane]'), function(b){
       b.classList.toggle('on', b.dataset.pane === id);
     });
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.pc-tab'), function(b){
+  Array.prototype.forEach.call(document.querySelectorAll('.pc-tab[data-pane]'), function(b){
     b.addEventListener('click', function(){ showPane(b.dataset.pane); });
   });
 
-  function record(name, r){
-    if(!r) return '';
-    return '<div class="pc-rec"><div class="rt">'
-      + '<div class="rh">' + esc(name) + '<span class="rn">' + esc(r.count) + '</span></div>'
-      + '<div class="rs">' + esc(r.title) + '</div>'
-      + '<div class="rd">' + esc(r.detail) + '</div>'
-      + '</div>'
-      + (r.badge ? '<span class="rb">' + esc(r.badge) + '</span>' : '')
-      + '</div>';
+  function grid(rows){
+    return (rows || []).map(function(row){
+      var na = (row[1] === 'Not recorded' || row[1] === '—');
+      return '<dt>' + esc(row[0]) + '</dt><dd class="' + (na ? 'na' : '')
+        + '">' + esc(row[1]) + '</dd>';
+    }).join('');
   }
 
   function fill(d){
@@ -252,30 +288,44 @@
     document.getElementById('pcMeta').textContent =
       [d.id_card, (d.age != null ? d.age + ' years' : null), d.sex]
         .filter(Boolean).join(' • ');
-    document.getElementById('pcStatus').textContent = d.status_label || '—';
+    var st = document.getElementById('pcStatus');
+    st.textContent = d.status_label || '—';
+    st.className = 'pc-st' + (d.is_outcome ? ' outcome' : '');
     document.getElementById('pcLoc').textContent = d.locality ? '📍 ' + d.locality : '';
     document.getElementById('pcProfile').href = d.profile_url;
+    document.getElementById('pcClinTab').href = d.profile_url;
 
-    document.getElementById('pcDl').innerHTML =
-      (d.phone ? '<dt>Phone</dt><dd>' + esc(d.phone) + '</dd>' : '')
-      + (d.dob ? '<dt>Date of birth</dt><dd>' + esc(d.dob) + '</dd>' : '')
-      + (d.summary || []).map(function(row){
-          return '<dt>' + esc(row[0]) + '</dt><dd>' + esc(row[1]) + '</dd>';
-        }).join('');
+    /* ---- Summary: next action + snapshot + contact ---- */
+    document.getElementById('pcNextS').textContent = d.next_action || 'No future review booked';
+    document.getElementById('pcSubS').textContent = d.status_label || '';
+    document.getElementById('pcSnap').innerHTML = grid(d.snapshot);
+    document.getElementById('pcContact').innerHTML = grid(d.contact);
+    var seen = document.getElementById('pcSeen');
+    seen.textContent = d.last_seen || 'No recorded visits yet.';
 
-    document.getElementById('pcClinical').innerHTML =
-      record('Episodes', d.episodes)
-      + record('Stomas', d.stomas)
-      + record('Appliances', d.appliances);
-
-    var ap = d.appointments || [];
-    document.getElementById('pcAppts').innerHTML = ap.length
-      ? ap.map(function(a){
-          return '<div class="pc-ap"><span class="al">' + esc(a.date)
-            + (a.time ? ' · ' + esc(a.time) : '') + '</span>'
-            + '<span class="ar">' + esc(a.status) + '<br>' + esc(a.nurse) + '</span></div>';
+    /* ---- Appointments: upcoming + recent history ---- */
+    document.getElementById('pcNextA').textContent = d.next_action || 'Nothing scheduled';
+    document.getElementById('pcSubA').textContent = d.status_label || '';
+    var hist = d.history || [];
+    document.getElementById('pcHistCount').textContent =
+      hist.length ? hist.length + (hist.length === 1 ? ' visit' : ' visits') : 'none';
+    document.getElementById('pcHist').innerHTML = hist.length
+      ? hist.map(function(a){
+          var cls = a.status_key === 'dna' ? ' dna'
+                  : (a.status_key === 'cancelled' ? ' cancelled' : '');
+          return '<div class="pc-ap"><div><div class="al">' + esc(a.date)
+            + (a.time ? ' · ' + esc(a.time) : '') + '</div>'
+            + (a.by ? '<div class="as">Seen by ' + esc(a.by) + '</div>' : '')
+            + '</div><span class="ab' + cls + '">' + esc(a.status) + '</span></div>';
         }).join('')
-      : '<div class="pc-empty">No follow-up appointments recorded.</div>';
+      : '<div class="pc-empty">No visits recorded yet.</div>';
+
+    /* ---- Schedule buttons: hidden once the case has an outcome ---- */
+    ['pcSchedS','pcSchedA'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(d.can_schedule){ b.hidden = false; b.href = d.schedule_url; }
+      else { b.hidden = true; }
+    });
 
     showPane('pcSummary');
   }
