@@ -537,6 +537,23 @@ def patient_profile(request, patient_id):
                 messages.success(request, f"{stoma.stoma_ref} marked {ctype}.")
             except Exception:
                 messages.error(request, "Could not record that change.")
+        elif action == "add_episode":
+            try:
+                models.CarePathway.objects.create(
+                    patient=patient,
+                    pathway_type=(request.POST.get("pathway_type") or "").strip()
+                        or models.CarePathway.ELECTIVE,
+                    status=(request.POST.get("status") or "").strip()
+                        or models.CarePathway.OUTPATIENT,
+                    surgery_date=_parse_date(request.POST.get("surgery_date")),
+                    operation=(request.POST.get("operation") or "").strip() or None,
+                    stoma_type=(request.POST.get("ep_stoma_type") or "").strip() or None,
+                    notes=(request.POST.get("ep_notes") or "").strip() or None,
+                    created_by_username=request.user.get_username(),
+                )
+                messages.success(request, "Episode added.")
+            except Exception:
+                messages.error(request, "Could not add that episode.")
         elif action == "mark_deceased":
             _close_case_for_deceased(
                 patient, _parse_date(request.POST.get("rip_date"), datetime.date.today())
@@ -575,6 +592,8 @@ def patient_profile(request, patient_id):
         "stoma_types": models.Stoma.TYPE_CHOICES,
         "site_choices": models.Stoma.SITE_CHOICES,
         "change_types": models.StomaChange.TYPE_CHOICES,
+        "pathway_types": models.CarePathway.TYPE_CHOICES,
+        "pathway_statuses": models.CarePathway.STATUS_CHOICES,
         "today": datetime.date.today(),
     })
 
@@ -2410,7 +2429,7 @@ def _pathway_action(request, p):
 
 # Roster shift codes that mean the nurse is on the floor and can see patients.
 CLINIC_WORKING_CODES = {"D", "AM", "OT", "TIL", "COD-in"}
-# 30-minute slots, 08:30 to 13:30 inclusive.
+# 30-minute slots, 21:00 to 23:30 inclusive — the Sunday / public-holiday session.
 CLINIC_SLOTS = ["21:00", "21:30", "22:00", "22:30", "23:00", "23:30"]
 # Consecutive did-not-turn-up appointments before a patient is dropped.
 DNTU_LIMIT = 3
@@ -2422,22 +2441,47 @@ COMMON_COLUMN = "Common"
 
 
 def _month_capacity_days(year, month, today=None):
-    """Days in a month that carry bookable clinic slots.
+    """Dates in a month that can carry clinic slots at all.
 
-    Only Sundays and Maltese public holidays count — Monday to Saturday are
-    excluded. Days that have already passed are never bookable, so a month
-    that is already under way is counted from today onwards."""
+    Only Sundays and Maltese public holidays run a clinic — Monday to Saturday
+    are excluded. Days that have already passed are never bookable, so a month
+    already under way is counted from today onwards."""
     today = today or datetime.date.today()
     ndays = calendar.monthrange(year, month)[1]
     holidays = maltese_public_holidays(year)
-    days = 0
+    days = []
     for d in range(1, ndays + 1):
         dt = datetime.date(year, month, d)
         if dt < today:                              # in the past — cannot book
             continue
         if dt.weekday() == 6 or dt in holidays:     # Sunday or public holiday
-            days += 1
+            days.append(dt)
     return days
+
+
+def _owner_capacity_days(owner, year, month, today=None):
+    """The clinic days one column can actually be booked on.
+
+    ``Common`` is the shared column, so it carries every Sunday and public
+    holiday. A named nurse only carries the days they are rostered to work,
+    plus any day they have overtime logged against them — so a nurse who picks
+    up an extra Sunday gains that day's slots automatically."""
+    days = _month_capacity_days(year, month, today)
+    if not owner or owner == COMMON_COLUMN or not days:
+        return days
+
+    rostered = set(
+        models.RosterShift.objects
+        .filter(staff__full_name=owner, staff__active=True,
+                date__in=days, code__in=CLINIC_WORKING_CODES)
+        .values_list("date", flat=True)
+    )
+    overtime = set(
+        models.OvertimeHours.objects
+        .filter(staff__full_name=owner, date__in=days)
+        .values_list("date", flat=True)
+    )
+    return sorted(rostered | overtime)
 
 
 def _availability_rating(free, total):
@@ -2458,7 +2502,8 @@ def _capacity_for(owner, year, month):
     """Monthly slot capacity for one clinic column (a nurse name, or
     ``Common``), plus the clinic-wide booked total for that month."""
     today = datetime.date.today()
-    working_days = _month_capacity_days(year, month, today)
+    day_list = _owner_capacity_days(owner, year, month, today)
+    working_days = len(day_list)
     total = working_days * len(CLINIC_SLOTS)
 
     FA = models.FollowUpAppointment
@@ -2968,6 +3013,123 @@ def patient_list(request):
         "statuses": statuses,
         "outcome_tabs": forms.FOLLOWUP_STATUS_CHOICES,
     })
+
+
+def _age_from(dob, on=None):
+    """Whole years between ``dob`` and ``on`` (today by default)."""
+    if not dob:
+        return None
+    on = on or datetime.date.today()
+    return on.year - dob.year - ((on.month, on.day) < (dob.month, dob.day))
+
+
+# Follow-up statuses that are a closed outcome rather than an open case — a
+# patient in one of these is not booked for further reviews.
+OUTCOME_STATUSES = {"reversed", "deceased", "relocated_gozo", "relocated_overseas"}
+
+
+def _patient_card(patient):
+    """The at-a-glance payload behind the patient card on the registry."""
+    today = datetime.date.today()
+    FA = models.FollowUpAppointment
+
+    stomas = _safe(lambda: list(patient.stomas.all()), []) or []
+    open_stomas = [s for s in stomas if s.is_open]
+    current_stoma = open_stomas[0] if open_stomas else (stomas[0] if stomas else None)
+
+    appts = _safe(
+        lambda: list(FA.objects.filter(patient_id=patient.id)
+                     .select_related("nurse")
+                     .order_by("-appt_date", "-appt_time")), []
+    ) or []
+
+    def _d(value):
+        return value.strftime("%d %b %Y") if value else None
+
+    # The next still-to-come booking, and the most recent realised visit.
+    upcoming = next(
+        (a for a in sorted(appts, key=lambda x: (x.appt_date, x.appt_time or ""))
+         if a.appt_date and a.appt_date >= today
+         and a.status in {FA.SCHEDULED, FA.POSTPONED}),
+        None,
+    )
+    last_seen = next(
+        (a for a in appts if a.status == FA.ATTENDED and a.appt_date), None
+    )
+
+    status = (patient.followup_status or "").strip()
+    is_outcome = status in OUTCOME_STATUSES
+    name = f"{patient.first_name or ''} {patient.surname or ''}".strip()
+
+    stoma_type = (current_stoma.get_stoma_type_display() if current_stoma
+                  else (patient.stoma_type_summary or None))
+
+    history = [
+        {
+            "date": _d(a.appt_date) or "—",
+            "time": a.appt_time or "",
+            "status": a.get_status_display(),
+            "status_key": a.status,
+            "by": a.outcome_by or (a.nurse.full_name if a.nurse_id else None),
+        }
+        for a in appts
+        if a.status in {FA.ATTENDED, FA.DNA, FA.CANCELLED} and a.appt_date
+    ][:8]
+
+    return {
+        "id": str(patient.id),
+        "name": name or (patient.id_card or "Unnamed patient"),
+        "id_card": patient.id_card or None,
+        "age": _age_from(patient.dob),
+        "dob": _d(patient.dob),
+        "sex": (patient.sex or "").strip() or None,
+        "locality": patient.locality or None,
+        "phone": patient.phone_number or None,
+        "status": status or None,
+        "status_label": dict(forms.FOLLOWUP_STATUS_CHOICES).get(status, status or "—"),
+        "is_outcome": is_outcome,
+        "can_schedule": not is_outcome,
+        # Next-action / upcoming-appointment banner.
+        "next_action": (
+            f"{_d(upcoming.appt_date)}" + (f" · {upcoming.appt_time}" if upcoming.appt_time else "")
+            if upcoming else None
+        ),
+        # Clinical snapshot.
+        "snapshot": [
+            ("Stoma type", stoma_type or "Not recorded"),
+            ("Surgery date", _d(patient.surgery_date) or "Not recorded"),
+            ("Discharge date", _d(patient.discharged_date) or "Not recorded"),
+            ("Procedure", patient.operation_performed or patient.surgery_type or "Not recorded"),
+            ("Findings", patient.findings or "Not recorded"),
+        ],
+        # Contact & record.
+        "contact": [
+            ("Telephone", patient.phone_number or "—"),
+            ("Date of birth", _d(patient.dob) or "—"),
+            ("Locality", patient.locality or "—"),
+            ("ID card", patient.id_card or "—"),
+        ],
+        "last_seen": (
+            f"Last seen {_d(last_seen.appt_date)}"
+            + (f" by {last_seen.outcome_by}" if last_seen.outcome_by else "")
+            if last_seen else None
+        ),
+        "history": history,
+        "profile_url": reverse("clinic:patient_profile", args=[patient.id]),
+        "detail_url": reverse("clinic:patient_detail", args=[patient.id]),
+        "schedule_url": reverse("clinic:appointments"),
+    }
+
+
+@login_required
+def patient_card(request, patient_id):
+    """JSON for the patient card that opens from the registry list."""
+    patient = get_object_or_404(models.Patient, pk=patient_id)
+    data = _safe_query(lambda: _patient_card(patient), None)
+    if data is None:
+        return JsonResponse({"ok": False}, status=200)
+    data["ok"] = True
+    return JsonResponse(data)
 
 
 @login_required
