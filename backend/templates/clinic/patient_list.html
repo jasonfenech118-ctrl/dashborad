@@ -293,7 +293,7 @@
     st.className = 'pc-st' + (d.is_outcome ? ' outcome' : '');
     document.getElementById('pcLoc').textContent = d.locality ? '📍 ' + d.locality : '';
     document.getElementById('pcProfile').href = d.profile_url;
-    document.getElementById('pcClinTab').href = d.profile_url;
+    document.getElementById('pcClinTab').href = d.profile_url + '?tab=clinical';
 
     /* ---- Summary: next action + snapshot + contact ---- */
     document.getElementById('pcNextS').textContent = d.next_action || 'No future review booked';

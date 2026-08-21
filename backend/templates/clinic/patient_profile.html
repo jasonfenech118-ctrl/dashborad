@@ -9,31 +9,67 @@
   .esrf-msg.error{background:#fef3f2;border-color:#fecdca;color:#b42318;}
   .esrf-msg.warning{background:#fffaeb;border-color:#fedf89;color:#b54708;}
 
-  /* ---- identity header ---- */
-  .ident{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;background:#fff;
-    border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
-  .avatar{width:96px;height:96px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;}
-  .avatar.female{background:#fdf2f8;}   /* pink */
-  .avatar.male{background:#fefce8;}     /* yellow */
-  .avatar.unknown{background:#f1f5f9;}
-  .avatar svg{width:60px;height:60px;}
-  .avatar.female svg{fill:#ec4899;}
-  .avatar.male svg{fill:#ca8a04;}
-  .avatar.unknown svg{fill:#94a3b8;}
-  .ident .who{flex:1;min-width:220px;}
-  .ident h1{margin:0 0 4px;font-size:22px;}
-  .ident .meta{color:var(--muted);font-size:13px;}
-  .state{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:800;}
-  .state.active{background:#ecfdf3;color:#067647;}
-  .state.inactive{background:#f1f5f9;color:#475569;}
+  /* ---- the patient page card ---- */
+  .pp{max-width:760px;margin:14px auto 40px;background:#fff;border:1px solid var(--border);
+    border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,.06);overflow:hidden;}
+  .pp-head{display:flex;gap:15px;align-items:center;padding:20px 22px 16px;}
+  .pp-av{width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .pp-av.female{background:#fdf2f8;} .pp-av.male{background:#fefce8;} .pp-av.unknown{background:#e0f2f1;}
+  .pp-av svg{width:34px;height:34px;}
+  .pp-av.female svg{fill:#ec4899;} .pp-av.male svg{fill:#ca8a04;} .pp-av.unknown svg{fill:#0f766e;}
+  .pp-name{font-size:21px;font-weight:800;color:var(--ink);margin:0;}
+  .pp-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .pp-tags{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px;}
+  .pp-st{font-size:11.5px;font-weight:800;padding:3px 11px;border-radius:999px;background:#dcfce7;color:#166534;}
+  .pp-st.outcome{background:#f1f5f9;color:#475569;}
+  .pp-loc{font-size:12.5px;color:var(--muted);}
 
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;width:100%;}
-  .stat{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
-  .stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:800;}
-  .stat .v{font-size:19px;font-weight:800;margin-top:2px;}
+  .pp-tabs{display:flex;gap:8px;padding:0 22px 16px;}
+  .pp-tab{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:#fff;
+    font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;}
+  .pp-tab.on{background:var(--navy,#0f172a);color:#fff;border-color:var(--navy,#0f172a);}
 
-  .sec-t{font-size:15px;font-weight:800;margin-bottom:2px;}
-  .sec-s{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  .pp-body{padding:0 22px 20px;}
+  .pp-pane[hidden]{display:none;}
+
+  /* action banner */
+  .pp-action{display:flex;gap:12px;align-items:center;justify-content:space-between;
+    background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+  .pp-ak{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:#0f766e;}
+  .pp-av2{font-size:15px;font-weight:800;color:var(--ink);margin-top:2px;}
+  .pp-asub{font-size:12px;color:var(--muted);margin-top:1px;}
+  .pp-sched{white-space:nowrap;flex:none;}
+
+  .pp-sec{display:flex;align-items:center;justify-content:space-between;margin:0 2px 9px;}
+  .pp-sh{font-size:14px;font-weight:800;color:var(--ink);}
+  .pp-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#ede9fe;color:#5b21b6;}
+  .pp-badge.alt{background:#f1f5f9;color:#475569;}
+  .pp-box{border:1px solid var(--border);border-radius:12px;padding:15px 16px;margin-bottom:18px;background:#fcfdff;}
+  .pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin:0;}
+  .pp-grid dt{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+  .pp-grid dd{margin:2px 0 0;color:var(--ink);font-weight:700;font-size:13.5px;overflow-wrap:anywhere;}
+  .pp-grid dd.na{color:var(--muted);font-weight:600;font-style:italic;}
+  .pp-seen{margin-top:13px;padding-top:12px;border-top:1px solid #eef2f7;font-size:12px;color:var(--muted);}
+
+  .pp-ap{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--border);
+    border-radius:10px;padding:11px 13px;margin-bottom:8px;}
+  .pp-ap .al{font-weight:800;color:var(--ink);font-size:13px;}
+  .pp-ap .as{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pp-ap .ab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+    padding:3px 9px;border-radius:20px;background:#dcfce7;color:#166534;white-space:nowrap;height:fit-content;}
+  .pp-ap .ab.dna{background:#fef3c7;color:#92400e;}
+  .pp-ap .ab.cancelled{background:#fee2e2;color:#991b1b;}
+
+  /* compact stat chips on the Clinical tab */
+  .pp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:9px;margin-bottom:18px;}
+  .pp-stat{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:9px 11px;}
+  .pp-stat .k{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:800;}
+  .pp-stat .v{font-size:18px;font-weight:800;margin-top:1px;}
+
+  /* clinical sub-sections (episodes, stomas, appliances, history) */
+  .sub{margin-bottom:22px;}
+  .sec-t{font-size:14px;font-weight:800;margin-bottom:2px;}
+  .sec-s{color:var(--muted);font-size:12px;margin-bottom:12px;}
   .sref{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:800;background:#f1f5f9;border-radius:5px;padding:2px 7px;}
   .stag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;}
   .st-active{background:#ecfdf3;color:#067647;}
@@ -49,6 +85,9 @@
   details summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--teal);}
   .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
   .btn-ghost:hover{background:#f1f5f9;}
+  .pp-scroll{overflow-x:auto;}
+  .pp-foot{display:flex;gap:9px;justify-content:flex-end;padding:15px 22px;border-top:1px solid var(--border);}
+  @media(max-width:520px){ .pp-grid{grid-template-columns:1fr;} }
 </style>
 
 <a href="{% url 'clinic:patient_list' %}" class="back">
@@ -58,214 +97,310 @@
 
 {% if messages %}{% for message in messages %}<div class="esrf-msg {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
 
-<!-- Identity -->
-<div class="ident">
-  <div class="avatar {{ silhouette }}" title="{{ patient.sex|default:'Not recorded' }}">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5z"/></svg>
-  </div>
-  <div class="who">
-    <h1>{{ patient.first_name|default:"" }} {{ patient.surname|default:"" }}</h1>
-    <div class="meta">
-      {% if patient.id_card %}ID {{ patient.id_card }} · {% endif %}
-      {{ patient.sex|default:"Sex not recorded" }}{% if patient.dob %} · born {{ patient.dob|date:"d/m/Y" }}{% endif %}
-      {% if patient.locality %} · {{ patient.locality }}{% endif %}
-      {% if patient.phone_number %} · {{ patient.phone_number }}{% endif %}
-    </div>
-    <div style="margin-top:8px;">
-      {% if active_case %}<span class="state active">Active case</span>
-      {% else %}<span class="state inactive">Inactive — {{ patient.followup_status|default:"closed" }}</span>{% endif %}
-    </div>
-    <div class="stats">
-      <div class="stat"><div class="k">Stomas</div><div class="v">{{ stomas|length }}</div></div>
-      <div class="stat"><div class="k">In place</div><div class="v">{{ open_stomas|length }}</div></div>
-      <div class="stat"><div class="k">Episodes</div><div class="v">{{ pathways|length }}</div></div>
-      <div class="stat"><div class="k">Encounters</div><div class="v">{{ events|length }}</div></div>
-      <div class="stat"><div class="k">Appliance records</div><div class="v">{{ appliances|length }}</div></div>
-    </div>
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-      <a class="btn" href="{% url 'clinic:discharge_letter_for' patient_id=patient.id %}" target="_blank" rel="noopener">Discharge letter</a>
-      <a class="btn btn-ghost" href="{% url 'clinic:patient_detail' patient_id=patient.id %}">Full record</a>
+<div class="pp">
+  <!-- header -->
+  <div class="pp-head">
+    <span class="pp-av {{ silhouette }}" title="{{ patient.sex|default:'Not recorded' }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5z"/></svg>
+    </span>
+    <div>
+      <h1 class="pp-name">{{ patient.first_name|default:"" }} {{ patient.surname|default:"" }}</h1>
+      <div class="pp-meta">
+        {% if patient.id_card %}ID {{ patient.id_card }} · {% endif %}
+        {{ patient.sex|default:"Sex not recorded" }}{% if card.age %} · {{ card.age }} years{% endif %}{% if patient.dob %} · born {{ patient.dob|date:"d/m/Y" }}{% endif %}
+      </div>
+      <div class="pp-tags">
+        {% if active_case %}<span class="pp-st">{{ card.status_label|default:"Active case" }}</span>
+        {% else %}<span class="pp-st outcome">{{ card.status_label|default:patient.followup_status|default:"Closed" }}</span>{% endif %}
+        {% if patient.locality %}<span class="pp-loc">📍 {{ patient.locality }}</span>{% endif %}
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Episodes -->
-<div class="card">
-  <div class="sec-t">Episodes</div>
-  <div class="sec-s">Every admission or care episode, each made up of numbered encounters.</div>
-  {% if pathways %}
-    <table>
-      <thead><tr><th>Episode</th><th>Pathway</th><th>Stage</th><th>Surgery</th><th>Discharged</th><th></th></tr></thead>
-      <tbody>
-        {% for cp in pathways %}
-        <tr>
-          <td class="sref">{{ cp.episode_number|default:"—" }}</td>
-          <td>{{ cp.get_pathway_type_display }}</td>
-          <td>{{ cp.get_status_display }}{% if cp.first_review_was_late %}
-              <span class="stag" style="background:#fef3f2;color:#b42318;">1st review day {{ cp.first_review_delay_days }}</span>{% endif %}</td>
-          <td>{{ cp.surgery_date|date:"d/m/Y"|default:"—" }}</td>
-          <td>{{ cp.discharge_date|date:"d/m/Y"|default:"—" }}</td>
-          <td><a href="{% url 'clinic:pathway_detail' pk=cp.id %}">Open →</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="muted" style="font-size:13px;">No episodes yet.</p>
-  {% endif %}
+  <!-- tabs -->
+  <div class="pp-tabs" role="tablist">
+    <button class="pp-tab on" data-pane="ppSummary" role="tab">Summary</button>
+    <button class="pp-tab" data-pane="ppClinical" role="tab">Clinical</button>
+    <button class="pp-tab" data-pane="ppAppts" role="tab">Appointments</button>
+  </div>
 
-  <details {% if not pathways %}open{% endif %} style="margin-top:8px;">
-    <summary>+ Add episode</summary>
-    <form method="post" style="margin-top:12px;">{% csrf_token %}
-      <input type="hidden" name="action" value="add_episode">
-      <div class="f-row" style="align-items:end;">
-        <div><label class="lbl">Pathway</label>
-          <select name="pathway_type" required>{% for v,l in pathway_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-        <div><label class="lbl">Stage</label>
-          <select name="status" required>{% for v,l in pathway_statuses %}<option value="{{ v }}"{% if v == 'outpatient' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
-        <div><label class="lbl">Surgery date</label><input type="date" name="surgery_date"></div>
-        <div><label class="lbl">Stoma type</label><input type="text" name="ep_stoma_type"></div>
-        <div><label class="lbl">Operation</label><input type="text" name="operation"></div>
-        <div><label class="lbl">Notes</label><input type="text" name="ep_notes"></div>
-        <div><button class="btn" type="submit">Add episode</button></div>
-      </div>
-    </form>
-  </details>
-</div>
-
-<!-- Stomas -->
-<div class="card">
-  <div class="sec-t">Stomas &amp; mucous fistulas</div>
-  <div class="sec-s">Each one has its own reference and its own history — refashioned, resited, closed or reversed.</div>
-
-  {% for s in stomas %}
-  <div class="stoma-card">
-    <div class="hd">
-      <span class="sref">{{ s.stoma_ref }}</span>
-      <strong style="font-size:14px;">{{ s.get_stoma_type_display }}</strong>
-      {% if s.site %}<span class="muted" style="font-size:12.5px;">{{ s.get_site_display }}</span>{% endif %}
-      <span class="stag st-{{ s.status }}">{{ s.get_status_display }}</span>
-      {% if s.formed_date %}<span class="muted" style="font-size:12px;">formed {{ s.formed_date|date:"d/m/Y" }}</span>{% endif %}
-      {% if s.ended_date %}<span class="muted" style="font-size:12px;">ended {{ s.ended_date|date:"d/m/Y" }}</span>{% endif %}
-      <span class="muted" style="font-size:12px;margin-left:auto;">{{ s.appliance_count }} appliance record{{ s.appliance_count|pluralize }}</span>
-    </div>
-    {% if s.notes %}<p class="muted" style="font-size:12.5px;margin-bottom:8px;">{{ s.notes }}</p>{% endif %}
-
-    {% if s.change_list %}
-      <div style="margin:8px 0;">
-        {% for ch in s.change_list %}
-          <div class="chg">• {{ ch.change_date|date:"d/m/Y" }} — <strong>{{ ch.get_change_type_display }}</strong>{% if ch.new_site %} to {{ ch.new_site }}{% endif %}{% if ch.notes %} — {{ ch.notes }}{% endif %}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {% if s.is_open %}
-    <details>
-      <summary>Record a change</summary>
-      <form method="post" style="margin-top:12px;">{% csrf_token %}
-        <input type="hidden" name="action" value="stoma_change">
-        <input type="hidden" name="stoma_id" value="{{ s.id }}">
-        <div class="f-row" style="align-items:end;">
-          <div><label class="lbl">What happened</label>
-            <select name="change_type">{% for v,l in change_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-          <div><label class="lbl">Date</label><input type="date" name="change_date" value="{{ today|date:'Y-m-d' }}"></div>
-          <div><label class="lbl">New site (if resited)</label>
-            <select name="new_site"><option value="">—</option>{% for v,l in site_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-          <div><label class="lbl">Notes</label><input type="text" name="change_notes"></div>
-          <div><button class="btn" type="submit">Record</button></div>
+  <div class="pp-body">
+    <!-- ============ SUMMARY ============ -->
+    <div class="pp-pane" id="ppSummary">
+      <div class="pp-action">
+        <div>
+          <div class="pp-ak">Next action</div>
+          <div class="pp-av2">{{ card.next_action|default:"No future review booked" }}</div>
+          <div class="pp-asub">{{ card.status_label|default:"" }}</div>
         </div>
-      </form>
-    </details>
-    {% endif %}
-  </div>
-  {% empty %}
-    <p class="muted" style="font-size:13px;">No stomas recorded yet.</p>
-  {% endfor %}
-
-  <details {% if not stomas %}open{% endif %} style="margin-top:8px;">
-    <summary>+ Add a stoma or mucous fistula</summary>
-    <form method="post" style="margin-top:12px;">{% csrf_token %}
-      <input type="hidden" name="action" value="add_stoma">
-      <div class="f-row" style="align-items:end;">
-        <div><label class="lbl">Type</label>
-          <select name="stoma_type" required>{% for v,l in stoma_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-        <div><label class="lbl">Site</label>
-          <select name="site"><option value="">—</option>{% for v,l in site_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
-        <div><label class="lbl">Formed on</label><input type="date" name="formed_date" value="{{ today|date:'Y-m-d' }}"></div>
-        {% if pathways %}
-        <div><label class="lbl">Episode</label>
-          <select name="pathway"><option value="">—</option>{% for cp in pathways %}<option value="{{ cp.id }}">{{ cp.episode_number }}</option>{% endfor %}</select></div>
+        {% if card.can_schedule %}
+        <a class="btn pp-sched" href="{% url 'clinic:appointments' %}">Schedule</a>
         {% endif %}
-        <div><label class="lbl">Notes</label><input type="text" name="notes"></div>
-        <div><button class="btn" type="submit">Add stoma</button></div>
       </div>
-    </form>
-  </details>
-</div>
 
-<!-- Appliances -->
-<div class="card">
-  <div class="sec-t">Appliance history</div>
-  <div class="sec-s">Appliances used and changed, most recent first.</div>
-  {% if appliances %}
-    <table>
-      <thead><tr><th>Date</th><th>Stoma</th><th>System</th><th>Pouch</th><th>Brand</th><th>Size</th><th>Changed</th></tr></thead>
-      <tbody>
-        {% for a in appliances %}
-        <tr>
-          <td>{{ a.used_on|date:"d/m/Y" }}</td>
-          <td>{% if a.stoma %}<span class="sref">{{ a.stoma.stoma_ref }}</span>{% else %}—{% endif %}</td>
-          <td>{{ a.get_system_display|default:"—" }}</td>
-          <td>{{ a.pouch_type|default:"—" }}</td>
-          <td>{{ a.brand|default:"—" }}</td>
-          <td>{{ a.size|default:"—" }}</td>
-          <td>{% if a.changed %}Yes{% else %}No{% endif %}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="muted" style="font-size:13px;">No appliance records yet — they're captured on each encounter.</p>
-  {% endif %}
-</div>
+      <div class="pp-sec"><span class="pp-sh">Clinical snapshot</span><span class="pp-badge">Stoma clinic</span></div>
+      <div class="pp-box">
+        <dl class="pp-grid">
+          {% for row in card.snapshot %}
+          <div><dt>{{ row.0 }}</dt><dd class="{% if row.1 == 'Not recorded' or row.1 == '—' %}na{% endif %}">{{ row.1 }}</dd></div>
+          {% endfor %}
+        </dl>
+      </div>
 
-<!-- History -->
-<div class="card">
-  <div class="sec-t">History</div>
-  <div class="sec-s">Every encounter across all episodes.</div>
-  {% if events %}
-    <table>
-      <thead><tr><th>Encounter</th><th>Date</th><th>Type</th><th>Summary</th><th>Episode</th></tr></thead>
-      <tbody>
-        {% for e in events %}
-        <tr>
-          <td class="sref">{{ e.encounter_number|default:"—" }}</td>
-          <td>{{ e.event_date|date:"d/m/Y" }}{% if e.day_number != None %} <span class="muted">(day {{ e.day_number }})</span>{% endif %}</td>
-          <td>{{ e.get_event_type_display }}</td>
-          <td class="muted">{{ e.summary|default:"—" }}</td>
-          <td><a href="{% url 'clinic:pathway_detail' pk=e.pathway_id %}">{{ e.pathway.episode_number|default:"—" }}</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p class="muted" style="font-size:13px;">No encounters recorded yet.</p>
-  {% endif %}
-</div>
-
-<!-- Outcome -->
-{% if active_case %}
-<div class="card" style="margin-bottom:30px;">
-  <div class="sec-t">Outcome</div>
-  <div class="sec-s">Recording a death closes the case and every open episode automatically.</div>
-  <form method="post" onsubmit="return confirm('Mark this patient as deceased and close the case?');">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="mark_deceased">
-    <div class="f-row" style="align-items:end;max-width:460px;">
-      <div><label class="lbl">Date of death</label><input type="date" name="rip_date" value="{{ today|date:'Y-m-d' }}"></div>
-      <div><button class="btn btn-ghost" type="submit" style="color:#b42318;border-color:#fecdca;">Mark deceased</button></div>
+      <div class="pp-sec"><span class="pp-sh">Contact &amp; record</span></div>
+      <div class="pp-box">
+        <dl class="pp-grid">
+          {% for row in card.contact %}
+          <div><dt>{{ row.0 }}</dt><dd class="{% if row.1 == '—' %}na{% endif %}">{{ row.1 }}</dd></div>
+          {% endfor %}
+        </dl>
+        <div class="pp-seen">{{ card.last_seen|default:"No recorded visits yet." }}</div>
+      </div>
     </div>
-  </form>
+
+    <!-- ============ CLINICAL ============ -->
+    <div class="pp-pane" id="ppClinical" hidden>
+      <div class="pp-stats">
+        <div class="pp-stat"><div class="k">Stomas</div><div class="v">{{ stomas|length }}</div></div>
+        <div class="pp-stat"><div class="k">In place</div><div class="v">{{ open_stomas|length }}</div></div>
+        <div class="pp-stat"><div class="k">Episodes</div><div class="v">{{ pathways|length }}</div></div>
+        <div class="pp-stat"><div class="k">Encounters</div><div class="v">{{ events|length }}</div></div>
+        <div class="pp-stat"><div class="k">Appliances</div><div class="v">{{ appliances|length }}</div></div>
+      </div>
+
+      <!-- Episodes -->
+      <div class="sub">
+        <div class="sec-t">Episodes</div>
+        <div class="sec-s">Every admission or care episode, each made up of numbered encounters.</div>
+        {% if pathways %}
+          <div class="pp-scroll"><table>
+            <thead><tr><th>Episode</th><th>Pathway</th><th>Stage</th><th>Surgery</th><th>Discharged</th><th></th></tr></thead>
+            <tbody>
+              {% for cp in pathways %}
+              <tr>
+                <td class="sref">{{ cp.episode_number|default:"—" }}</td>
+                <td>{{ cp.get_pathway_type_display }}</td>
+                <td>{{ cp.get_status_display }}{% if cp.first_review_was_late %}
+                    <span class="stag" style="background:#fef3f2;color:#b42318;">1st review day {{ cp.first_review_delay_days }}</span>{% endif %}</td>
+                <td>{{ cp.surgery_date|date:"d/m/Y"|default:"—" }}</td>
+                <td>{{ cp.discharge_date|date:"d/m/Y"|default:"—" }}</td>
+                <td><a href="{% url 'clinic:pathway_detail' pk=cp.id %}">Open →</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        {% else %}
+          <p class="muted" style="font-size:13px;">No episodes yet.</p>
+        {% endif %}
+
+        <details {% if not pathways %}open{% endif %} style="margin-top:10px;">
+          <summary>+ Add episode</summary>
+          <form method="post" style="margin-top:12px;">{% csrf_token %}
+            <input type="hidden" name="action" value="add_episode">
+            <div class="f-row" style="align-items:end;">
+              <div><label class="lbl">Pathway</label>
+                <select name="pathway_type" required>{% for v,l in pathway_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+              <div><label class="lbl">Stage</label>
+                <select name="status" required>{% for v,l in pathway_statuses %}<option value="{{ v }}"{% if v == 'outpatient' %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+              <div><label class="lbl">Surgery date</label><input type="date" name="surgery_date"></div>
+              <div><label class="lbl">Stoma type</label><input type="text" name="ep_stoma_type"></div>
+              <div><label class="lbl">Operation</label><input type="text" name="operation"></div>
+              <div><label class="lbl">Notes</label><input type="text" name="ep_notes"></div>
+              <div><button class="btn" type="submit">Add episode</button></div>
+            </div>
+          </form>
+        </details>
+      </div>
+
+      <!-- Stomas -->
+      <div class="sub">
+        <div class="sec-t">Stomas &amp; mucous fistulas</div>
+        <div class="sec-s">Each one has its own reference and its own history — refashioned, resited, closed or reversed.</div>
+        {% for s in stomas %}
+        <div class="stoma-card">
+          <div class="hd">
+            <span class="sref">{{ s.stoma_ref }}</span>
+            <strong style="font-size:14px;">{{ s.get_stoma_type_display }}</strong>
+            {% if s.site %}<span class="muted" style="font-size:12.5px;">{{ s.get_site_display }}</span>{% endif %}
+            <span class="stag st-{{ s.status }}">{{ s.get_status_display }}</span>
+            {% if s.formed_date %}<span class="muted" style="font-size:12px;">formed {{ s.formed_date|date:"d/m/Y" }}</span>{% endif %}
+            {% if s.ended_date %}<span class="muted" style="font-size:12px;">ended {{ s.ended_date|date:"d/m/Y" }}</span>{% endif %}
+            <span class="muted" style="font-size:12px;margin-left:auto;">{{ s.appliance_count }} appliance record{{ s.appliance_count|pluralize }}</span>
+          </div>
+          {% if s.notes %}<p class="muted" style="font-size:12.5px;margin-bottom:8px;">{{ s.notes }}</p>{% endif %}
+
+          {% if s.change_list %}
+            <div style="margin:8px 0;">
+              {% for ch in s.change_list %}
+                <div class="chg">• {{ ch.change_date|date:"d/m/Y" }} — <strong>{{ ch.get_change_type_display }}</strong>{% if ch.new_site %} to {{ ch.new_site }}{% endif %}{% if ch.notes %} — {{ ch.notes }}{% endif %}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if s.is_open %}
+          <details>
+            <summary>Record a change</summary>
+            <form method="post" style="margin-top:12px;">{% csrf_token %}
+              <input type="hidden" name="action" value="stoma_change">
+              <input type="hidden" name="stoma_id" value="{{ s.id }}">
+              <div class="f-row" style="align-items:end;">
+                <div><label class="lbl">What happened</label>
+                  <select name="change_type">{% for v,l in change_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="lbl">Date</label><input type="date" name="change_date" value="{{ today|date:'Y-m-d' }}"></div>
+                <div><label class="lbl">New site (if resited)</label>
+                  <select name="new_site"><option value="">—</option>{% for v,l in site_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+                <div><label class="lbl">Notes</label><input type="text" name="change_notes"></div>
+                <div><button class="btn" type="submit">Record</button></div>
+              </div>
+            </form>
+          </details>
+          {% endif %}
+        </div>
+        {% empty %}
+          <p class="muted" style="font-size:13px;">No stomas recorded yet.</p>
+        {% endfor %}
+
+        <details {% if not stomas %}open{% endif %} style="margin-top:8px;">
+          <summary>+ Add a stoma or mucous fistula</summary>
+          <form method="post" style="margin-top:12px;">{% csrf_token %}
+            <input type="hidden" name="action" value="add_stoma">
+            <div class="f-row" style="align-items:end;">
+              <div><label class="lbl">Type</label>
+                <select name="stoma_type" required>{% for v,l in stoma_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+              <div><label class="lbl">Site</label>
+                <select name="site"><option value="">—</option>{% for v,l in site_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+              <div><label class="lbl">Formed on</label><input type="date" name="formed_date" value="{{ today|date:'Y-m-d' }}"></div>
+              {% if pathways %}
+              <div><label class="lbl">Episode</label>
+                <select name="pathway"><option value="">—</option>{% for cp in pathways %}<option value="{{ cp.id }}">{{ cp.episode_number }}</option>{% endfor %}</select></div>
+              {% endif %}
+              <div><label class="lbl">Notes</label><input type="text" name="notes"></div>
+              <div><button class="btn" type="submit">Add stoma</button></div>
+            </div>
+          </form>
+        </details>
+      </div>
+
+      <!-- Appliances -->
+      <div class="sub">
+        <div class="sec-t">Appliance history</div>
+        <div class="sec-s">Appliances used and changed, most recent first.</div>
+        {% if appliances %}
+          <div class="pp-scroll"><table>
+            <thead><tr><th>Date</th><th>Stoma</th><th>System</th><th>Pouch</th><th>Brand</th><th>Size</th><th>Changed</th></tr></thead>
+            <tbody>
+              {% for a in appliances %}
+              <tr>
+                <td>{{ a.used_on|date:"d/m/Y" }}</td>
+                <td>{% if a.stoma %}<span class="sref">{{ a.stoma.stoma_ref }}</span>{% else %}—{% endif %}</td>
+                <td>{{ a.get_system_display|default:"—" }}</td>
+                <td>{{ a.pouch_type|default:"—" }}</td>
+                <td>{{ a.brand|default:"—" }}</td>
+                <td>{{ a.size|default:"—" }}</td>
+                <td>{% if a.changed %}Yes{% else %}No{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        {% else %}
+          <p class="muted" style="font-size:13px;">No appliance records yet — they're captured on each encounter.</p>
+        {% endif %}
+      </div>
+
+      <!-- History -->
+      <div class="sub">
+        <div class="sec-t">History</div>
+        <div class="sec-s">Every encounter across all episodes.</div>
+        {% if events %}
+          <div class="pp-scroll"><table>
+            <thead><tr><th>Encounter</th><th>Date</th><th>Type</th><th>Summary</th><th>Episode</th></tr></thead>
+            <tbody>
+              {% for e in events %}
+              <tr>
+                <td class="sref">{{ e.encounter_number|default:"—" }}</td>
+                <td>{{ e.event_date|date:"d/m/Y" }}{% if e.day_number != None %} <span class="muted">(day {{ e.day_number }})</span>{% endif %}</td>
+                <td>{{ e.get_event_type_display }}</td>
+                <td class="muted">{{ e.summary|default:"—" }}</td>
+                <td><a href="{% url 'clinic:pathway_detail' pk=e.pathway_id %}">{{ e.pathway.episode_number|default:"—" }}</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        {% else %}
+          <p class="muted" style="font-size:13px;">No encounters recorded yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Outcome -->
+      {% if active_case %}
+      <div class="sub">
+        <div class="sec-t">Outcome</div>
+        <div class="sec-s">Recording a death closes the case and every open episode automatically.</div>
+        <form method="post" onsubmit="return confirm('Mark this patient as deceased and close the case?');">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="mark_deceased">
+          <div class="f-row" style="align-items:end;max-width:460px;">
+            <div><label class="lbl">Date of death</label><input type="date" name="rip_date" value="{{ today|date:'Y-m-d' }}"></div>
+            <div><button class="btn btn-ghost" type="submit" style="color:#b42318;border-color:#fecdca;">Mark deceased</button></div>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ============ APPOINTMENTS ============ -->
+    <div class="pp-pane" id="ppAppts" hidden>
+      <div class="pp-action">
+        <div>
+          <div class="pp-ak">Upcoming appointment</div>
+          <div class="pp-av2">{{ card.next_action|default:"Nothing scheduled" }}</div>
+          <div class="pp-asub">{{ card.status_label|default:"" }}</div>
+        </div>
+        {% if card.can_schedule %}
+        <a class="btn pp-sched" href="{% url 'clinic:appointments' %}">Schedule</a>
+        {% endif %}
+      </div>
+
+      <div class="pp-sec">
+        <span class="pp-sh">Recent history</span>
+        <span class="pp-badge alt">{% if card.history %}{{ card.history|length }} visit{{ card.history|length|pluralize }}{% else %}none{% endif %}</span>
+      </div>
+      {% if card.history %}
+        {% for h in card.history %}
+        <div class="pp-ap">
+          <div>
+            <div class="al">{{ h.date }}{% if h.time %} · {{ h.time }}{% endif %}</div>
+            {% if h.by %}<div class="as">Seen by {{ h.by }}</div>{% endif %}
+          </div>
+          <span class="ab{% if h.status_key == 'dna' %} dna{% elif h.status_key == 'cancelled' %} cancelled{% endif %}">{{ h.status }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted" style="font-size:13px;">No visits recorded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- footer actions -->
+  <div class="pp-foot">
+    <a class="btn btn-ghost" href="{% url 'clinic:patient_detail' patient_id=patient.id %}">Full record</a>
+    <a class="btn" href="{% url 'clinic:discharge_letter_for' patient_id=patient.id %}" target="_blank" rel="noopener">Discharge letter</a>
+  </div>
 </div>
-{% endif %}
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.pp-tab');
+  var panes = ['ppSummary','ppClinical','ppAppts'];
+  function show(id){
+    panes.forEach(function(p){ var el = document.getElementById(p); if(el) el.hidden = (p !== id); });
+    tabs.forEach(function(t){ t.classList.toggle('on', t.dataset.pane === id); });
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.pane); }); });
+  // Deep-link: /profile?tab=clinical opens straight on that tab.
+  var want = (new URLSearchParams(location.search).get('tab') || '').toLowerCase();
+  var map = {summary:'ppSummary', clinical:'ppClinical', appointments:'ppAppts', appts:'ppAppts'};
+  if(map[want]) show(map[want]);
+})();
+</script>
 {% endblock %}

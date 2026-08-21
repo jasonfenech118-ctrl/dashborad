@@ -579,6 +579,7 @@ def patient_profile(request, patient_id):
     sex = (patient.sex or "").strip().lower()
     silhouette = "female" if sex.startswith("f") else ("male" if sex.startswith("m") else "unknown")
     active_case = (patient.followup_status or "") not in {"reversed", "deceased"}
+    card = _safe_query(lambda: _patient_card(patient), None) or {}
 
     return render(request, "clinic/patient_profile.html", {
         "patient": patient,
@@ -589,6 +590,7 @@ def patient_profile(request, patient_id):
         "events": events,
         "silhouette": silhouette,
         "active_case": active_case,
+        "card": card,
         "stoma_types": models.Stoma.TYPE_CHOICES,
         "site_choices": models.Stoma.SITE_CHOICES,
         "change_types": models.StomaChange.TYPE_CHOICES,
