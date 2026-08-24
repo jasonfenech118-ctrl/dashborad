@@ -64,6 +64,82 @@
   .pt-empty{padding:34px;text-align:center;color:var(--muted);font-size:13px;}
   .pager{margin:14px 2px 0;display:flex;gap:8px;align-items:center;font-size:13px;}
 
+  /* ============ patient card (modal) ============ */
+  .pc-scrim{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;}
+  .pc-scrim.on{display:block;}
+  .pc{position:fixed;z-index:201;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(620px,95vw);max-height:90vh;display:flex;flex-direction:column;
+    background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.3);}
+  .pc[hidden]{display:none;}
+  .pc-x{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:8px;
+    border:1px solid var(--border);background:#fff;color:var(--muted);font-size:19px;
+    line-height:1;cursor:pointer;}
+  .pc-x:hover{background:#f8fafc;}
+  .pc-head{display:flex;gap:13px;align-items:center;padding:18px 18px 13px;}
+  .pc-av{width:44px;height:44px;flex:none;border-radius:50%;background:#e0f2f1;color:#0f766e;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;}
+  .pc-name{font-size:17px;font-weight:800;color:var(--ink);}
+  .pc-meta{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .pc-tags{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+  .pc-st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+    background:#dcfce7;color:#166534;}
+  .pc-st.outcome{background:#f1f5f9;color:#475569;}
+  .pc-loc{font-size:11.5px;color:var(--muted);}
+  /* tab strip — scrolls sideways on narrow screens */
+  .pc-tabs{display:flex;gap:6px;padding:0 18px 13px;overflow-x:auto;}
+  .pc-tab{flex:none;padding:8px 12px;border-radius:9px;border:1px solid var(--border);
+    background:#fff;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);
+    cursor:pointer;white-space:nowrap;}
+  .pc-tab.on{background:var(--navy,#0f172a);color:#fff;border-color:var(--navy,#0f172a);}
+  .pc-body{flex:1;overflow:auto;padding:0 18px;}
+  .pc-empty{padding:22px 2px;text-align:center;color:var(--muted);font-size:13px;}
+  /* action banner (next action / upcoming appointment) */
+  .pc-action{display:flex;gap:12px;align-items:center;justify-content:space-between;
+    background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:13px 15px;margin-bottom:14px;}
+  .pc-at{min-width:0;}
+  .pc-ak{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:#0f766e;}
+  .pc-av2{font-size:15px;font-weight:800;color:var(--ink);margin-top:2px;}
+  .pc-asub{font-size:12px;color:var(--muted);margin-top:1px;}
+  .pc-sched{white-space:nowrap;flex:none;}
+  /* section header */
+  .pc-sec{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px;}
+  .pc-sh{font-size:14px;font-weight:800;color:var(--ink);}
+  .pc-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#ede9fe;color:#5b21b6;}
+  .pc-badge.alt{background:#f1f5f9;color:#475569;}
+  .pc-box{border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:16px;background:#fcfdff;}
+  .pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;margin:0;}
+  .pc-grid dt{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+  .pc-grid dd{margin:2px 0 0;color:var(--ink);font-weight:700;font-size:13.5px;overflow-wrap:anywhere;}
+  .pc-grid dd.na{color:var(--muted);font-weight:600;font-style:italic;}
+  .pc-seen{margin-top:12px;padding-top:11px;border-top:1px solid #eef2f7;font-size:12px;color:var(--muted);}
+  /* recent history rows */
+  .pc-ap{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--border);
+    border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:13px;}
+  .pc-ap .al{font-weight:800;color:var(--ink);}
+  .pc-ap .as{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pc-ap .ab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+    padding:3px 9px;border-radius:20px;background:#dcfce7;color:#166534;white-space:nowrap;height:fit-content;}
+  .pc-ap .ab.dna{background:#fef3c7;color:#92400e;}
+  .pc-ap .ab.cancelled{background:#fee2e2;color:#991b1b;}
+  /* episode cards */
+  .pc-ep{border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:10px;background:#fcfdff;}
+  .pc-ep-top{display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .pc-ep-no{font-weight:800;color:var(--ink);font-size:13.5px;}
+  .pc-ep-st{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+    padding:3px 9px;border-radius:20px;background:#e0e7ff;color:#3730a3;white-space:nowrap;}
+  .pc-ep-meta{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .pc-ep-meta b{color:var(--ink);font-weight:700;}
+  /* inline add-episode form */
+  .pc-form{border:1px dashed var(--border);border-radius:12px;padding:14px;margin-bottom:14px;background:#fff;}
+  .pc-form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .pc-form label{font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;}
+  .pc-form input,.pc-form select,.pc-form textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);
+    border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;}
+  .pc-form textarea{min-height:52px;resize:vertical;}
+  .pc-toggle{background:none;border:none;color:var(--teal);font-weight:700;font-size:13px;cursor:pointer;padding:6px 0;font-family:inherit;}
+  .pc-foot{display:flex;gap:9px;justify-content:flex-end;padding:14px 18px;border-top:1px solid var(--border);}
+  @media(max-width:480px){ .pc-grid,.pc-form .row{grid-template-columns:1fr;} }
+
 </style>
 
 <div class="pt">
@@ -90,7 +166,8 @@
         {% for p in page %}
         <tr>
           <td>
-            <a class="rowlink" href="{% url 'clinic:patient_profile' patient_id=p.id %}">
+            <a class="rowlink" href="{% url 'clinic:patient_profile' patient_id=p.id %}"
+               data-card="{% url 'clinic:patient_card' patient_id=p.id %}">
               <span class="pt-name">
                 <span class="avatar">{{ p.surname|slice:":1" }}{{ p.first_name|slice:":1" }}</span>
                 <span>
@@ -118,6 +195,103 @@
     </table>
   </div>
 
+  <!-- ============ patient card (modal) ============ -->
+  {% csrf_token %}
+  <div class="pc-scrim" id="pcScrim" onclick="closeCard()"></div>
+  <div class="pc" id="pcCard" role="dialog" aria-modal="true" aria-labelledby="pcName" hidden>
+    <button class="pc-x" onclick="closeCard()" aria-label="Close">&times;</button>
+    <div class="pc-head">
+      <span class="pc-av" id="pcAv"></span>
+      <div>
+        <div class="pc-name" id="pcName">—</div>
+        <div class="pc-meta" id="pcMeta"></div>
+        <div class="pc-tags"><span class="pc-st" id="pcStatus"></span><span class="pc-loc" id="pcLoc"></span></div>
+      </div>
+    </div>
+
+    <div class="pc-tabs" role="tablist">
+      <button class="pc-tab on" data-pane="pcDetails" role="tab">Patient details</button>
+      <button class="pc-tab" data-pane="pcSummary" role="tab">Summary</button>
+      <button class="pc-tab" data-pane="pcEpisodes" role="tab">Episodes</button>
+      <button class="pc-tab" data-pane="pcAppts" role="tab">Appointments</button>
+      <button class="pc-tab" data-pane="pcMail" role="tab">Email correspondence</button>
+    </div>
+
+    <div class="pc-body">
+      <div id="pcLoading" class="pc-empty">Loading…</div>
+
+      <!-- Patient details -->
+      <div class="pc-pane" id="pcDetails" hidden>
+        <div class="pc-sec"><span class="pc-sh">Patient details</span></div>
+        <div class="pc-box"><dl class="pc-grid" id="pcDetailsGrid"></dl></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="pc-pane" id="pcSummary" hidden>
+        <div class="pc-action">
+          <div class="pc-at">
+            <div class="pc-ak">Next action</div>
+            <div class="pc-av2" id="pcNextS">—</div>
+            <div class="pc-asub" id="pcSubS"></div>
+          </div>
+          <a class="btn pc-sched" id="pcSchedS" href="#">Schedule</a>
+        </div>
+        <div class="pc-sec"><span class="pc-sh">Clinical snapshot</span><span class="pc-badge">Stoma clinic</span></div>
+        <div class="pc-box"><dl class="pc-grid" id="pcSnap"></dl></div>
+        <div class="pc-sec"><span class="pc-sh">Contact &amp; record</span></div>
+        <div class="pc-box"><dl class="pc-grid" id="pcContact"></dl><div class="pc-seen" id="pcSeen"></div></div>
+      </div>
+
+      <!-- Episodes -->
+      <div class="pc-pane" id="pcEpisodes" hidden>
+        <div class="pc-sec"><span class="pc-sh">Episodes</span><span class="pc-badge alt" id="pcEpCount"></span></div>
+        <button type="button" class="pc-toggle" id="pcEpToggle">+ Add episode</button>
+        <form class="pc-form" id="pcEpForm" hidden>
+          <div class="row">
+            <div><label>Type</label><select name="pathway_type" id="pcEpType"></select></div>
+            <div><label>Status</label><select name="status" id="pcEpStatus"></select></div>
+          </div>
+          <div class="row">
+            <div><label>Surgery date</label><input type="date" name="surgery_date"></div>
+            <div><label>Stoma type</label><input type="text" name="ep_stoma_type" placeholder="e.g. End colostomy"></div>
+          </div>
+          <div style="margin-bottom:10px;"><label>Operation</label><input type="text" name="operation" placeholder="Operation performed"></div>
+          <div style="margin-bottom:10px;"><label>Notes</label><textarea name="ep_notes" placeholder="Episode notes…"></textarea></div>
+          <div style="display:flex;gap:9px;justify-content:flex-end;">
+            <button type="button" class="btn ghost" id="pcEpCancel">Cancel</button>
+            <button type="submit" class="btn" id="pcEpSave">Add episode</button>
+          </div>
+        </form>
+        <div id="pcEpList"></div>
+      </div>
+
+      <!-- Appointments -->
+      <div class="pc-pane" id="pcAppts" hidden>
+        <div class="pc-action">
+          <div class="pc-at">
+            <div class="pc-ak">Upcoming appointment</div>
+            <div class="pc-av2" id="pcNextA">—</div>
+            <div class="pc-asub" id="pcSubA"></div>
+          </div>
+          <a class="btn pc-sched" id="pcSchedA" href="#">Schedule</a>
+        </div>
+        <div class="pc-sec"><span class="pc-sh">Recent history</span><span class="pc-badge alt" id="pcHistCount"></span></div>
+        <div id="pcHist"></div>
+      </div>
+
+      <!-- Email correspondence -->
+      <div class="pc-pane" id="pcMail" hidden>
+        <div class="pc-sec"><span class="pc-sh">Email correspondence</span><span class="pc-badge alt" id="pcMailCount"></span></div>
+        <div id="pcMailList"></div>
+      </div>
+    </div>
+
+    <div class="pc-foot">
+      <button class="btn ghost" onclick="closeCard()">Close</button>
+      <a class="btn" id="pcProfile" href="#">Full record</a>
+    </div>
+  </div>
+
   {% if page.has_other_pages %}
   <div class="pager">
     {% if page.has_previous %}<a class="btn" href="?q={{ q }}&status={{ status }}&page={{ page.previous_page_number }}">← Prev</a>{% endif %}
@@ -127,4 +301,214 @@
   {% endif %}
 </div>
 
+<script>
+(function(){
+  var card   = document.getElementById('pcCard');
+  var scrim  = document.getElementById('pcScrim');
+  var panes  = ['pcDetails','pcSummary','pcEpisodes','pcAppts','pcMail'];
+  var lastFocus = null;
+  var current = null;   // the actionUrl for the open patient
+
+  function csrf(){
+    var el = document.querySelector('input[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function showPane(id){
+    panes.forEach(function(p){ document.getElementById(p).hidden = (p !== id); });
+    Array.prototype.forEach.call(document.querySelectorAll('.pc-tab[data-pane]'), function(b){
+      b.classList.toggle('on', b.dataset.pane === id);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.pc-tab[data-pane]'), function(b){
+    b.addEventListener('click', function(){ showPane(b.dataset.pane); });
+  });
+
+  function grid(rows){
+    return (rows || []).map(function(row){
+      var na = (row[1] === 'Not recorded' || row[1] === '—');
+      return '<dt>' + esc(row[0]) + '</dt><dd class="' + (na ? 'na' : '')
+        + '">' + esc(row[1]) + '</dd>';
+    }).join('');
+  }
+
+  function renderEpisodes(eps){
+    document.getElementById('pcEpCount').textContent =
+      eps.length ? eps.length + (eps.length === 1 ? ' episode' : ' episodes') : 'none';
+    document.getElementById('pcEpList').innerHTML = eps.length
+      ? eps.map(function(e){
+          var meta = [];
+          if(e.surgery_date) meta.push('<b>Surgery</b> ' + esc(e.surgery_date));
+          if(e.operation)    meta.push('<b>Operation</b> ' + esc(e.operation));
+          if(e.stoma_type)   meta.push('<b>Stoma</b> ' + esc(e.stoma_type));
+          if(e.notes)        meta.push(esc(e.notes));
+          return '<div class="pc-ep"><div class="pc-ep-top">'
+            + '<span class="pc-ep-no">' + esc(e.number) + '</span>'
+            + '<span class="pc-ep-st">' + esc(e.status) + '</span></div>'
+            + '<div class="pc-ep-meta">' + esc(e.type)
+            + (meta.length ? '<br>' + meta.join(' · ') : '') + '</div></div>';
+        }).join('')
+      : '<div class="pc-empty">No episodes recorded yet.</div>';
+  }
+
+  function renderMail(items){
+    document.getElementById('pcMailCount').textContent =
+      items.length ? items.length + (items.length === 1 ? ' item' : ' items') : 'none';
+    document.getElementById('pcMailList').innerHTML = items.length
+      ? items.map(function(m){
+          return '<div class="pc-ap"><div><div class="al">' + esc(m.title) + '</div>'
+            + '<div class="as">' + [m.date, m.by, m.size].filter(Boolean).map(esc).join(' · ')
+            + '</div></div><a class="ab" style="text-decoration:none;" href="'
+            + esc(m.url) + '" target="_blank" rel="noopener">Open</a></div>';
+        }).join('')
+      : '<div class="pc-empty">No email correspondence filed for this patient yet.</div>';
+  }
+
+  function options(sel, choices){
+    sel.innerHTML = (choices || []).map(function(c){
+      return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>';
+    }).join('');
+  }
+
+  function fill(d){
+    document.getElementById('pcLoading').hidden = true;
+    current = d.add_episode_url;
+
+    var initials = (d.name || '').split(/\s+/).filter(Boolean)
+      .slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase();
+    document.getElementById('pcAv').textContent = initials || '?';
+    document.getElementById('pcName').textContent = d.name;
+    document.getElementById('pcMeta').textContent =
+      [d.id_card, (d.age != null ? d.age + ' years' : null), d.sex]
+        .filter(Boolean).join(' • ');
+    var st = document.getElementById('pcStatus');
+    st.textContent = d.status_label || '—';
+    st.className = 'pc-st' + (d.is_outcome ? ' outcome' : '');
+    document.getElementById('pcLoc').textContent = d.locality ? '📍 ' + d.locality : '';
+    document.getElementById('pcProfile').href = d.profile_url;
+
+    /* Patient details */
+    document.getElementById('pcDetailsGrid').innerHTML = grid(d.details);
+
+    /* Summary */
+    document.getElementById('pcNextS').textContent = d.next_action || 'No future review booked';
+    document.getElementById('pcSubS').textContent = d.status_label || '';
+    document.getElementById('pcSnap').innerHTML = grid(d.snapshot);
+    document.getElementById('pcContact').innerHTML = grid(d.contact);
+    document.getElementById('pcSeen').textContent = d.last_seen || 'No recorded visits yet.';
+
+    /* Episodes */
+    options(document.getElementById('pcEpType'), d.episode_type_choices);
+    options(document.getElementById('pcEpStatus'), d.episode_status_choices);
+    renderEpisodes(d.episodes || []);
+    document.getElementById('pcEpForm').hidden = true;
+    document.getElementById('pcEpToggle').hidden = false;
+
+    /* Appointments */
+    document.getElementById('pcNextA').textContent = d.next_action || 'Nothing scheduled';
+    document.getElementById('pcSubA').textContent = d.status_label || '';
+    var hist = d.history || [];
+    document.getElementById('pcHistCount').textContent =
+      hist.length ? hist.length + (hist.length === 1 ? ' visit' : ' visits') : 'none';
+    document.getElementById('pcHist').innerHTML = hist.length
+      ? hist.map(function(a){
+          var cls = a.status_key === 'dna' ? ' dna'
+                  : (a.status_key === 'cancelled' ? ' cancelled' : '');
+          return '<div class="pc-ap"><div><div class="al">' + esc(a.date)
+            + (a.time ? ' · ' + esc(a.time) : '') + '</div>'
+            + (a.by ? '<div class="as">Seen by ' + esc(a.by) + '</div>' : '')
+            + '</div><span class="ab' + cls + '">' + esc(a.status) + '</span></div>';
+        }).join('')
+      : '<div class="pc-empty">No visits recorded yet.</div>';
+
+    /* Email correspondence */
+    renderMail(d.correspondence || []);
+
+    /* Schedule buttons hidden once the case has an outcome */
+    ['pcSchedS','pcSchedA'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(d.can_schedule){ b.hidden = false; b.href = d.schedule_url; }
+      else { b.hidden = true; }
+    });
+
+    showPane('pcDetails');
+  }
+
+  function openCard(url, trigger){
+    lastFocus = trigger || null;
+    panes.forEach(function(p){ document.getElementById(p).hidden = true; });
+    var loading = document.getElementById('pcLoading');
+    loading.hidden = false; loading.textContent = 'Loading…';
+    card.hidden = false;
+    scrim.classList.add('on');
+    document.querySelector('.pc-x').focus();
+    fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(!d.ok){ throw new Error('unavailable'); } fill(d); })
+      .catch(function(){
+        loading.textContent = 'Could not load this patient. Open the full record instead.';
+      });
+  }
+
+  window.closeCard = function(){
+    card.hidden = true;
+    scrim.classList.remove('on');
+    if(lastFocus){ lastFocus.focus(); lastFocus = null; }
+  };
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !card.hidden) closeCard();
+  });
+
+  /* ---- inline add-episode form ---- */
+  var epForm   = document.getElementById('pcEpForm');
+  var epToggle = document.getElementById('pcEpToggle');
+  epToggle.addEventListener('click', function(){
+    epForm.hidden = false; epToggle.hidden = true;
+  });
+  document.getElementById('pcEpCancel').addEventListener('click', function(){
+    epForm.reset(); epForm.hidden = true; epToggle.hidden = false;
+  });
+  epForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!current) return;
+    var save = document.getElementById('pcEpSave');
+    save.disabled = true; save.textContent = 'Saving…';
+    var body = new FormData(epForm);
+    body.append('action', 'add_episode');
+    fetch(current, {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrf(), 'X-Requested-With': 'XMLHttpRequest'},
+      body: body,
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        save.disabled = false; save.textContent = 'Add episode';
+        if(!d.ok){ alert(d.error || 'Could not add that episode.'); return; }
+        renderEpisodes(d.episodes || []);
+        epForm.reset(); epForm.hidden = true; epToggle.hidden = false;
+      })
+      .catch(function(){
+        save.disabled = false; save.textContent = 'Add episode';
+        alert('Could not add that episode.');
+      });
+  });
+
+  /* Clicking a patient opens the card; the row still links to the profile so
+     ctrl/cmd/middle-click and "open in new tab" keep working. */
+  Array.prototype.forEach.call(document.querySelectorAll('.rowlink[data-card]'), function(a){
+    a.addEventListener('click', function(e){
+      if(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      openCard(a.dataset.card, a);
+    });
+  });
+})();
+</script>
 {% endblock %}

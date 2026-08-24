@@ -3030,6 +3030,61 @@ def _age_from(dob, on=None):
 OUTCOME_STATUSES = {"reversed", "deceased", "relocated_gozo", "relocated_overseas"}
 
 
+def _episode_rows(patient):
+    """Care-pathway (episode) rows for the patient card's Episodes tab."""
+    CP = models.CarePathway
+    rows = _safe(
+        lambda: list(CP.objects.filter(patient_id=patient.id)), []
+    ) or []
+
+    def _d(value):
+        return value.strftime("%d %b %Y") if value else None
+
+    out = []
+    for e in rows:
+        created = getattr(e, "created_at", None)
+        out.append({
+            "id": str(e.id),
+            "number": e.episode_number or "Episode",
+            "type": e.get_pathway_type_display() if e.pathway_type else "—",
+            "status": e.get_status_display() if e.status else "—",
+            "status_key": e.status or "",
+            "surgery_date": _d(e.surgery_date),
+            "operation": e.operation or None,
+            "stoma_type": e.stoma_type or None,
+            "notes": e.notes or None,
+            "created": _d(created) if created else None,
+        })
+    return out
+
+
+def _correspondence_rows(patient):
+    """Filed email-correspondence documents for the patient card's Email tab."""
+    LD = models.LibraryDocument
+    docs = _safe(
+        lambda: list(
+            LD.objects.filter(
+                patient_id=patient.id, category=LD.CORRESPONDENCE
+            ).order_by("-created_at")[:50]
+        ), []
+    ) or []
+
+    def _d(value):
+        return value.strftime("%d %b %Y") if value else None
+
+    out = []
+    for d in docs:
+        out.append({
+            "id": str(d.id),
+            "title": d.title or "Correspondence",
+            "date": _d(getattr(d, "created_at", None)),
+            "by": d.uploaded_by or None,
+            "size": _safe(lambda d=d: d.size_display, None),
+            "url": reverse("clinic:library_file", args=[d.id]),
+        })
+    return out
+
+
 def _patient_card(patient):
     """The at-a-glance payload behind the patient card on the registry."""
     today = datetime.date.today()
@@ -3117,6 +3172,28 @@ def _patient_card(patient):
             if last_seen else None
         ),
         "history": history,
+        # Full demographics for the Patient details tab.
+        "details": [
+            ("Full name", name or "—"),
+            ("ID card", patient.id_card or "—"),
+            ("Date of birth", _d(patient.dob) or "—"),
+            ("Age", f"{_age_from(patient.dob)} years" if _age_from(patient.dob) is not None else "—"),
+            ("Sex", (patient.sex or "").strip() or "—"),
+            ("Telephone", patient.phone_number or "—"),
+            ("Locality", patient.locality or "—"),
+            ("Consultant", patient.consultant or "—"),
+            ("Admission route", patient.admission_route or "—"),
+            ("Surgery type", patient.surgery_type or "—"),
+            ("Follow-up owner", patient.followup_owner or "—"),
+            ("DPA status", patient.dpa_status or "—"),
+        ],
+        # Episodes (care pathways) and filed email correspondence.
+        "episodes": _episode_rows(patient),
+        "correspondence": _correspondence_rows(patient),
+        # Choices for the inline "add episode" form.
+        "episode_type_choices": list(models.CarePathway.TYPE_CHOICES),
+        "episode_status_choices": list(models.CarePathway.STATUS_CHOICES),
+        "add_episode_url": reverse("clinic:patient_card_action", args=[patient.id]),
         "profile_url": reverse("clinic:patient_profile", args=[patient.id]),
         "detail_url": reverse("clinic:patient_detail", args=[patient.id]),
         "schedule_url": reverse("clinic:appointments"),
@@ -3132,6 +3209,41 @@ def patient_card(request, patient_id):
         return JsonResponse({"ok": False}, status=200)
     data["ok"] = True
     return JsonResponse(data)
+
+
+@login_required
+def patient_card_action(request, patient_id):
+    """AJAX actions from the patient card (currently: add an episode).
+
+    Returns the refreshed episode list as JSON so the modal can update the
+    Episodes tab in place, without navigating away from the registry.
+    """
+    patient = get_object_or_404(models.Patient, pk=patient_id)
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required"}, status=405)
+
+    action = (request.POST.get("action") or "").strip()
+    if action == "add_episode":
+        try:
+            models.CarePathway.objects.create(
+                patient=patient,
+                pathway_type=(request.POST.get("pathway_type") or "").strip()
+                    or models.CarePathway.ELECTIVE,
+                status=(request.POST.get("status") or "").strip()
+                    or models.CarePathway.OUTPATIENT,
+                surgery_date=_parse_date(request.POST.get("surgery_date")),
+                operation=(request.POST.get("operation") or "").strip() or None,
+                stoma_type=(request.POST.get("ep_stoma_type") or "").strip() or None,
+                notes=(request.POST.get("ep_notes") or "").strip() or None,
+                created_by_username=request.user.get_username(),
+            )
+        except Exception:
+            return JsonResponse(
+                {"ok": False, "error": "Could not add that episode."}, status=200
+            )
+        return JsonResponse({"ok": True, "episodes": _episode_rows(patient)})
+
+    return JsonResponse({"ok": False, "error": "Unknown action"}, status=200)
 
 
 @login_required
